@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="MiB Beam Spot : Milano Bicocca development and operations of CMS Beam Spot">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>MiB Beam Spot</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/MilanoBicocca-pix/cmssw">View on GitHub</a>
+
+          <h1 id="project_title">MiB Beam Spot</h1>
+          <h2 id="project_tagline">Milano Bicocca development and operations of CMS Beam Spot</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/MilanoBicocca-pix/cmssw/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/MilanoBicocca-pix/cmssw/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h3>
+<a id="what" class="anchor" href="#what" aria-hidden="true"><span class="octicon octicon-link"></span></a>What?</h3>
+
+<p>This is meant to be the code sharepoint for Milano Bicocca group venture on the CMS Beam Spot development and operations</p>
+
+<h3>
+<a id="before-you-start" class="anchor" href="#before-you-start" aria-hidden="true"><span class="octicon octicon-link"></span></a>Before you start</h3>
+
+<ul>
+<li>you must have a GitHub account. Follow the FAQ here <a href="http://cms-sw.github.io/faq.html">http://cms-sw.github.io/faq.html</a>
+if in trouble</li>
+<li>join MilanoBicocca-pix common github (ask Riccardo)</li>
+</ul>
+
+<h3>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h3>
+
+<p>setup area</p>
+
+<pre><code>cmsRel CMSSW_7_2_3
+cd src
+</code></pre>
+
+<p>initialize a git repository</p>
+
+<pre><code>git init
+</code></pre>
+
+<p>add the common Milano Bicocca remote github repository you will push your changes here (not into your personal github!) pull requests into the official cmssw github will be made from the common github </p>
+
+<pre><code>git remote add mib git@github.com:MilanoBicocca-pix/cmssw.git
+</code></pre>
+
+<p>add also the official cmssw remote github, so that we can align from time to time</p>
+
+<pre><code>git remote add official-cmssw git@github.com:cms-sw/cmssw.git
+</code></pre>
+
+<p>checkout just what you need, not the full burden</p>
+
+<pre><code>git config core.sparsecheckout true
+echo RecoVertex/BeamSpotProducer &gt;&gt; .git/info/sparse-checkout
+git pull mib &lt;BRANCH&gt;
+</code></pre>
+
+<p>now you're up and running</p>
+
+<h3>
+<a id="very-minimal-how-to" class="anchor" href="#very-minimal-how-to" aria-hidden="true"><span class="octicon octicon-link"></span></a>Very minimal how to</h3>
+
+<p>First, do your modifications, then the usual way to keep them on the record and to propagate them to everybody is</p>
+
+<ol>
+<li>git add </li>
+<li>git commit -m "hey hey I saved the world today" </li>
+<li>git push mib </li>
+</ol>
+
+<p>now, if our private mib  reached the point it worths being put into the official CMSSW  </p>
+
+<ol>
+<li>(after 1., 2. and 3.) do a pull request <a href="http://cms-sw.github.io/tutorial.html#do-a-pull-request">http://cms-sw.github.io/tutorial.html#do-a-pull-request</a>
+</li>
+</ol>
+
+<h3>
+<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+
+<p>Riccardo Manzoni (<a href="https://github.com/rmanzoni" class="user-mention">@rmanzoni</a>)<br>
+Sara Fiorendi (<a href="https://github.com/sarafiorendi" class="user-mention">@sarafiorendi</a>)<br>
+Simone Gennai (<a href="https://github.com/gennai" class="user-mention">@gennai</a>)<br>
+Mauro Dinardo (<a href="https://github.com/dinardo" class="user-mention">@dinardo</a>)  </p>
+
+<h3>
+<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+
+<p>manzoni AT cern DOT ch</p>
+
+<h3>
+<a id="about-github-pages" class="anchor" href="#about-github-pages" aria-hidden="true"><span class="octicon octicon-link"></span></a>About GitHub Pages</h3>
+
+<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+
+<pre><code>$ cd your_repo_root/repo_name
+$ git fetch origin
+$ git checkout gh-pages
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">MiB Beam Spot maintained by <a href="https://github.com/MilanoBicocca-pix">MilanoBicocca-pix</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
