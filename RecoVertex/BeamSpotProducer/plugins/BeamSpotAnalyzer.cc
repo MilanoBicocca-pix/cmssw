@@ -177,7 +177,7 @@ void BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock & lumiSeg,
         << "[BeamFitter] fit failed"  
         << ACPlain 
 	<< _SP_ 
-        << "Empty Beam spot fit" ;
+        << "Empty Beam spot fit" 
         << "For runs: " 
 	<< _SP_
       	<< ftmprun0 
