@@ -155,20 +155,28 @@ def Fit3D( pvStore ):
 def main():
 
     # input files
-    tfile = TFile("BeamFit_LumiBased_NewAlignWorkflow_1042_139407_1.root")
+    print "A" 
+    tfile = TFile("../run124120_all_vpv3.root")
+    print "B" 
     tfile.cd()
     
-    fchain = ROOT.gDirectory.Get( 'PrimaryVertices' )
+    print "C" 
+#    fchain  = ROOT.gDirectory.Get( 'PrimaryVertices' )
+    fchain  = gDirectory.Get( 'PrimaryVertices' )
+    print "D" 
+    fchain.Print() 
+    print "E" 
     entries = fchain.GetEntriesFast()
-    
-    aData = BeamSpotTreeData()
-    
+    print "F" 
+    aData   = BeamSpotTreeData()
+    print "G" 
     aData.setBranchAddress(fchain);
+    print "H" 
     
-    histox = {}
-    histoy = {}
-    histoz = {}
-    histobx = TH1I("bx","bx",5000,0,5000)
+    histox    = {}
+    histoy    = {}
+    histoz    = {}
+    histobx   = TH1I("bx"  ,"bx"  ,5000,0,5000)
     histolumi = TH1I("lumi","lumi",3000,0,3000)
     
 #pvStore = []

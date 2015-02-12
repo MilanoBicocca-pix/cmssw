@@ -5,11 +5,7 @@
    class:   BeamSpotWrite2DB.h
    package: RecoVertex/BeamSpotProducer
    
-
-
  author: Francisco Yumiceva, Fermilab (yumiceva@fnal.gov)
-
-
 ________________________________________________________________**/
 
 
@@ -28,21 +24,20 @@ ________________________________________________________________**/
 
 #include<fstream>
 
-class BeamSpotWrite2DB : public edm::EDAnalyzer {
+class BeamSpotWrite2DB : public edm::EDAnalyzer 
+{
  public:
-  explicit BeamSpotWrite2DB(const edm::ParameterSet&);
-  ~BeamSpotWrite2DB();
+  explicit      BeamSpotWrite2DB(const edm::ParameterSet &);
+               ~BeamSpotWrite2DB(void                     );
 
  private:
-  virtual void beginJob() ;
-  virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
-
-  
-  std::ifstream fasciiFile;
-  std::string fasciiFileName;
-
-  
+  virtual void  beginJob        (void                     );
+  virtual void  analyze 	(const edm::Event        &, 
+                                 const edm::EventSetup   &);
+  virtual void  endJob  	(void                     );
+ 
+  std::ifstream fasciiFile    ;
+  std::string   fasciiFileName;
 };
 
 #endif

@@ -8,9 +8,10 @@ using namespace std;
 
 //
 // constructor from vertex data
-//
+//==============================================================================
 FcnBeamSpotFitPV::FcnBeamSpotFitPV(const vector<BeamSpotFitPVData>& data) : 
-  data_(data), errorDef_(1.) { 
+  data_(data), errorDef_(1.) 
+{ 
   //
   // default: no additional cuts
   //
@@ -18,10 +19,10 @@ FcnBeamSpotFitPV::FcnBeamSpotFitPV(const vector<BeamSpotFitPVData>& data) :
   upperLimits_[0] = upperLimits_[1] = upperLimits_[2] =  1.e30;
 }
 
-void 
-FcnBeamSpotFitPV::setLimits (float xmin, float xmax,
-			  float ymin, float ymax,
-			  float zmin, float zmax) 
+//==============================================================================
+void FcnBeamSpotFitPV::setLimits (float xmin, float xmax,
+			  	  float ymin, float ymax,
+			  	  float zmin, float zmax) 
 {
   lowerLimits_[0] = xmin;
   lowerLimits_[1] = ymin;
@@ -31,8 +32,8 @@ FcnBeamSpotFitPV::setLimits (float xmin, float xmax,
   upperLimits_[2] = zmax;
 }
 
-unsigned int
-FcnBeamSpotFitPV::nrOfVerticesUsed () const
+//==============================================================================
+unsigned int FcnBeamSpotFitPV::nrOfVerticesUsed () const
 {
   //
   // count vertices imposing the current limits
@@ -41,8 +42,10 @@ FcnBeamSpotFitPV::nrOfVerticesUsed () const
   double v1(0);
   double v2(0);
   double v3(0);
-  for ( vector<BeamSpotFitPVData>::const_iterator ipv=data_.begin();
-	ipv!=data_.end(); ++ipv ) {
+  for ( vector<BeamSpotFitPVData>::const_iterator ipv  = data_.begin();
+	                                          ipv != data_.end(); 
+						++ipv )
+  {						
     v1 = (*ipv).position[0];
     if ( v1<lowerLimits_[0] || v1>upperLimits_[0] )  continue;
     v2 = (*ipv).position[1];
@@ -56,22 +59,22 @@ FcnBeamSpotFitPV::nrOfVerticesUsed () const
   return nVtx;
 }
 
-double
-FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
+//==============================================================================
+double FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
 {
   //
   // fit parameters
   //
-  double vb1 = pars[0];
-  double vb2 = pars[1];
-  double vb3 = pars[2];
-  double sigb1 = pars[3]; 
+  double vb1     = pars[0];
+  double vb2     = pars[1];
+  double vb3     = pars[2];
+  double sigb1   = pars[3];
   double corrb12 = pars[4];
-  double sigb2 = pars[5];
-  double dxdz = pars[6];
-  double dydz = pars[7];
-  double sigb3 = pars[8];
-  double escale = pars[9];
+  double sigb2   = pars[5];
+  double dxdz 	 = pars[6];
+  double dydz 	 = pars[7];
+  double sigb3	 = pars[8];
+  double escale  = pars[9];
   //
   // covariance matrix of the beamspot distribution
   //
@@ -111,8 +114,10 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   //
   // iteration over vertices
   //
-  for ( vector<BeamSpotFitPVData>::const_iterator ipv=data_.begin();
-	ipv!=data_.end(); ++ipv ) {
+  for ( vector<BeamSpotFitPVData>::const_iterator ipv  = data_.begin();
+	                                          ipv != data_.end(); 
+						++ipv ) 
+  {
     //
     // additional selection
     //
@@ -125,15 +130,15 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
     //
     // vertex errors (after scaling) and correlations
     //
-    ev1 = (*ipv).posError[0];
-    corr12 = (*ipv).posCorr[0];
-    ev2 = (*ipv).posError[1];
-    corr13 = (*ipv).posCorr[1];
-    corr23 = (*ipv).posCorr[2];
-    ev3 = (*ipv).posError[2];
-    ev1 *= escale;
-    ev2 *= escale;
-    ev3 *= escale;
+    ev1    = (*ipv).posError[0];
+    corr12 = (*ipv).posCorr [0];
+    ev2    = (*ipv).posError[1];
+    corr13 = (*ipv).posCorr [1];
+    corr23 = (*ipv).posCorr [2];
+    ev3    = (*ipv).posError[2];
+    ev1   *= escale	       ;
+    ev2   *= escale	       ;
+    ev3   *= escale	       ;
     //
     // vertex covariance matrix
     //
@@ -149,7 +154,8 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
     cov += covb;
     int ifail;
     wgt = cov.Inverse(ifail);
-    if ( ifail ) {
+    if ( ifail )
+    {
       //edm::LogWarning("FcnBeamSpotFitPV") 
       cout << "Inversion failed" << endl;
       return -1.e30;

@@ -19,26 +19,28 @@
 
 #include <vector> 
 
-class FcnBeamSpotFitPV : public ROOT::Minuit2::FCNBase { 
+class FcnBeamSpotFitPV : public ROOT::Minuit2::FCNBase 
+{ 
 public: 
   // constructor from vertex data
-  FcnBeamSpotFitPV(const std::vector<BeamSpotFitPVData>& data);
-  ~FcnBeamSpotFitPV() {} 
+         FcnBeamSpotFitPV	(const std::vector<BeamSpotFitPVData>& data);
+        ~FcnBeamSpotFitPV	(void					   )	   {		     } 
   // additional vertex selection using limits in x, y, z
-  void setLimits (float xmin, float xmax,
-		  float ymin, float ymax,
-		  float zmin, float zmax);
+  void   setLimits	 	(float xmin, float xmax, 	 
+	 		 	 float ymin, float ymax, 	 
+	 		 	 float zmin, float zmax                   );	 
   // deltaFcn for definition of the uncertainty
-  double Up() const {return errorDef_;} 
+  double Up                     (void                                      ) const {return errorDef_;} 
   // -2lnL value based on vector of parameters
-  double operator() (const std::vector<double>&) const; 
+  double operator()             (const std::vector<double>           &     ) const; 
   // vertex count used for the fit (after selection)
-  unsigned int nrOfVerticesUsed () const;
-private: 
-  const std::vector<BeamSpotFitPVData>& data_; //< vertex data
-  double errorDef_;                            //< error definition for Minuit
+  unsigned int nrOfVerticesUsed (void                                      ) const;
 
-  float lowerLimits_[3];                       //< lower limits for x,y,z
-  float upperLimits_[3];                       //< upper limits for x,y,z
+private: 
+  const std::vector<BeamSpotFitPVData> & data_        ; //< vertex data
+  double                               errorDef_      ; //< error definition for Minuit
+
+  float 			       lowerLimits_[3]; //< lower limits for x,y,z
+  float 			       upperLimits_[3]; //< upper limits for x,y,z
 }; 
 #endif

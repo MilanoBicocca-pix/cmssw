@@ -5,11 +5,7 @@
    class:   BeamSpotFromDB.h
    package: RecoVertex/BeamSpotProducer
    
-
-
  author: Francisco Yumiceva, Fermilab (yumiceva@fnal.gov)
-
-
 ________________________________________________________________**/
 
 
@@ -21,18 +17,17 @@ ________________________________________________________________**/
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-
-class BeamSpotFromDB : public edm::EDAnalyzer {
+class BeamSpotFromDB : public edm::EDAnalyzer 
+{
  public:
-  explicit BeamSpotFromDB(const edm::ParameterSet&);
-  ~BeamSpotFromDB();
+   explicit     BeamSpotFromDB(const edm::ParameterSet &);
+               ~BeamSpotFromDB(void		        );
 
  private:
-  virtual void beginJob() ;
-  virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
-
-
+  virtual void  beginJob      (void		        );
+  virtual void  analyze       (const edm::Event        &, 
+                               const edm::EventSetup   &);
+  virtual void  endJob        (void		        );
 };
 
 #endif

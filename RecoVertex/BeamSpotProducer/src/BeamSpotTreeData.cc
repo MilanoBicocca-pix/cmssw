@@ -1,13 +1,15 @@
 #include "RecoVertex/BeamSpotProducer/interface/BeamSpotTreeData.h"
 #include <TTree.h>
-
+#include <iostream>
 
 BeamSpotTreeData::BeamSpotTreeData(){}
 BeamSpotTreeData::~BeamSpotTreeData(){}
 
 
 //--------------------------------------------------------------------------------------------------
-void BeamSpotTreeData::branch(TTree* tree){
+void BeamSpotTreeData::branch(TTree* tree)
+{
+  _HERE_() ;
   tree->Branch("run"	      , &run_	       , "run/i");
   tree->Branch("lumi"	      , &lumi_	       , "lumi/i");
   tree->Branch("bunchCrossing", &bunchCrossing_, "bunchCrossing/i");
@@ -15,7 +17,9 @@ void BeamSpotTreeData::branch(TTree* tree){
 }
 
 //--------------------------------------------------------------------------------------------------
-void BeamSpotTreeData::setBranchAddress(TTree* tree){
+void BeamSpotTreeData::setBranchAddress(TTree* tree)
+{
+  _HERE_() ;
   tree->SetBranchAddress("run"	        , &run_	         );
   tree->SetBranchAddress("lumi"	        , &lumi_	 );
   tree->SetBranchAddress("bunchCrossing", &bunchCrossing_);
