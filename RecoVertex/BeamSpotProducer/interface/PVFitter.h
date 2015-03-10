@@ -33,6 +33,7 @@
 #include "TH2F.h"
 
 #include <fstream>
+#include <sstream>
 
 namespace edm {class ConsumesCollector;}
 

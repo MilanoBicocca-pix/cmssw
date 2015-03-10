@@ -28,10 +28,14 @@ double BSpdfsFcn::PDFGauss_d(double 			 z     ,
   //  beam reference frame.
   //---------------------------------------------------------------------------
   double fsqrt2pi = sqrt(2.* TMath::Pi());
-  double sig      = sqrt(parms[fPar_SigmaBeam]*parms[fPar_SigmaBeam] +
-  				    sigmad*sigmad);
-  double dprime   = d - ( ( parms[fPar_X0] + z*parms[fPar_dxdz] )*sin(phi)
-  	              - (   parms[fPar_Y0] + z*parms[fPar_dydz] )*cos(phi) );
+  double sig      = sqrt(
+                         parms[fPar_SigmaBeam]*parms[fPar_SigmaBeam] +
+  		         sigmad               *sigmad
+			);
+  double dprime   = d - (  
+                           ( parms[fPar_X0] + z*parms[fPar_dxdz] )*sin(phi)
+  	                 - ( parms[fPar_Y0] + z*parms[fPar_dydz] )*cos(phi) 
+			);
   double result   = (exp(-(dprime*dprime)/(2.0*sig*sig)))/(sig*fsqrt2pi);  	  
   return result;
 }
@@ -50,10 +54,14 @@ double BSpdfsFcn::PDFGauss_d_resolution(double  		    z  ,
   //---------------------------------------------------------------------------
   double fsqrt2pi = sqrt(2.* TMath::Pi());
   double sigmad   = parms[fPar_c0] + parms[fPar_c1]/pt;
-  double sig      = sqrt(parms[fPar_SigmaBeam]*parms[fPar_SigmaBeam] +
-  				    sigmad*sigmad);
-  double dprime   = d - ( ( parms[fPar_X0] + z*parms[fPar_dxdz] )*sin(phi)
-  	              - (   parms[fPar_Y0] + z*parms[fPar_dydz] )*cos(phi) );
+  double sig      = sqrt(
+                         parms[fPar_SigmaBeam]*parms[fPar_SigmaBeam] +
+  		         sigmad               *sigmad
+			);
+  double dprime   = d - ( 
+                           ( parms[fPar_X0] + z*parms[fPar_dxdz] )*sin(phi)
+  	                 - ( parms[fPar_Y0] + z*parms[fPar_dydz] )*cos(phi) 
+			);
   double result = (exp(-(dprime*dprime)/(2.0*sig*sig)))/(sig*fsqrt2pi);  	  
   return result;
 }

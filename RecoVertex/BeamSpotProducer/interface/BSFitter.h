@@ -22,11 +22,13 @@ ________________________________________________________________**/
 #include "TMatrixD.h"
 #include "TMath.h"
 #include "Minuit2/VariableMetricMinimizer.h"
-#include "TH1F.h"
+#include "TH1F.h" 
+#include "TFile.h" // Dario
 
 // C++ standard
 #include <vector>
 #include <string>
+#include <sstream>
 
 class BSFitter 
 {
@@ -116,6 +118,9 @@ class BSFitter
     int      				      fnthite        ;
     int      				      fminNtrks      ;
     TH1F     				    * h1z            ;
+    TH1F     				    * h1Z            ; // Dario
+    TFile     				    * fhz_           ; // Dario
+    std::stringstream                         ss_            ;
 };
 
 #endif

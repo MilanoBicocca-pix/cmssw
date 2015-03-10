@@ -98,6 +98,7 @@ BeamFitter::BeamFitter(const edm::ParameterSet       & iConfig,
   
   if (saveNtuple_) 
   {
+    _MSG_("Booking mytree ntuple") ;
     ftree_ = new TTree("mytree","mytree");
     ftree_->AutoSave();
 
@@ -135,6 +136,7 @@ BeamFitter::BeamFitter(const edm::ParameterSet       & iConfig,
   }
   if (saveBeamFit_)
   {
+    _MSG_("Booking fitResults ntuple") ;
     ftreeFit_ = new TTree("fitResults","fitResults");
     ftreeFit_->AutoSave();
     
@@ -245,15 +247,16 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
   const std::time_t ftmptime        = ftimestamp >> 32;
 
   if (fbeginLumiOfFit == -1) freftime[0] = freftime[1] = ftmptime;
-  if (freftime[0]     == 0 || ftmptime < freftime[0]) freftime[0] = ftmptime;
-  if (freftime[1]     == 0 || ftmptime > freftime[1]) freftime[1] = ftmptime;
+  
+  if (freftime[0]     == 0 || ftmptime < freftime[0]  ) freftime[0] 	= ftmptime;
+  if (freftime[1]     == 0 || ftmptime > freftime[1]  ) freftime[1] 	= ftmptime;
   // Update the human-readable string versions of the time
   updateBTime();
 
   flumi   = iEvent.luminosityBlock();
   frunFit = frun;
-  if (fbeginLumiOfFit == -1 || fbeginLumiOfFit > flumi) fbeginLumiOfFit = flumi;
-  if (fendLumiOfFit   == -1 || fendLumiOfFit   < flumi) fendLumiOfFit   = flumi;
+  if (fbeginLumiOfFit == -1 || fbeginLumiOfFit > flumi) fbeginLumiOfFit = flumi   ;
+  if (fendLumiOfFit   == -1 || fendLumiOfFit   < flumi) fendLumiOfFit   = flumi   ;
 
   //------ Get track collection
   edm::Handle<reco::TrackCollection> TrackCollection;

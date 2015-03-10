@@ -22,6 +22,7 @@ ________________________________________________________________**/
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 #include "RecoVertex/BeamSpotProducer/interface/BSFitter.h"
+#include "RecoVertex/BeamSpotProducer/interface/helpers.h"
 
 // ROOT
 #include "TMatrixD.h"
@@ -45,13 +46,13 @@ BSFitter::BSFitter( const std:: vector< BSTrkParameters > &BSvector )
   ffit_variable = "default"	       ;
   fBSvector     = BSvector 	       ;
   fsqrt2pi      = sqrt(2.* TMath::Pi());
-  fpar_name[0]  = "z0	     "	       ;
-  fpar_name[1]  = "SigmaZ0   "	       ;
-  fpar_name[2]  = "X0	     "	       ;
-  fpar_name[3]  = "Y0	     "	       ;
-  fpar_name[4]  = "dxdz      "	       ;
-  fpar_name[5]  = "dydz      "	       ;
-  fpar_name[6]  = "SigmaBeam "         ;     
+  fpar_name[0]  = "z0"	               ;
+  fpar_name[1]  = "SigmaZ0"	       ;
+  fpar_name[2]  = "X0"	               ;
+  fpar_name[3]  = "Y0"	               ;
+  fpar_name[4]  = "dxdz"	       ;
+  fpar_name[5]  = "dydz"	       ;
+  fpar_name[6]  = "SigmaBeam"          ;     
 
   //if (theGausszFcn == 0 ) 
   //{
@@ -74,12 +75,16 @@ BSFitter::BSFitter( const std:: vector< BSTrkParameters > &BSvector )
   ftmp.ResizeTo(4,1);
   ftmp.Zero();
 
+  fhz_ = new TFile("hz.root","RECREATE") ; // Dario
+
   h1z = new TH1F("h1z","z distribution",200,-fMaxZ, fMaxZ);	
+  h1Z = new TH1F("h1Z","Z distribution",200,-fMaxZ, fMaxZ); // Dario
 }
 
 //==============================================================================
 BSFitter::~BSFitter()
 {
+  fhz_->Close() ; // Dario
   //delete fBSvector;
   delete thePDF;
   delete theFitter;
@@ -95,6 +100,13 @@ reco::BeamSpot BSFitter::Fit()
 reco::BeamSpot BSFitter::Fit(double *inipar = 0) 
 {
   fbeamtype = reco::BeamSpot::Unknown;
+
+  ss_.str(""); ss_ << "ffit_variable: " 
+                   <<  ffit_variable
+		   << ",  ffit_type : "
+                   <<     ffit_type ;
+  _MSG_(ss_.str()) ;
+  
   if ( ffit_variable == "z" ) 
   {
     if (      ffit_type == "chi2"       ) 
@@ -489,24 +501,23 @@ reco::BeamSpot BSFitter::Fit_d0phi()
   //std::cout << " ftmp(3,0)="<<ftmp(3,0)<<std::endl;
 
   h1z->Reset();  
+  h1Z->Reset();  
   
-  TMatrixD x_result(4,1);
   TMatrixDSym V_result(4);
 
   TMatrixDSym Vint(4);
-  TMatrixD b(4,1);
+  TMatrixDSym temp(4);
+  TMatrixD    x_result(4,1);
+  TMatrixD    b(4,1);
+  TMatrixD    g(4,1);
 
   //Double_t weightsum = 0;
 
   Vint.Zero();
   b.Zero();
 
-  TMatrixD g(4,1);
-  TMatrixDSym temp(4);
-
   std::vector<BSTrkParameters>::iterator iparam = fBSvector.begin();
   ftmprow=0;
-
 
   //edm::LogInfo ("BSFitter") << " test";
   	  
@@ -527,8 +538,7 @@ reco::BeamSpot BSFitter::Fit_d0phi()
     g(1,0) = -cos(iparam->phi0());
     g(2,0) = iparam->z0() * g(0,0);
     g(3,0) = iparam->z0() * g(1,0);
-  
-  
+    
     // average transverse beam width
     double sigmabeam2 = 0.006 * 0.006;
     if (finputBeamWidth > 0 ) sigmabeam2 = finputBeamWidth * finputBeamWidth;
@@ -536,7 +546,7 @@ reco::BeamSpot BSFitter::Fit_d0phi()
   
     //double sigma2 = sigmabeam2 +  (iparam->sigd0())* (iparam->sigd0()) / iparam->weight2;
     // this should be 2*sigmabeam2?
-    double sigma2 = sigmabeam2 +  (iparam->sigd0())* (iparam->sigd0());
+    double sigma2 = sigmabeam2 + (iparam->sigd0()) * (iparam->sigd0());
 
     TMatrixD ftmptrans(1,4);
     ftmptrans      = ftmptrans.Transpose(ftmp);
@@ -572,6 +582,7 @@ reco::BeamSpot BSFitter::Fit_d0phi()
       //weightsum += sqrt(i->weight2);
       ftmprow++;
       h1z->Fill( iparam->z0() );
+      h1Z->Fill( iparam->z0() ); // Dario
     }
   }
   
@@ -608,8 +619,12 @@ reco::BeamSpot BSFitter::Fit_d0phi()
   TF1 fgaus("fgaus","gaus");
   //returns 0 if OK
 //auto status = h1z->Fit(&fgaus,"QLM0","",h1z->GetMean() -2.*h1z->GetRMS(),h1z->GetMean() +2.*h1z->GetRMS());
-  auto status = h1z->Fit(&fgaus,"QL0", "",h1z->GetMean() -2.*h1z->GetRMS(),h1z->GetMean() +2.*h1z->GetRMS());
+  auto status = h1Z->Fit(&fgaus, "QL0","",h1Z->GetMean() -2.*h1Z->GetRMS(),
+                                          h1Z->GetMean() +2.*h1Z->GetRMS()); // Dario
 
+  fhz_->cd()   ; // Dario
+  h1Z->Write() ; // Dario
+  
   //std::cout << "fitted "<< std::endl;
 
   //std::cout << "got function" << std::endl;

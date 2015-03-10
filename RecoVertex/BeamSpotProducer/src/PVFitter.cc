@@ -18,14 +18,25 @@ ________________________________________________________________**/
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Utilities/interface/isFinite.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "RecoVertex/BeamSpotProducer/interface/FcnBeamSpotFitPV.h"
 #include "RecoVertex/BeamSpotProducer/interface/PVFitter.h"
 
+//#define _OLDMINUIT_ 1
+
+#include "RecoVertex/BeamSpotProducer/interface/helpers.h"
+
+#ifdef _OLDMINUIT_
+  #include "TFitterMinuit.h" 
+#else
+  #include "FWCore/Utilities/interface/isFinite.h"
+  #include "Minuit2/FunctionMinimum.h"
+  #include "Minuit2/MnMigrad.h"
+  #include "Minuit2/MnPrint.h"
+#endif
+
 #include "Minuit2/FCNBase.h"
-#include "Minuit2/FunctionMinimum.h"
-#include "Minuit2/MnMigrad.h"
+
 #include "TF1.h"
 
 // ----------------------------------------------------------------------
@@ -44,6 +55,7 @@ PVFitter::PVFitter(const edm::ParameterSet       & iConfig,
                          edm::ConsumesCollector && iColl )
   : ftree_(0)
 {
+  _HERE_() ;
   initialize(iConfig, iColl);
 }
 
@@ -52,6 +64,7 @@ PVFitter::PVFitter(const edm::ParameterSet      & iConfig,
                          edm::ConsumesCollector & iColl )
     :ftree_(0)
 {
+  _HERE_() ;
   initialize(iConfig, iColl);
 }
 
@@ -59,6 +72,7 @@ PVFitter::PVFitter(const edm::ParameterSet      & iConfig,
 void PVFitter::initialize(const edm::ParameterSet      & iConfig,
                                 edm::ConsumesCollector & iColl)
 {
+  _HERE_() ;
   edm::ParameterSet _ps = iConfig.getParameter<edm::ParameterSet>("PVFitter") ;
 
   debug_               = _ps.getUntrackedParameter<bool>("Debug");
@@ -92,6 +106,7 @@ void PVFitter::initialize(const edm::ParameterSet      & iConfig,
 //==============================================================================
 PVFitter::~PVFitter() 
 {
+  _HERE_() ;
 }
 
 //==============================================================================
@@ -238,6 +253,107 @@ bool PVFitter::runBXFitter()
     // LL function and fitter
     //
     FcnBeamSpotFitPV* fcn = new FcnBeamSpotFitPV(pvStore->second);
+#ifdef _OLDMINUIT_
+    TFitterMinuit minuitx;
+    minuitx.SetMinuitFCN(fcn);
+    //
+    // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
+    //
+    minuitx.SetParameter(0,"x",0.,0.02,-10.,10.);
+    minuitx.SetParameter(1,"y",0.,0.02,-10.,10.);
+    minuitx.SetParameter(2,"z",0.,0.20,-30.,30.);
+    minuitx.SetParameter(3,"ex",0.015,0.01,0.,10.);
+    minuitx.SetParameter(4,"corrxy",0.,0.02,-1.,1.);
+    minuitx.SetParameter(5,"ey",0.015,0.01,0.,10.);
+    minuitx.SetParameter(6,"dxdz",0.,0.0002,-0.1,0.1);
+    minuitx.SetParameter(7,"dydz",0.,0.0002,-0.1,0.1);
+    minuitx.SetParameter(8,"ez",1.,0.1,0.,30.);
+    minuitx.SetParameter(9,"scale",errorScale_,errorScale_/10.,errorScale_/2.,errorScale_*2.);
+    //
+    // first iteration without correlations
+    //
+    int ierr(0);
+    minuitx.FixParameter(4);
+    minuitx.FixParameter(6);
+    minuitx.FixParameter(7);
+    minuitx.FixParameter(9);
+    minuitx.SetMaxIterations(100);
+    //       minuitx.SetPrintLevel(3);
+    minuitx.SetPrintLevel(0);
+    minuitx.CreateMinimizer();
+    ierr = minuitx.Minimize();
+    if ( ierr ) 
+    {
+	edm::LogInfo("PVFitter") << "3D beam spot fit failed in 1st iteration" << std::endl;
+    fit_ok = false;
+      continue;
+    }
+    //
+    // refit with harder selection on vertices
+    //
+    fcn->setLimits(minuitx.GetParameter(0)-sigmaCut_*minuitx.GetParameter(3),
+	   minuitx.GetParameter(0)+sigmaCut_*minuitx.GetParameter(3),
+	   minuitx.GetParameter(1)-sigmaCut_*minuitx.GetParameter(5),
+	   minuitx.GetParameter(1)+sigmaCut_*minuitx.GetParameter(5),
+	   minuitx.GetParameter(2)-sigmaCut_*minuitx.GetParameter(8),
+	   minuitx.GetParameter(2)+sigmaCut_*minuitx.GetParameter(8));
+    ierr = minuitx.Minimize();
+    if ( ierr ) 
+    {
+      edm::LogInfo("PVFitter") << "3D beam spot fit failed in 2nd iteration" << std::endl;
+      fit_ok = false;
+      continue;
+    }
+    //
+    // refit with correlations
+    //
+    minuitx.ReleaseParameter(4);
+    minuitx.ReleaseParameter(6);
+    minuitx.ReleaseParameter(7);
+
+    ierr = minuitx.Minimize();
+    if ( ierr ) 
+    {
+	edm::LogInfo("PVFitter") << "3D beam spot fit failed in 3rd iteration" << std::endl;
+    fit_ok = false;
+      continue;
+    }
+    // refit with floating scale factor
+    //   minuitx.ReleaseParameter(9);
+    //   minuitx.Minimize();
+
+    //minuitx.PrintResults(0,0);
+
+    fwidthX = minuitx.GetParameter(3);
+    fwidthY = minuitx.GetParameter(5);
+    fwidthZ = minuitx.GetParameter(8);
+    fwidthXerr = minuitx.GetParError(3);
+    fwidthYerr = minuitx.GetParError(5);
+    fwidthZerr = minuitx.GetParError(8);
+
+    reco::BeamSpot::CovarianceMatrix matrix;
+    // need to get the full cov matrix
+    matrix(0,0) = pow( minuitx.GetParError(0), 2);
+    matrix(1,1) = pow( minuitx.GetParError(1), 2);
+    matrix(2,2) = pow( minuitx.GetParError(2), 2);
+    matrix(3,3) = fwidthZerr * fwidthZerr;
+    matrix(4,4) = pow( minuitx.GetParError(6), 2);
+    matrix(5,5) = pow( minuitx.GetParError(7), 2);
+    matrix(6,6) = fwidthXerr * fwidthXerr;
+
+    fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(minuitx.GetParameter(0),
+			      minuitx.GetParameter(1),
+			      minuitx.GetParameter(2) ),
+		fwidthZ,
+		minuitx.GetParameter(6), minuitx.GetParameter(7),
+		fwidthX,
+		matrix );
+    fbeamspot.setBeamWidthX( fwidthX );
+    fbeamspot.setBeamWidthY( fwidthY );
+    fbeamspot.setType( reco::BeamSpot::Tracker );
+
+    fbspotMap[pvStore->first] = fbeamspot;
+#else
     //
     // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
     //
@@ -333,6 +449,7 @@ bool PVFitter::runBXFitter()
     fbeamspot.setType( reco::BeamSpot::Tracker );
 
     fbspotMap[pvStore->first] = fbeamspot;
+#endif
     edm::LogInfo("PVFitter") << "3D PV fit done for this bunch crossing."<<std::endl;
     //delete fcn;
     fit_ok = fit_ok & true;
@@ -398,106 +515,246 @@ bool PVFitter::runFitter()
   }
   else 
   { // do 3D fit
-    //
-    // LL function and fitter
-    //
-    FcnBeamSpotFitPV* fcn = new FcnBeamSpotFitPV(pvStore_);
-    //
-    // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
-    //
-    MnUserParameters upar;
-    upar.Add("x"     , 0.   	  , 0.02  	   , -10.  	   , 10.	   ); // 0
-    upar.Add("y"     , 0.   	  , 0.02  	   , -10.  	   , 10.	   ); // 1
-    upar.Add("z"     , 0.   	  , 0.20  	   , -30.  	   , 30.	   ); // 2
-    upar.Add("ex"    , 0.005	  , 0.0005	   ,   0.0001	   ,  0.05	   ); // 3
-    upar.Add("corrxy", 0.   	  , 0.02  	   ,  -1.   	   ,  1.  	   ); // 4
-    upar.Add("ey"    , 0.005	  , 0.0005	   ,   0.0001	   ,  0.05	   ); // 5
-    upar.Add("dxdz"  , 0.   	  , 0.0002	   ,  -0.1  	   ,  0.1	   ); // 6
-    upar.Add("dydz"  , 0.   	  , 0.0002	   ,  -0.1  	   ,  0.1	   ); // 7
-    upar.Add("ez"    , 1.   	  , 0.1            ,   1.0   	   , 30. 	   ); // 8
-    upar.Add("scale" , errorScale_, errorScale_/10., errorScale_/2., errorScale_*2.); // 9
-    MnMigrad migrad(*fcn, upar);
-    //
-    // first iteration without correlations
-    //
-    upar.Fix(4);
-    upar.Fix(6);
-    upar.Fix(7);
-    upar.Fix(9);
-    FunctionMinimum ierr = migrad();
-    if ( !ierr.IsValid() ) 
-    {
-      edm::LogWarning("PVFitter") << "3D beam spot fit failed in 1st iteration" << std::endl;
-      return false;
-    }
-    //
-    // refit with harder selection on vertices
-    //
-    fcn->setLimits(upar.Value(0)-sigmaCut_*upar.Value(3),
- 		   upar.Value(0)+sigmaCut_*upar.Value(3),
- 		   upar.Value(1)-sigmaCut_*upar.Value(5),
- 		   upar.Value(1)+sigmaCut_*upar.Value(5),
- 		   upar.Value(2)-sigmaCut_*upar.Value(8),
- 		   upar.Value(2)+sigmaCut_*upar.Value(8));
-    ierr = migrad();
-    if ( !ierr.IsValid() ) 
-    {
-      edm::LogWarning("PVFitter") << "3D beam spot fit failed in 2nd iteration" << std::endl;
-      return false;
-    }
-    //
-    // refit with correlations
-    //
-    upar.Release(4);
-    upar.Release(6);
-    upar.Release(7);
-    ierr = migrad();
-    if ( !ierr.IsValid() ) 
-    {
-      edm::LogWarning("PVFitter") << "3D beam spot fit failed in 3rd iteration" << std::endl;
-      return false;
-    }
-    // refit with floating scale factor
-    //   minuitx.ReleaseParameter(9);
-    //   minuitx.Minimize();
+    int strategy = 1 ;
+    H::ss_.str(""); H::ss_ << "Strategy: " << strategy ; _WARNING_(H::ss_.str()) ;
+#ifdef _OLDMINUIT_
+      _MSG_("Old Minuit version") ;
+      FcnBeamSpotFitPV* fcn = new FcnBeamSpotFitPV(pvStore_);
+      TFitterMinuit minuitx;
+      minuitx.SetMinuitFCN(fcn);
+      //
+      // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
+      //
+      minuitx.SetParameter(0,"x"     ,0.   	 ,0.02		 ,-10.		,10.	       );
+      minuitx.SetParameter(1,"y"     ,0.   	 ,0.02		 ,-10.		,10.	       );
+      minuitx.SetParameter(2,"z"     ,0.   	 ,0.20		 ,-30.		,30.	       );
+      minuitx.SetParameter(3,"ex"    ,0.015	 ,0.01		 ,0.0001	,10.	       );
+      minuitx.SetParameter(4,"corrxy",0.   	 ,0.02		 ,-1.		,1. 	       );
+      minuitx.SetParameter(5,"ey"    ,0.015	 ,0.01		 ,0.0001	,10.	       );
+      minuitx.SetParameter(6,"dxdz"  ,0.   	 ,0.0002	 ,-0.1		,0.1	       );
+      minuitx.SetParameter(7,"dydz"  ,0.   	 ,0.0002	 ,-0.1		,0.1	       );
+      minuitx.SetParameter(8,"ez"    ,1.   	 ,0.1		 ,1.0   	,30.	       );
+      minuitx.SetParameter(9,"scale" ,errorScale_,errorScale_/10.,errorScale_/2.,errorScale_*2.);
+      //
+      // first iteration without correlations
+      //
+      int ierr(0);
+      minuitx.FixParameter    (       4);
+      minuitx.FixParameter    (       6);
+      minuitx.FixParameter    (       7);
+      minuitx.FixParameter    (       9);
+      minuitx.SetMaxIterations(     100);
+      minuitx.SetPrintLevel   (       0);
+      minuitx.CreateMinimizer (        );
+      minuitx.SetStrategy     (strategy);
+      ierr = minuitx.Minimize (        );
+      if ( ierr ) 
+      {
+	  edm::LogWarning("PVFitter") << "3D beam spot fit failed in 1st iteration" << std::endl;
+	  _WARNING_("3D beam spot fit failed in 1st iteration") ;
+	  return false;
+      }
+      _RESULTS_("3D beam spot fit passed 1st iteration") ;
+      //
+      // refit with harder selection on vertices
+      //
+      fcn->setLimits(minuitx.GetParameter(0)-sigmaCut_*minuitx.GetParameter(3),
+	     	     minuitx.GetParameter(0)+sigmaCut_*minuitx.GetParameter(3),
+	     	     minuitx.GetParameter(1)-sigmaCut_*minuitx.GetParameter(5),
+	     	     minuitx.GetParameter(1)+sigmaCut_*minuitx.GetParameter(5),
+	     	     minuitx.GetParameter(2)-sigmaCut_*minuitx.GetParameter(8),
+	     	     minuitx.GetParameter(2)+sigmaCut_*minuitx.GetParameter(8));
+      ierr = minuitx.Minimize();
+      if ( ierr ) 
+      {
+	  edm::LogWarning("PVFitter") << "3D beam spot fit failed in 2nd iteration" << std::endl;
+	  _WARNING_("3D beam spot fit failed in 2nd iteration") ;
+	  return false;
+      }
+      _RESULTS_("3D beam spot fit passed 2nd iteration") ;
+      //
+      // refit with correlations
+      //
+      minuitx.ReleaseParameter(4);
+      minuitx.ReleaseParameter(6);
+      minuitx.ReleaseParameter(7);
+      ierr = minuitx.Minimize();
+      if ( ierr ) 
+      {
+	  edm::LogWarning("PVFitter") << "3D beam spot fit failed in 3rd iteration" << std::endl;
+	  _WARNING_("3D beam spot fit failed in 3rd iteration") ;
+	  return false;
+      }
+      _RESULTS_("3D beam spot fit passed 3rd iteration") ;
+      // refit with floating scale factor
+      //   minuitx.ReleaseParameter(9);
+      //   minuitx.Minimize();
 
-    //minuitx.PrintResults(0,0);
+      //minuitx.PrintResults(0,0);
 
-    fwidthX    = upar.Value(3);
-    fwidthY    = upar.Value(5);
-    fwidthZ    = upar.Value(8);
-    fwidthXerr = upar.Error(3);
-    fwidthYerr = upar.Error(5);
-    fwidthZerr = upar.Error(8);
+      fwidthX 	 = minuitx.GetParameter(3);
+      fwidthY 	 = minuitx.GetParameter(5);
+      fwidthZ 	 = minuitx.GetParameter(8);
+      fwidthXerr = minuitx.GetParError(3);
+      fwidthYerr = minuitx.GetParError(5);
+      fwidthZerr = minuitx.GetParError(8);
 
-    // check errors on widths and sigmaZ for nan
-    if ( edm::isNotFinite(fwidthXerr) || edm::isNotFinite(fwidthYerr) || edm::isNotFinite(fwidthZerr) ) 
-    {
-      edm::LogWarning("PVFitter") << "3D beam spot fit returns nan in 3rd iteration" << std::endl;
-      return false;
-    }
+      // check errors on widths and sigmaZ for nan
+      if ( std::isnan(fwidthXerr) || std::isnan(fwidthYerr) || std::isnan(fwidthZerr) ) 
+      {
+	  edm::LogWarning("PVFitter") << "3D beam spot fit returns nan in 3rd iteration" << std::endl;
+	  return false;
+      }
 
-    reco::BeamSpot::CovarianceMatrix matrix;
-    // need to get the full cov matrix
-    matrix(0,0) = pow( upar.Error(0), 2);
-    matrix(1,1) = pow( upar.Error(1), 2);
-    matrix(2,2) = pow( upar.Error(2), 2);
-    matrix(3,3) = fwidthZerr * fwidthZerr;
-    matrix(6,6) = fwidthXerr * fwidthXerr;
+      reco::BeamSpot::CovarianceMatrix matrix;
+      // need to get the full cov matrix
+      matrix(0,0) = pow( minuitx.GetParError(0), 2);
+      matrix(1,1) = pow( minuitx.GetParError(1), 2);
+      matrix(2,2) = pow( minuitx.GetParError(2), 2);
+      matrix(3,3) = fwidthZerr * fwidthZerr;
+      matrix(6,6) = fwidthXerr * fwidthXerr;
 
-    fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(upar.Value(0),
- 						      upar.Value(1),
- 						      upar.Value(2) ),
- 				fwidthZ,
- 				upar.Value(6), 
-				upar.Value(7),
- 				fwidthX,
- 				matrix );
-    fbeamspot.setBeamWidthX( fwidthX );
-    fbeamspot.setBeamWidthY( fwidthY );
-    fbeamspot.setType(reco::BeamSpot::Tracker);
+      fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(minuitx.GetParameter(0),
+							minuitx.GetParameter(1),
+							minuitx.GetParameter(2) ),
+				  fwidthZ,
+				  minuitx.GetParameter(6), minuitx.GetParameter(7),
+				  fwidthX,
+				  matrix );
+      fbeamspot.setBeamWidthX( fwidthX );
+      fbeamspot.setBeamWidthY( fwidthY );
+      fbeamspot.setType(reco::BeamSpot::Tracker);
+#else
+      vector<double> results ;
+      vector<double> errors  ;
+      _MSG_("New Minuit version") ;
+      //
+      // LL function and fitter
+      //
+      FcnBeamSpotFitPV* fcn = new FcnBeamSpotFitPV(pvStore_);
+      MnStrategy theStrategy(strategy) ;
+      //
+      // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
+      //
+      MnUserParameters upar;
+      upar.Add("x"     , 0.	    , 0.02	     , -10.	     , 10.	     ); // 0
+      upar.Add("y"     , 0.	    , 0.02	     , -10.	     , 10.	     ); // 1
+      upar.Add("z"     , 0.	    , 0.20	     , -30.	     , 30.	     ); // 2
+      upar.Add("ex"    , 0.015      , 0.01	     ,   0.0001      , 10.	     ); // 3
+      upar.Add("corrxy", 0.	    , 0.02	     ,  -1.	     ,  1.	     ); // 4
+      upar.Add("ey"    , 0.015      , 0.01	     ,   0.0001      , 10.	     ); // 5
+      upar.Add("dxdz"  , 0.	    , 0.0002	     ,  -0.1	     ,  0.1	     ); // 6
+      upar.Add("dydz"  , 0.	    , 0.0002	     ,  -0.1	     ,  0.1	     ); // 7
+      upar.Add("ez"    , 1.	    , 0.1	     ,   1.0	     , 30.	     ); // 8
+      upar.Add("scale" , errorScale_, errorScale_/10., errorScale_/2., errorScale_*2.); // 9
+      MnMigrad migrad(*fcn, upar, theStrategy);
+      //
+      // first iteration without correlations
+      //
+      migrad.Fix(4);
+      migrad.Fix(6);
+      migrad.Fix(7);
+      migrad.Fix(9);
+      
+      FunctionMinimum ierr = migrad();
+      if ( !ierr.IsValid() ) 
+      {
+        edm::LogWarning("PVFitter") << "3D beam spot fit failed in 1st iteration" << std::endl;
+        _WARNING_("3D beam spot fit failed in 1st iteration") ;
+//         H::ss_.str("") ; H::ss_ << "HasAccurateCovar	 " << ierr.HasAccurateCovar()	; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasCovariance	 " << ierr.HasCovariance()	; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasMadePosDefCovar   " << ierr.HasMadePosDefCovar() ; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasPosDefCovar	 " << ierr.HasPosDefCovar()	; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasReachedCallLimit  " << ierr.HasReachedCallLimit(); _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasValidCovariance   " << ierr.HasValidCovariance() ; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HasValidParameters   " << ierr.HasValidParameters() ; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "HesseFailed 	 " << ierr.HesseFailed()	; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "IsAboveMaxEdm	 " << ierr.IsAboveMaxEdm()	; _WARNING_(H::ss_.str()) ;
+//         H::ss_.str("") ; H::ss_ << "ierr: "		   << endl << ierr << endl      ; _WARNING_(H::ss_.str()) ;
+        return false;
+      }
+      _RESULTS_("3D beam spot fit passed 1st iteration") ;
+      //								
+      // refit with harder selection on vertices
+      //
+      fcn->setLimits(results[0]-sigmaCut_*results[3],
+        	     results[0]+sigmaCut_*results[3],
+        	     results[1]-sigmaCut_*results[5],
+        	     results[1]+sigmaCut_*results[5],
+        	     results[2]-sigmaCut_*results[8],
+        	     results[2]+sigmaCut_*results[8]);
+      cout << __LINE__ << "] new limits: "
+           << setw(22) << setprecision(15) 
+	   << results[0] << " +/- " << sigmaCut_ << " * " << results[3] << endl
+	   << results[1] << " +/- " << sigmaCut_ << " * " << results[5] << endl
+	   << results[2] << " +/- " << sigmaCut_ << " * " << results[8] << endl
+	   << endl ;
+      ierr = migrad();
+      if ( !ierr.IsValid() ) 
+      {
+        edm::LogWarning("PVFitter") << "3D beam spot fit failed in 2nd iteration" << std::endl;
+        _WARNING_("3D beam spot fit failed in 2nd iteration") ;
+        return false;
+      }
+      _RESULTS_("3D beam spot fit passed 2nd iteration") ;
+      //
+      // refit with correlations
+      //
+      migrad.Release(4);
+      migrad.Release(6);
+      migrad.Release(7);
+      ierr = migrad();
+      if ( !ierr.IsValid() ) 
+      {
+        edm::LogWarning("PVFitter") << "3D beam spot fit failed in 3rd iteration" << std::endl;
+        _WARNING_("3D beam spot fit failed in 3rd iteration") ;
+        return false;
+      }
+      _RESULTS_("3D beam spot fit passed 3rd iteration") ;
+      // refit with floating scale factor
+      //   minuitx.ReleaseParameter(9);
+      //   minuitx.Minimize();
+
+      //minuitx.PrintResults(0,0);
+
+      fwidthX	 = results[3];
+      fwidthY	 = results[5];
+      fwidthZ	 = results[8];
+      fwidthXerr = errors [3];
+      fwidthYerr = errors [5];
+      fwidthZerr = errors [8];
+
+      // check errors on widths and sigmaZ for nan
+      if ( edm::isNotFinite(fwidthXerr) || edm::isNotFinite(fwidthYerr) || edm::isNotFinite(fwidthZerr) ) 
+      {
+        edm::LogWarning("PVFitter") << "3D beam spot fit returns nan in 3rd iteration" << std::endl;
+        _WARNING_("3D beam spot fit returns nan in 3rd iteration") ;
+        return false;
+      }
+
+      reco::BeamSpot::CovarianceMatrix matrix;
+      // need to get the full cov matrix
+      matrix(0,0) = pow( errors[0], 2);
+      matrix(1,1) = pow( errors[1], 2);
+      matrix(2,2) = pow( errors[2], 2);
+      matrix(3,3) = fwidthZerr * fwidthZerr;
+      matrix(6,6) = fwidthXerr * fwidthXerr;
+
+      fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(results[0],
+        						results[1],
+        						results[2] ),
+        			  fwidthZ,
+        			  results[6], 
+        			  results[7],
+        			  fwidthX,
+        			  matrix );
+      fbeamspot.setBeamWidthX( fwidthX );
+      fbeamspot.setBeamWidthY( fwidthY );
+      fbeamspot.setType(reco::BeamSpot::Tracker);
+#endif
   }
 
+  _MSG_("3D beam spot fit succeded") ;
   return true; //FIXME: Need to add quality test for the fit results!
 }
 

@@ -106,7 +106,7 @@ process.d0_phi_analyzer.BeamFitter.SaveNtuple     = True
 process.d0_phi_analyzer.BeamFitter.SavePVVertices = True
 process.d0_phi_analyzer.BeamFitter.SaveFitResults = True
 
-#process.d0_phi_analyzer.PVFitter.Apply3DFit = True
+process.d0_phi_analyzer.PVFitter.Apply3DFit = True
 
 # fit as function of lumi sections
 process.d0_phi_analyzer.BSAnalyzerParameters.fitEveryNLumi = 2

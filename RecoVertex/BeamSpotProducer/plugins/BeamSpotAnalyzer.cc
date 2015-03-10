@@ -24,6 +24,7 @@ ________________________________________________________________**/
 #include "RecoVertex/BeamSpotProducer/interface/helpers.h"
 
 #include "TMath.h"
+
 //==============================================================================
 BeamSpotAnalyzer::BeamSpotAnalyzer(const edm::ParameterSet& iConfig)
 {
@@ -32,7 +33,8 @@ BeamSpotAnalyzer::BeamSpotAnalyzer(const edm::ParameterSet& iConfig)
 	  << "Initializing Beam Spot producer "
 	  << ACPlain 
 	  << "\n";
-  _HERE_() ;
+  _MSG_("----------- Beam Spot Analyzer --------------") ;
+//  H::set(false) ;
   
   // get parameter
   edm::ParameterSet _ps = iConfig.getParameter<edm::ParameterSet>("BSAnalyzerParameters");
@@ -85,10 +87,10 @@ void BeamSpotAnalyzer::beginLuminosityBlock(const edm::LuminosityBlock & lumiSeg
 
   if ( countLumi_ == 0 || (resetFitNLumi_ > 0 && countLumi_%resetFitNLumi_ == 0) ) 
   {
-      ftmprun0          = lumiSeg.run();
-      ftmprun           = ftmprun0;
-      beginLumiOfBSFit_ = lumiSeg.luminosityBlock();
-      refBStime[0]      = ftmptime;
+    ftmprun0	      = lumiSeg.run();
+    ftmprun	      = ftmprun0;
+    beginLumiOfBSFit_ = lumiSeg.luminosityBlock();
+    refBStime[0]      = ftmptime;
   }
 
   countLumi_++;
@@ -153,8 +155,8 @@ void BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock & lumiSeg,
   	<< ACBold 
         << "------ RESULTS OF DEFAULT FIT -------" 
         << ACPlain 
-        << "For runs: " 
 	<< _SP_
+        << "For runs: " 
       	<< ftmprun0 
       	<< " - " 
       	<< ftmprun 
@@ -165,7 +167,10 @@ void BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock & lumiSeg,
       	<< LSRange.second 
       	<< _SP_ 
       	<< "lumi counter # " 
-      	<< countLumi_ ;
+      	<< countLumi_ 
+      	<< endl 
+      	<< endl 
+	<< bs ;
     _MSG_(ss_.str()) ;
   }
   else 
