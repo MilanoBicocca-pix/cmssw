@@ -95,6 +95,22 @@ git pull mib &lt;BRANCH&gt;
 </ol>
 
 <h3>
+<a id="tricks-worth-noting" class="anchor" href="#tricks-worth-noting" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tricks worth noting</h3>
+
+<p>Check the differences between your HEAD and a given branch</p>
+
+<pre><code>cd $CMSSW_BASE
+cmsenv
+git fetch REMOTE_NAME
+find RecoVertex/BeamSpotProducer/ -wholename 'RecoVertex/BeamSpotProducer/*/*.*' -type f | git diff REMOTE_NAME/BRANCH_TO_COMPARE_AGAINST --
+</code></pre>
+
+<p>Check the differences between your HEAD and a given branch, but only display the names of the files that changed</p>
+
+<pre><code>git diff --stat BRANCH_TO_COMPARE_AGAINST
+</code></pre>
+
+<h3>
 <a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
 
 <p>Riccardo Manzoni (<a href="https://github.com/rmanzoni" class="user-mention">@rmanzoni</a>)<br>
