@@ -1,33 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>MiB Beam Spot by MilanoBicocca-pix</title>
+    <meta name="description" content="MiB Beam Spot : Milano Bicocca development and operations of CMS Beam Spot">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>MiB Beam Spot</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>MiB Beam Spot</h1>
-        <p>Milano Bicocca development and operations of CMS Beam Spot</p>
 
-        <p class="view"><a href="https://github.com/MilanoBicocca-pix/cmssw">View the Project on GitHub <small>MilanoBicocca-pix/cmssw</small></a></p>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/MilanoBicocca-pix/cmssw">View on GitHub</a>
 
+          <h1 id="project_title">MiB Beam Spot</h1>
+          <h2 id="project_tagline">Milano Bicocca development and operations of CMS Beam Spot</h2>
 
-        <ul>
-          <li><a href="https://github.com/MilanoBicocca-pix/cmssw/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/MilanoBicocca-pix/cmssw/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/MilanoBicocca-pix/cmssw">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/MilanoBicocca-pix/cmssw/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/MilanoBicocca-pix/cmssw/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h3>
 <a id="what" class="anchor" href="#what" aria-hidden="true"><span class="octicon octicon-link"></span></a>What?</h3>
 
@@ -111,6 +114,97 @@ find RecoVertex/BeamSpotProducer/ -wholename 'RecoVertex/BeamSpotProducer/*/*.*'
 </code></pre>
 
 <h3>
+<a id="more-extended-git-cheatsheet-in-light-of-our-scope" class="anchor" href="#more-extended-git-cheatsheet-in-light-of-our-scope" aria-hidden="true"><span class="octicon octicon-link"></span></a>More extended git cheatsheet (in light of our scope)</h3>
+
+<p>set architecture for 75X</p>
+
+<pre><code>setenv SCRAM_ARCH slc6_amd64_gcc491
+</code></pre>
+
+<p>create the release</p>
+
+<pre><code>cmsrel CMSSW_7_5_X
+cd CMSSW_7_5_X
+cd src
+</code></pre>
+
+<p>initialise a git repo</p>
+
+<pre><code>git init
+</code></pre>
+
+<p>tell git what remote github repos you’ll be interested in</p>
+
+<pre><code>git remote add cms-official git@github.com:cms-sw/cmssw.git             # official CMSSW repository (you can push changes here)
+git remote ass mib          git@github.com:MilanoBicocca-pix/cmssw.git  # MiB common repository (you have full access rights)
+</code></pre>
+
+<p>now you’ve got two remotes you can pull down from, cms-official and mib</p>
+
+<p>now enable the sparse-checkout feature. You don’t want to have the whole wealth of CMSSW packages in your working directory, do you?</p>
+
+<pre><code>git config core.sparsecheckout true
+echo RecoVertex/BeamSpotProducer &gt;&gt; .git/info/sparse-checkout
+</code></pre>
+
+<p>now pull down the branch you want to work on from the remote mib repository</p>
+
+<pre><code>git pull mib BRANCH
+</code></pre>
+
+<p>side note 1: “git pull mib BRANCH” is effectively equivalent to <code>git fetch mib ; git merge BRANCH</code>
+side note 2: in case you already have something in your current branch, conflicts may happen. If you want to solve the conflicts, edit the conflicting files and commit them, then push. If you simply want to stop, cleanup and back off because you suspect you’re messing it up, then do <code>git merge —abort</code></p>
+
+<p>now you can do all the changes you want</p>
+
+<p>check if there’s any file you want to stage and, later commit</p>
+
+<pre><code>git status
+</code></pre>
+
+<p>stage the files that will go into the next commit</p>
+
+<pre><code>git add FILE1 FILE2
+</code></pre>
+
+<p>suppose theres one file that you modified but you don’t want to stage nor commit</p>
+
+<pre><code>git checkout —- FILE
+</code></pre>
+
+<p>now you’re ready to commit, bear in mind that it’s a snapshot of the whole repo!</p>
+
+<pre><code>git commit -m “my message”
+</code></pre>
+
+<p>if you want to start a new branch right from where you are now (first make sure your staging area is clean, aka <code>git status</code> should return clean)</p>
+
+<pre><code>git checkout -b NEW_BRANCH # please note that NEW_BRANCH did not exist until now
+</code></pre>
+
+<p>to hop on and off a branch (as above, git status should return clean before you jump)</p>
+
+<pre><code>git checkout BRANCH1
+git checkout BRANCH2
+</code></pre>
+
+<p>suppose you’re on <code>BRANCH1</code> and you want to wipe it clean and align it to some other branch <code>BRANCH_TO_ALIGN_TO</code>. Beware, you’re gonna loose all your mods!</p>
+
+<pre><code>git reset —hard BRANCH_TO_ALIGN_TO
+</code></pre>
+
+<p>now <code>git diff BRANCH_TO_ALIGN_TO</code> should return nothing, i.e. you forced <code>BRANCH1</code> to point to the exact commit <code>BRANCH_TO_ALIGN_TO</code> points to</p>
+
+<p>if you want to display all the branches you have available locally</p>
+
+<pre><code>git branch -a
+</code></pre>
+
+<p>you’ll notice that some of them look like <code>BRANCH</code> some others like <code>remotes/REMOTE/BRANCH</code>
+the former are your local branches, whereas the latter are the branches that were available in the oven <code>REMOTE</code> 
+frozen at the time of your last <code>git fetch/pull REMOTE</code> you did. These get regularly update every <code>git fetch/pull REMOTE</code></p>
+
+<h3>
 <a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
 
 <p>Riccardo Manzoni (<a href="https://github.com/rmanzoni" class="user-mention">@rmanzoni</a>)<br>
@@ -133,12 +227,17 @@ $ git fetch origin
 $ git checkout gh-pages
 </code></pre>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/MilanoBicocca-pix">MilanoBicocca-pix</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">MiB Beam Spot maintained by <a href="https://github.com/MilanoBicocca-pix">MilanoBicocca-pix</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
+
   </body>
 </html>
