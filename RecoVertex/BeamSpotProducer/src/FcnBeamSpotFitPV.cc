@@ -78,19 +78,19 @@ double FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   //
   // covariance matrix of the beamspot distribution
   //
-  typedef ROOT::Math::SVector<double,3> Vector3D;
+  typedef ROOT::Math::SVector<double,3>                                    Vector3D;
   typedef ROOT::Math::SMatrix<double,3,3,ROOT::Math::MatRepSym<double,3> > Matrix3D;
-  Matrix3D covb;
+  Matrix3D                                                                 covb;
   double varb1 = sigb1*sigb1;
   double varb2 = sigb2*sigb2;
   double varb3 = sigb3*sigb3;
 // parametrisation: rotation (dx/dz, dy/dz); covxy
-  covb(0,0) = varb1;
+  covb(0,0) =             varb1;
   covb(1,0) = covb(0,1) = corrb12*sigb1*sigb2;
-  covb(1,1) = varb2;
+  covb(1,1) =             varb2;
   covb(2,0) = covb(0,2) = dxdz*(varb3-varb1)-dydz*covb(1,0);
   covb(2,1) = covb(1,2) = dydz*(varb3-varb2)-dxdz*covb(1,0);
-  covb(2,2) = varb3;
+  covb(2,2) =             varb3;
 
   //
   // calculation of the likelihood function
@@ -142,12 +142,12 @@ double FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
     //
     // vertex covariance matrix
     //
-    cov(0,0) = ev1*ev1;
+    cov(0,0) =            ev1*ev1;
     cov(1,0) = cov(0,1) = ev1*ev2*corr12;
-    cov(1,1) = ev2*ev2;
+    cov(1,1) =            ev2*ev2;
     cov(2,0) = cov(0,2) = ev1*ev3*corr13;
     cov(2,1) = cov(1,2) = ev2*ev3*corr23;
-    cov(2,2) = ev3*ev3;
+    cov(2,2) =            ev3*ev3;
     //
     // total covariance and weight matrix
     //

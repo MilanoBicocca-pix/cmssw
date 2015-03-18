@@ -542,7 +542,10 @@ reco::BeamSpot BSFitter::Fit_d0phi()
     // average transverse beam width
     double sigmabeam2 = 0.006 * 0.006;
     if (finputBeamWidth > 0 ) sigmabeam2 = finputBeamWidth * finputBeamWidth;
-    else { edm::LogWarning("BSFitter") << "using in fit beam width = " << sqrt(sigmabeam2) << std::endl; }
+    else 
+    { 
+//     edm::LogWarning("BSFitter") << "using in fit beam width = " << sqrt(sigmabeam2) << std::endl;
+    }
   
     //double sigma2 = sigmabeam2 +  (iparam->sigd0())* (iparam->sigd0()) / iparam->weight2;
     // this should be 2*sigmabeam2?

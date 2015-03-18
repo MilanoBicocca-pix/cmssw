@@ -159,10 +159,8 @@ void PVFitter::readEvent(const edm::Event& iEvent)
       if ( pv->isFake() || pv->tracksSize()==0 )                                       continue;
       if ( pv->ndof() < minVtxNdf_ || (pv->ndof()+3.)/pv->tracksSize()<2*minVtxWgt_ )  continue;
       //---
-
       hPVx->Fill( pv->x(), pv->z() );
       hPVy->Fill( pv->y(), pv->z() );
-
       //
       // 3D fit section
       //
@@ -689,6 +687,19 @@ bool PVFitter::runFitter()
 	   << results[1] << " +/- " << sigmaCut_ << " * " << results[5] << endl
 	   << results[2] << " +/- " << sigmaCut_ << " * " << results[8] << endl
 	   << endl ;
+      cout << __LINE__ << "] upar <-> results comparison: " << endl 
+           << setw(22) << setprecision(15)  
+	   << upar.Value(0) << " <-> " << results[0] << endl 
+	   << upar.Value(1) << " <-> " << results[1] << endl 
+	   << upar.Value(2) << " <-> " << results[2] << endl 
+	   << upar.Value(3) << " <-> " << results[3] << endl 
+	   << upar.Value(4) << " <-> " << results[4] << endl 
+	   << upar.Value(5) << " <-> " << results[5] << endl 
+	   << upar.Value(6) << " <-> " << results[6] << endl 
+	   << upar.Value(7) << " <-> " << results[7] << endl 
+	   << upar.Value(8) << " <-> " << results[8] << endl 
+	   << upar.Value(9) << " <-> " << results[9] << endl 
+	   << endl ;
       ierr = migrad();
       if ( !ierr.IsValid() ) 
       {
@@ -703,6 +714,7 @@ bool PVFitter::runFitter()
       migrad.Release(4);
       migrad.Release(6);
       migrad.Release(7);
+
       ierr = migrad();
       if ( !ierr.IsValid() ) 
       {

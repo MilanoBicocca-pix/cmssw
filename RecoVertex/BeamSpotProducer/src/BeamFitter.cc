@@ -64,7 +64,6 @@ BeamFitter::BeamFitter(const edm::ParameterSet       & iConfig,
   outputTxt_         	= _ps.getUntrackedParameter<std::string>	      ("AsciiFileName"         );
   appendRunTxt_      	= _ps.getUntrackedParameter<bool>		      ("AppendRunToFileName"   );
   writeDIPTxt_       	= _ps.getUntrackedParameter<bool>		      ("WriteDIPAscii"         );
-  // Specify whether we want to write the DIP file even if the fit is failed.
   writeDIPBadFit_    	= _ps.getUntrackedParameter<bool>		      ("WriteDIPOnBadFit", true);
   outputDIPTxt_      	= _ps.getUntrackedParameter<std::string>	      ("DIPFileName"	       );
   saveNtuple_        	= _ps.getUntrackedParameter<bool>		      ("SaveNtuple"	       );
