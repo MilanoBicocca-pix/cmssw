@@ -129,16 +129,21 @@ namespace pat {
       float particleIso() const { return userIsolation(pat::PfAllParticleIso); }
       /// Returns the isolation calculated with only the charged hadron
       /// PFCandidates
-      float chargedHadronIso() const { return userIsolation(pat::PfChargedHadronIso); }
+      float chargedHadronIso() const { return reco::Photon::chargedHadronIso(); }
       /// Returns the isolation calculated with only the neutral hadron
       /// PFCandidates
-      float neutralHadronIso() const { return userIsolation(pat::PfNeutralHadronIso); }        
+      float neutralHadronIso() const { return reco::Photon::neutralHadronIso(); }
       /// Returns the isolation calculated with only the gamma
       /// PFCandidates
-      float photonIso() const { return userIsolation(pat::PfGammaIso); }
+      float photonIso() const { return reco::Photon::photonIso(); }
       /// Returns the isolation calculated with only the pile-up charged hadron
       /// PFCandidates
       float puChargedHadronIso() const { return userIsolation(pat::PfPUChargedHadronIso); }        
+      /// get and set PFCluster Isolation                                                                                                                                     
+      float ecalPFClusterIso() const { return ecalPFClusIso_; };
+      float hcalPFClusterIso() const { return hcalPFClusIso_; };
+      void setEcalPFClusterIso(float ecalPFClus) { ecalPFClusIso_ = ecalPFClus; };
+      void setHcalPFClusterIso(float hcalPFClus) { hcalPFClusIso_ = hcalPFClus; };
 
       /// Returns a user defined isolation value
       float userIso(uint8_t index=0)  const { return userIsolation(IsolationKeys(UserBaseIso + index)); }
@@ -296,13 +301,20 @@ namespace pat {
       /// pipe operator (introduced to use pat::Photon with PFTopProjectors)
       friend std::ostream& reco::operator<<(std::ostream& out, const pat::Photon& obj);
 
-      /// References to PFCandidates (e.g. to recompute isolation)
-      void setPackedPFCandidateCollection(const edm::RefProd<pat::PackedCandidateCollection> & refprod) ; 
       /// References to PFCandidates linked to this object (e.g. for isolation vetos or masking before jet reclustering)
       edm::RefVector<pat::PackedCandidateCollection> associatedPackedPFCandidates() const ;
       /// References to PFCandidates linked to this object (e.g. for isolation vetos or masking before jet reclustering)
-      void setAssociatedPackedPFCandidates(const edm::RefVector<pat::PackedCandidateCollection> &refvector) ;
-
+      template<typename T>
+      void setAssociatedPackedPFCandidates(const edm::RefProd<pat::PackedCandidateCollection> & refprod,
+                                           T beginIndexItr,
+                                           T endIndexItr) {
+        packedPFCandidates_ = refprod;
+        associatedPackedFCandidateIndices_.clear();
+        associatedPackedFCandidateIndices_.insert(associatedPackedFCandidateIndices_.begin(),
+                                                  beginIndexItr,
+                                                  endIndexItr);
+      }
+ 
       /// get the number of non-null PFCandidates
       size_t numberOfSourceCandidatePtrs() const { return associatedPackedFCandidateIndices_.size(); }
       /// get the source candidate pointer with index i
@@ -375,6 +387,9 @@ namespace pat {
       float cryPhi_;
       float iEta_;
       float iPhi_;
+
+      float ecalPFClusIso_;
+      float hcalPFClusIso_;
 
       // ---- link to PackedPFCandidates
       edm::RefProd<pat::PackedCandidateCollection> packedPFCandidates_;

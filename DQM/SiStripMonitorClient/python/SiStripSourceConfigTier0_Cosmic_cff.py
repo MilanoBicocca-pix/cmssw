@@ -43,7 +43,8 @@ SiStripMonitorDigi.TProfGlobalNShots.globalswitchon = True
 from DQM.SiStripMonitorCluster.SiStripMonitorCluster_cfi import *
 SiStripMonitorCluster.Mod_On = False
 SiStripMonitorCluster.TProfClustersApvCycle.subdetswitchon = True
-SiStripMonitorCluster.TProfTotalNumberOfClusters.subdetswitchon = True
+SiStripMonitorCluster.TProfTotalNumberOfClusters.subdetswitchon = True 
+SiStripMonitorCluster.TrendVsLS = True
 SiStripMonitorCluster.TH2CStripVsCpixel.globalswitchon=False
 SiStripMonitorCluster.TH1MultiplicityRegions.globalswitchon=False
 SiStripMonitorCluster.TH1MainDiagonalPosition.globalswitchon=False
@@ -82,19 +83,16 @@ SiStripMonitorTrack_ckf.Mod_On             = False
 import DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi
 MonitorTrackResiduals_cosmicTk = DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi.MonitorTrackResiduals.clone()
 MonitorTrackResiduals_cosmicTk.trajectoryInput     = 'cosmictrackfinderP5'
-MonitorTrackResiduals_cosmicTk.OutputMEsInRootFile = False
 MonitorTrackResiduals_cosmicTk.Mod_On              = False
 # Clone for CKF Tracks
 import DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi
 MonitorTrackResiduals_ckf = DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi.MonitorTrackResiduals.clone()
 MonitorTrackResiduals_ckf.trajectoryInput          = 'ctfWithMaterialTracksP5'
-MonitorTrackResiduals_ckf.OutputMEsInRootFile      = False
 MonitorTrackResiduals_ckf.Mod_On                   = False
 # Clone for Road Search  Tracks
 #import DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi
 #MonitorTrackResiduals_rs = DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi.MonitorTrackResiduals.clone()
 #MonitorTrackResiduals_rs.trajectoryInput           = 'rsWithMaterialTracksP5'
-#MonitorTrackResiduals_rs.OutputMEsInRootFile       = False
 #MonitorTrackResiduals_rs.Mod_On                    = False
 
 # TrackingMonitor ####

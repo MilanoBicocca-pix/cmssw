@@ -1,14 +1,22 @@
 from PhysicsTools.Heppy.physicsobjects.Lepton import Lepton
 
 class Muon( Lepton ):
+    def __init__(self, *args, **kwargs):
+        super(Muon, self).__init__(*args, **kwargs)
+        self._trackForDxyDz = "muonBestTrack"
+
+    def setTrackForDxyDz(self,what):
+        if not hasattr(self,what):
+            raise RuntimeError, "I don't have a track called "+what
+        self._trackForDxyDz = what
 
     def looseId( self ):
         '''Loose ID as recommended by mu POG.'''
         return self.physObj.isLooseMuon()
 
     def tightId( self ):
-        '''Tight ID as recommended by mu POG.'''
-        return self.muonID("POG_ID_Tight")
+        '''Tight ID as recommended by mu POG (unless redefined in the lepton analyzer).'''
+        return getattr(self,"tightIdResult",self.muonID("POG_ID_Tight"))
 
     def muonID(self, name, vertex=None):
         if name == "" or name is None: 
@@ -27,6 +35,12 @@ class Muon( Lepton ):
                                                  self.numberOfMatchedStations()>1 and \
                                                  self.innerTrack().hitPattern().numberOfValidPixelHits()>0 and \
                                                  self.innerTrack().hitPattern().trackerLayersWithMeasurement() > 5
+            if name == "POG_ID_Medium":
+                if not self.looseId(): return False
+                goodGlb = self.physObj.isGlobalMuon() and self.physObj.globalTrack().normalizedChi2() < 3 and self.physObj.combinedQuality().chi2LocalPosition < 12 and self.physObj.combinedQuality().trkKink < 20;
+                return self.physObj.innerTrack().validFraction() >= 0.8 and self.physObj.segmentCompatibility() >= (0.303 if goodGlb else 0.451)
+            if name == "POG_Global_OR_TMArbitrated":
+                return self.physObj.isGlobalMuon() or (self.physObj.isTrackerMuon() and self.physObj.numberOfMatchedStations() > 0)
         return self.physObj.muonID(name)
             
     def mvaId(self):
@@ -47,7 +61,11 @@ class Muon( Lepton ):
         '''
         if vertex is None:
             vertex = self.associatedVertex
-        return self.innerTrack().dxy( vertex.position() )
+        return getattr(self,self._trackForDxyDz)().dxy( vertex.position() )
+
+    def edxy(self):
+        '''returns the uncertainty on dxy (from gsf track)'''
+        return getattr(self,self._trackForDxyDz)().dxyError()
  
 
     def dz(self, vertex=None):
@@ -57,29 +75,36 @@ class Muon( Lepton ):
         '''
         if vertex is None:
             vertex = self.associatedVertex
-        return self.innerTrack().dz( vertex.position() )
+        return getattr(self,self._trackForDxyDz)().dz( vertex.position() )
 
-    def chargedHadronIso(self,R=0.4):
+    def edz(self):
+        '''returns the uncertainty on dxz (from gsf track)'''
+        return getattr(self,self._trackForDxyDz)().dzError()
+
+    def chargedHadronIsoR(self,R=0.4):
         if   R == 0.3: return self.physObj.pfIsolationR03().sumChargedHadronPt 
         elif R == 0.4: return self.physObj.pfIsolationR04().sumChargedHadronPt 
         raise RuntimeError, "Muon chargedHadronIso missing for R=%s" % R
 
-    def neutralHadronIso(self,R=0.4):
+    def neutralHadronIsoR(self,R=0.4):
         if   R == 0.3: return self.physObj.pfIsolationR03().sumNeutralHadronEt 
         elif R == 0.4: return self.physObj.pfIsolationR04().sumNeutralHadronEt 
         raise RuntimeError, "Muon neutralHadronIso missing for R=%s" % R
 
-    def photonIso(self,R=0.4):
+    def photonIsoR(self,R=0.4):
         if   R == 0.3: return self.physObj.pfIsolationR03().sumPhotonEt 
         elif R == 0.4: return self.physObj.pfIsolationR04().sumPhotonEt 
         raise RuntimeError, "Muon photonIso missing for R=%s" % R
 
-    def chargedAllIso(self,R=0.4):
+    def chargedAllIsoR(self,R=0.4):
         if   R == 0.3: return self.physObj.pfIsolationR03().sumChargedParticlePt 
         elif R == 0.4: return self.physObj.pfIsolationR04().sumChargedParticlePt 
         raise RuntimeError, "Muon chargedAllIso missing for R=%s" % R
 
-    def puChargedHadronIso(self,R=0.4):
+    def chargedAllIso(self):
+        return self.chargedAllIsoR()
+
+    def puChargedHadronIsoR(self,R=0.4):
         if   R == 0.3: return self.physObj.pfIsolationR03().sumPUPt 
         elif R == 0.4: return self.physObj.pfIsolationR04().sumPUPt 
         raise RuntimeError, "Muon chargedHadronIso missing for R=%s" % R

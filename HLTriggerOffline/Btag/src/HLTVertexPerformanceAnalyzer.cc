@@ -5,7 +5,7 @@ HLTVertexPerformanceAnalyzer::HLTVertexPerformanceAnalyzer(const edm::ParameterS
 	hlTriggerResults_   		= consumes<TriggerResults>(iConfig.getParameter<InputTag> ("TriggerResults"));
 	VertexCollection_           = 	edm::vector_transform(iConfig.getParameter<std::vector<edm::InputTag> >( "Vertex" ), [this](edm::InputTag const & tag){return mayConsume< reco::VertexCollection>(tag);});
 	hltPathNames_        		= iConfig.getParameter< std::vector<std::string> > ("HLTPathNames");
-	simVertexCollection_ = consumes<std::vector<SimVertex> >(edm::InputTag("g4SimHits"));
+	simVertexCollection_ = consumes<std::vector<SimVertex> >(iConfig.getParameter<edm::InputTag> ("SimVertexCollection"));
 
 	EDConsumerBase::labelsForToken(hlTriggerResults_,label);
 	hlTriggerResults_Label = label.module;
@@ -63,29 +63,22 @@ void HLTVertexPerformanceAnalyzer::analyze(const edm::Event& iEvent, const edm::
 
 	//get triggerResults
 	Handle<TriggerResults> TriggerResulsHandler;
-	Exception excp(errors::LogicError);
 	if ( hlTriggerResults_Label == "" || hlTriggerResults_Label == "NULL" ) {
-		excp << "TriggerResults ==> Empty";
-		excp.raise();
+		edm::LogInfo("NoTriggerResults") << "TriggerResults ==> Empty";
+		return;
 	}
-	try {
-		iEvent.getByToken(hlTriggerResults_, TriggerResulsHandler);
-		if (TriggerResulsHandler.isValid())   trigRes=true;
-	}  catch (...) { }
-	if ( !trigRes ) {    excp << "TriggerResults ==> not readable";            excp.raise(); }
+	iEvent.getByToken(hlTriggerResults_, TriggerResulsHandler);
+	if (TriggerResulsHandler.isValid())   trigRes=true;
+	if ( !trigRes ) { edm::LogInfo("NoTriggerResults") << "TriggerResults ==> not readable"; return;}
 	const TriggerResults & triggerResults = *(TriggerResulsHandler.product());
 
 	//get simVertex
 	float simPV=0;
 
 	Handle<std::vector<SimVertex> > simVertexCollection;
-	
-	try {
-		iEvent.getByToken(simVertexCollection_, simVertexCollection);
-		const SimVertex simPVh = *(simVertexCollection->begin());
-		simPV=simPVh.position().z();
-	}
-	catch (...) {}
+	iEvent.getByToken(simVertexCollection_, simVertexCollection);
+	const SimVertex simPVh = *(simVertexCollection->begin());
+	simPV=simPVh.position().z();
 	
 	//fill the DQM plot
 	Handle<VertexCollection> VertexHandler;
@@ -98,10 +91,8 @@ void HLTVertexPerformanceAnalyzer::analyze(const edm::Event& iEvent, const edm::
 			//get the recoVertex
 			if (VertexCollection_Label.at(coll) != "" && VertexCollection_Label.at(coll) != "NULL" )
 			{
-				try {
-					iEvent.getByToken(VertexCollection_.at(coll), VertexHandler);
-					if (VertexHandler.isValid())   VertexOK=true;						
-				}  catch (...) { }			
+				iEvent.getByToken(VertexCollection_.at(coll), VertexHandler);
+				if (VertexHandler.isValid())   VertexOK=true;
 			}
 			
 			//calculate the variable (RecoVertex - SimVertex)

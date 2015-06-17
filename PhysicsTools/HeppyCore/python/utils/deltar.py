@@ -4,7 +4,10 @@
 import math
 import copy
 
-def deltaR2( e1, p1, e2, p2):
+def deltaR2( e1, p1, e2=None, p2=None):
+    """Take either 4 arguments (eta,phi, eta,phi) or two objects that have 'eta', 'phi' methods)"""
+    if (e2 == None and p2 == None):
+        return deltaR2(e1.eta(),e1.phi(), p1.eta(), p1.phi())
     de = e1 - e2
     dp = deltaPhi(p1, p2)
     return de*de + dp*dp
@@ -34,6 +37,57 @@ def inConeCollection(pivot, particles, deltaRMax, deltaRMin=1e-5):
         if dR2Min < dR2 < dR2Max:
             results.append(ptc)
     return results
+
+def matchObjectCollection3 ( objects, matchCollection, deltaRMax = 0.3, filter = lambda x,y : True ):
+    '''Univoque association of an element from matchCollection to an element of objects.
+    Reco and Gen objects get the "matched" attribute, true is they are re part of a matched tulpe.
+    By default, the matching is true only if delta R is smaller than 0.3. 
+    '''
+    #
+                                                                                                                                                                                                                                       
+    pairs = {}
+    if len(objects)==0:
+            return pairs
+    if len(matchCollection)==0:
+            return dict( zip(objects, [None]*len(objects)) )
+    # build all possible combinations
+
+    objectCoords = [ (o.eta(),o.phi(),o) for o in objects ]
+    matchdCoords = [ (o.eta(),o.phi(),o) for o in matchCollection ]
+    allPairs = [(deltaR2 (oeta, ophi, meta, mphi), (object, match)) for (oeta,ophi,object) in objectCoords for (meta,mphi,match) in matchdCoords if abs(oeta-meta)<=deltaRMax and filter(object,match) ]
+    #allPairs = [(deltaR2 (object.eta(), object.phi(), match.eta(), match.phi()), (object, match)) for object in objects for match in matchCollection if filter(object,match) ]
+    allPairs.sort ()
+    #
+    # to flag already matched objects
+    # FIXME this variable remains appended to the object, I do not like it
+
+    for object in objects:
+        object.matched = False
+    for match in matchCollection:
+        match.matched = False
+    #
+
+    deltaR2Max = deltaRMax * deltaRMax
+    for dR2, (object, match) in allPairs:
+        if dR2 > deltaR2Max:
+            break
+        if dR2 < deltaR2Max and object.matched == False and match.matched == False:
+            object.matched = True
+            match.matched = True
+            pairs[object] = match
+    #
+
+    for object in objects:
+       if object.matched == False:
+           pairs[object] = None
+    #
+
+    return pairs
+    # by now, the matched attribute remains in the objects, for future usage
+    # one could remove it with delattr (object, attrname)
+
+
+
 
 def cleanObjectCollection2( objects, masks, deltaRMin ):
     '''Masks objects using a deltaR cut, another algorithm (same results).'''

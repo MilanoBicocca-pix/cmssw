@@ -7,12 +7,16 @@
 #include <boost/algorithm/string.hpp>
 using namespace egHLT;
 
-TrigCodes::TrigBitSet trigTools::getFiltersPassed(const std::vector<std::pair<std::string,int> >& filters,const trigger::TriggerEvent* trigEvt,const std::string& hltTag)
+TrigCodes::TrigBitSet trigTools::getFiltersPassed(
+    const std::vector<std::pair<std::string,int> >& filters,
+    const trigger::TriggerEvent* trigEvt,
+    const std::string& hltTag,
+    const TrigCodes& trigCodes)
 {
   TrigCodes::TrigBitSet evtTrigs;
   for(size_t filterNrInVec=0;filterNrInVec<filters.size();filterNrInVec++){
     size_t filterNrInEvt = trigEvt->filterIndex(edm::InputTag(filters[filterNrInVec].first,"",hltTag).encode());
-    const TrigCodes::TrigBitSet filterCode = TrigCodes::getCode(filters[filterNrInVec].first.c_str());
+    const TrigCodes::TrigBitSet filterCode = trigCodes.getCode(filters[filterNrInVec].first.c_str());
     if(filterNrInEvt<trigEvt->sizeFilters()){ //filter found in event, however this only means that something passed the previous filter
       const trigger::Keys& trigKeys = trigEvt->filterKeys(filterNrInEvt);
       if(static_cast<int>(trigKeys.size())>=filters[filterNrInVec].second){
@@ -109,8 +113,9 @@ void trigTools::getActiveFilters(const HLTConfigProvider& hltConfig,std::vector<
   
   for(size_t pathNr=0;pathNr<hltConfig.size();pathNr++){
     const std::string& pathName = hltConfig.triggerName(pathNr);
+
     if(pathName.find("HLT_")==0){ //hlt path as they all start with HLT_XXXX
-      if((pathName.find("Photon")==4 || pathName.find("Ele")==4 || pathName.find("EG")==4 || pathName.find("Activity")==4 || pathName.find("Physics")==4)// e/g paths, pho or ele always come first
+      if((pathName.find("Photon")==4 || pathName.find("Ele")==4 || pathName.find("EG")!=pathName.npos || pathName.find("Activity")==4 || pathName.find("Physics")==4 || pathName.find("DiSC") == 4)// e/g paths, pho or ele always come first
 	 && (pathName.find("Jet")==pathName.npos && pathName.find("Muon")==pathName.npos 
 	     && pathName.find("Tau")==pathName.npos && pathName.find("HT")==pathName.npos 
 	     && pathName.find("MR")==pathName.npos && pathName.find("LEITI")==pathName.npos 
@@ -121,9 +126,11 @@ void trigTools::getActiveFilters(const HLTConfigProvider& hltConfig,std::vector<
 	//std::cout<<"Number of prescale sets: "<<hltConfig.prescaleSize()<<std::endl;
 	//std::cout<<std::endl<<"Path Name: "<<pathName<<"   Prescale: "<<hltConfig.prescaleValue(1,pathName)<<std::endl;
 
-	if(!filters.empty()){//std::cout<<"Path Name: "<<pathName<<std::endl;
+	if(!filters.empty()){
+	  //std::cout<<"Path Name: "<<pathName<<std::endl;
 	  //if(filters.back()=="hltBoolEnd" && filters.size()>=2){
 	  for(size_t filter=0;filter<filters.size();filter++){
+	    //std::cout << filters[filter] << std::endl;
 	    if(filters[filter].find("Filter")!=filters[filter].npos){//keep only modules that contain the word "Filter"
 	      //std::cout<<"  Module Name: "<<filters[filter]<<" filter#: "<<int(filter)<<"/"<<filters.size()<<" ncandcut: "<<trigTools::getMinNrObjsRequiredByFilter(filters[filter])<<std::endl;
 	      if(//keep only the last filter and the last one with ncandcut==1 (for di-object triggers)
@@ -133,11 +140,12 @@ void trigTools::getActiveFilters(const HLTConfigProvider& hltConfig,std::vector<
 		 || (filter<filters.size()-1  && trigTools::getMinNrObjsRequiredByFilter(filters[filter])==1 && trigTools::getMinNrObjsRequiredByFilter(filters[filter+1])==1 && filters[filter+1].find("PFMT")!=filters[filter+1].npos)  
 		 || filter==filters.size()-1 ){
 		activeFilters.push_back(filters[filter]); //saves all modules with saveTags=true
+		
 		//std::cout<<"  Module Name: "<<filters[filter]<<" filter#: "<<int(filter)<<"/"<<filters.size()<<" ncandcut: "<<trigTools::getMinNrObjsRequiredByFilter(filters[filter])<<std::endl;
-		if(pathName.find("Photon")!=pathName.npos || pathName.find("Activity")!=pathName.npos || pathName.find("Physics")!=pathName.npos ){
+		if(pathName.find("Photon")!=pathName.npos || pathName.find("Activity")!=pathName.npos || pathName.find("Physics")!=pathName.npos || pathName.find("DiSC") == 4){
 		  activePhoFilters.push_back(filters[filter]);//saves all "Photon" paths into photon set
 		  int posPho = pathName.find("Pho")+1;
-		  if( pathName.find("Pho",posPho)!=pathName.npos || pathName.find("SC",posPho)!=pathName.npos ){
+		  if( pathName.find("Pho",posPho)!=pathName.npos || pathName.find("SC",posPho)!=pathName.npos) {
 		    //This saves all "x_Photon_x_Photon_x" and "x_Photon_x_SC_x" path filters into 2leg photon set
 		    activePho2LegFilters.push_back(filters[filter]);
 		    //std::cout<<"Pho2LegPath: "<<pathName<<std::endl;

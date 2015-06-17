@@ -4,6 +4,9 @@
 namespace CondFormats_HcalObjects {
   struct dictionary {
 
+    HcalZDCLowGainFractions myfracs();
+    std::vector<HcalZDCLowGainFraction> myfracsVec;
+    
     HcalPedestals mypeds();
     std::vector<HcalPedestal> mypedsVec;
  
@@ -99,6 +102,10 @@ namespace CondFormats_HcalObjects {
     std::vector<HcalInterpolatedPulse> myHcalInterpolatedPulseVec;
     HBHEChannelGroups myHBHEChannelGroups;
     HcalInterpolatedPulseColl myHcalInterpolatedPulseColl;
+
+    // HBHE negative energy filter
+    std::vector<PiecewiseScalingPolynomial> myPiecewiseScalingPolynomialVec;
+    HBHENegativeEFilter myHBHENegativeEFilter;
   };
 }
 

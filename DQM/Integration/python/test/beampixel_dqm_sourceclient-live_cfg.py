@@ -9,7 +9,6 @@ process = cms.Process("BeamPixel")
 ### @@@@@@ Comment when running locally @@@@@@ ###
 process.load("DQM.Integration.test.inputsource_cfi")
 
-
 #----------------------------
 # HLT Filter
 #----------------------------
@@ -27,7 +26,7 @@ process.dqmEnv.subSystemFolder = "BeamPixel"
 #----------------------------
 # Sub-system Configuration
 #----------------------------
-process.load("Configuration.StandardSequences.Geometry_cff")
+process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
 process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 process.load("Configuration.StandardSequences.RawToDigi_Data_cff")
 process.load("DQM.Integration.test.FrontierCondition_GT_cfi")
@@ -40,6 +39,11 @@ process.dqmmodules  = cms.Sequence(process.dqmEnv + process.dqmSaver)
 process.phystrigger = cms.Sequence(process.hltTriggerTypeFilter)
 
 
+#----------------------------
+# Process Customizations
+#----------------------------
+from DQM.Integration.test.online_customizations_cfi import *
+process = customise(process)
 
 
 #----------------------------
@@ -72,7 +76,8 @@ if (process.runType.getRunType() == process.runType.pp_run or process.runType.ge
     #----------------------------
     process.pixelVertexDQM = cms.EDAnalyzer("Vx3DHLTAnalyzer",
                                             vertexCollection   = cms.untracked.InputTag("pixelVertices"),
-                                            pixelHitCollection = cms.untracked.InputTag("siPixelRecHits"),
+                                            #pixelHitCollection = cms.untracked.InputTag("siPixelRecHits"),
+                                            pixelHitCollection = cms.untracked.InputTag("siPixelRecHitsPreSplitting"),
                                             debugMode          = cms.bool(True),
                                             nLumiReset         = cms.uint32(2),
                                             dataFromFit        = cms.bool(True),
@@ -80,9 +85,9 @@ if (process.runType.getRunType() == process.runType.pp_run or process.runType.ge
                                             # If the histogram has at least "minNentries" then extract Mean and RMS,
                                             # or, if we are performing the fit, the number of vertices must be greater
                                             # than minNentries otherwise it waits for other nLumiReset
-                                            xRange             = cms.double(2.0),
+                                            xRange             = cms.double(1.0),
                                             xStep              = cms.double(0.001),
-                                            yRange             = cms.double(2.0),
+                                            yRange             = cms.double(1.0),
                                             yStep              = cms.double(0.001),
                                             zRange             = cms.double(30.0),
                                             zStep              = cms.double(0.05),
@@ -94,23 +99,31 @@ if (process.runType.getRunType() == process.runType.pp_run or process.runType.ge
        process.pixelVertexDQM.fileName = cms.string("/nfshome0/dqmpro/BeamMonitorDQM/BeamPixelResults.txt")
 
 
-    #----------------------------
-    # Pixel-Tracks Configuration
-    #----------------------------
-    process.pixelVertices.TkFilterParameters.minPt = process.pixelTracks.RegionFactoryPSet.RegionPSet.ptMin
 
+
+    process.load("RecoVertex.PrimaryVertexProducer.OfflinePixel3DPrimaryVertices_cfi")
+    #pixel  track/vertices reco
+    process.load("RecoPixelVertexing.Configuration.RecoPixelVertexing_cff")
+    process.pixelVertices.TkFilterParameters.minPt = process.pixelTracks.RegionFactoryPSet.RegionPSet.ptMin
+    process.offlinePrimaryVertices.TrackLabel = cms.InputTag("pixelTracks")
+    #process.dqmBeamMonitor.PVFitter.errorScale = 1.25 #keep checking this with new release expected close to 1.2
+    
+    from RecoTracker.TkSeedingLayers.PixelLayerTriplets_cfi import *
+    process.PixelLayerTriplets.BPix.HitProducer = cms.string('siPixelRecHitsPreSplitting')
+    process.PixelLayerTriplets.FPix.HitProducer = cms.string('siPixelRecHitsPreSplitting')
+    from RecoPixelVertexing.PixelTrackFitting.PixelTracks_cff import *
+    process.pixelTracks.OrderedHitsFactoryPSet.GeneratorPSet.SeedComparitorPSet.clusterShapeCacheSrc = cms.InputTag('siPixelClusterShapeCachePreSplitting')
 
     #----------------------------
     # Pixel-Vertices Configuration
     #----------------------------
-    process.reconstruction_step = cms.Sequence(process.siPixelDigis*
+    process.reconstruction_step  = cms.Sequence(process.siPixelDigis*
                                                process.offlineBeamSpot*
-                                               process.siPixelClusters*
-                                               process.siPixelRecHits*
-                                               process.siPixelClusterShapeCache*
-                                               process.PixelLayerTriplets*
-                                               process.pixelTracks*
-                                               process.pixelVertices)
+                                               process.siPixelClustersPreSplitting*
+                                               process.siPixelRecHitsPreSplitting*
+                                               process.siPixelClusterShapeCachePreSplitting*
+                                               process.recopixelvertexing
+                                               )
 
 
     #----------------------------
@@ -159,9 +172,9 @@ if (process.runType.getRunType() == process.runType.hi_run):
                                             # If the histogram has at least "minNentries" then extract Mean and RMS,
                                             # or, if we are performing the fit, the number of vertices must be greater
                                             # than minNentries otherwise it waits for other nLumiReset
-                                            xRange             = cms.double(2.0),
+                                            xRange             = cms.double(1.0),
                                             xStep              = cms.double(0.001),
-                                            yRange             = cms.double(2.0),
+                                            yRange             = cms.double(1.0),
                                             yStep              = cms.double(0.001),
                                             zRange             = cms.double(30.0),
                                             zStep              = cms.double(0.05),
@@ -191,3 +204,4 @@ if (process.runType.getRunType() == process.runType.hi_run):
     # Define Path
     #----------------------------
     process.p = cms.Path(process.phystrigger*process.reconstruction_step*process.pixelVertexDQM*process.dqmmodules)
+    

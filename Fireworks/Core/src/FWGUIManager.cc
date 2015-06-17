@@ -10,7 +10,7 @@
 //         Created:  Mon Feb 11 11:06:40 EST 2008
 
 
-//
+
 
 // system include files
 #include <boost/bind.hpp>
@@ -18,10 +18,13 @@
 #include <iostream>
 #include <cstdio>
 #include <sstream>
+#include <thread>
+#include <future>
 
 #include "TGButton.h"
 #include "TGLabel.h"
 #include "TSystem.h"
+#include "TGLIncludes.h"
 #include "TGLViewer.h"
 #include "TEveBrowser.h"
 #include "TEveManager.h"
@@ -37,6 +40,7 @@
 #include "Fireworks/Core/interface/FWGUIManager.h"
 #include "Fireworks/Core/interface/Context.h"
 #include "Fireworks/Core/interface/FWGUISubviewArea.h"
+#include "Fireworks/Core/interface/FWTEveViewer.h"
 
 #include "Fireworks/Core/interface/FWSelectionManager.h"
 #include "Fireworks/Core/interface/FWEventItemsManager.h"
@@ -77,8 +81,8 @@
 #include "Fireworks/Core/src/FWModelContextMenuHandler.h"
 
 #include "Fireworks/Core/interface/fwLog.h"
-
 #include "FWCore/Common/interface/EventBase.h"
+
 
 
 // constants, enums and typedefs
@@ -91,6 +95,8 @@ FWGUIManager* FWGUIManager::m_guiManager = 0;
 //
 // constructors and destructor
 //
+
+
 FWGUIManager::FWGUIManager(fireworks::Context* ctx,
                            const FWViewManagerManager* iVMMgr,
                            FWNavigatorBase* navigator):
@@ -156,15 +162,18 @@ FWGUIManager::FWGUIManager(fireworks::Context* ctx,
          action->activated.connect(boost::bind(&FWGUIManager::newViewSlot, this, FWViewType::idToName(i)));
       }
 
-      m_detailViewManager  = new FWDetailViewManager(m_context->colorManager());
+      m_detailViewManager  = new FWDetailViewManager(m_context);
       m_contextMenuHandler = new FWModelContextMenuHandler(m_context->selectionManager(), m_detailViewManager, m_context->colorManager(), this);
 
 
       getAction(cmsshow::sExportImage)->activated.connect(sigc::mem_fun(*this, &FWGUIManager::exportImageOfMainView));
       getAction(cmsshow::sExportAllImages)->activated.connect(sigc::mem_fun(*this, &FWGUIManager::exportImagesOfAllViews));
       getAction(cmsshow::sLoadConfig)->activated.connect(sigc::mem_fun(*this, &FWGUIManager::promptForLoadConfigurationFile));
+      getAction(cmsshow::sLoadPartialConfig)->activated.connect(sigc::mem_fun(*this, &FWGUIManager::promptForPartialLoadConfigurationFile));
       getAction(cmsshow::sSaveConfig)->activated.connect(writeToPresentConfigurationFile_);
+      getAction(cmsshow::sSavePartialConfig)->activated.connect(sigc::mem_fun(this, &FWGUIManager::savePartialToConfigurationFile));
       getAction(cmsshow::sSaveConfigAs)->activated.connect(sigc::mem_fun(*this,&FWGUIManager::promptForSaveConfigurationFile));
+      getAction(cmsshow::sSavePartialConfigAs)->activated.connect(sigc::mem_fun(*this,&FWGUIManager::promptForPartialSaveConfigurationFile));
       getAction(cmsshow::sShowEventDisplayInsp)->activated.connect(boost::bind( &FWGUIManager::showEDIFrame,this,-1));
       getAction(cmsshow::sShowMainViewCtl)->activated.connect(sigc::mem_fun(*m_guiManager, &FWGUIManager::showViewPopup));
       getAction(cmsshow::sShowObjInsp)->activated.connect(sigc::mem_fun(*m_guiManager, &FWGUIManager::showModelPopup));
@@ -819,6 +828,20 @@ FWGUIManager::promptForLoadConfigurationFile()
    loadFromConfigurationFile_(name);
 }
 
+
+void
+FWGUIManager::promptForPartialLoadConfigurationFile()
+{
+   std::string name;
+   if (!promptForConfigurationFile(name, kFDOpen))
+      return;
+  
+   
+   loadPartialFromConfigurationFile_(name);
+   //
+}
+
+
 /** Emits the signal which requests to save the current configuration in the 
     file picked up in the dialog.
   */
@@ -828,7 +851,24 @@ FWGUIManager::promptForSaveConfigurationFile()
    std::string name;
    if (!promptForConfigurationFile(name, kFDSave))
       return;
+
    writeToConfigurationFile_(name);
+}
+
+void
+FWGUIManager::promptForPartialSaveConfigurationFile()
+{
+   std::string name;
+   if (!promptForConfigurationFile(name, kFDSave))
+      return;
+
+   writePartialToConfigurationFile_(name);
+}
+
+void
+FWGUIManager::savePartialToConfigurationFile()
+{
+   writePartialToConfigurationFile_("current");
 }
 
 void
@@ -890,17 +930,17 @@ FWGUIManager::exportAllViews(const std::string& format, int height)
    // If several views shave the same name, they are post-fixed
    // with "_%d". They are sorted by view diagonal.
 
-   typedef std::list<TEveViewer*>           viewer_list_t;
-   typedef viewer_list_t::iterator          viewer_list_i;
+   typedef std::list<FWTEveViewer*>           viewer_list_t;
+   typedef viewer_list_t::iterator            viewer_list_i;
 
-   typedef std::map<TString, viewer_list_t> name_map_t;
-   typedef name_map_t::iterator             name_map_i;
+   typedef std::map<TString, viewer_list_t>   name_map_t;
+   typedef name_map_t::iterator               name_map_i;
 
    name_map_t vls;
 
    for (ViewMap_i i = m_viewMap.begin(); i != m_viewMap.end(); ++i)
    {
-      TEveViewer *ev = dynamic_cast<TEveViewer*>(i->first);
+      FWTEveViewer *ev = dynamic_cast<FWTEveViewer*>(i->first);
       if (ev)
       {
          TString name(ev->GetElementName());
@@ -913,6 +953,8 @@ FWGUIManager::exportAllViews(const std::string& format, int height)
       }
    }
 
+   std::vector<std::future<int>> futures;
+   
    const edm::EventBase *event = getCurrentEvent();
    for (name_map_i i = vls.begin(); i != vls.end(); ++i)
    {
@@ -930,11 +972,25 @@ FWGUIManager::exportAllViews(const std::string& format, int height)
          file.Form(format.c_str(), event->id().run(), event->id().event(),
                    event->luminosityBlock(), view_name.Data());
 
-         if (height == -1)
-            (*j)->GetGLViewer()->SavePicture(file);
-         else 
-            (*j)->GetGLViewer()->SavePictureHeight(file, height);
+         if (GLEW_EXT_framebuffer_object)
+         {
+            // Multi-threaded save
+            futures.push_back((*j)->CaptureAndSaveImage(file, height));
+         }
+         else
+         {
+            // Single-threaded save
+            if (height == -1)
+               (*j)->GetGLViewer()->SavePicture(file);
+            else 
+               (*j)->GetGLViewer()->SavePictureHeight(file, height);
+         }
       }
+   }
+
+   for (auto &f : futures)
+   {
+      f.get();
    }
 }
 

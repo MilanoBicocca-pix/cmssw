@@ -39,7 +39,8 @@ SiStripMonitorClusterBPTX = SiStripMonitorCluster.clone()
 SiStripMonitorClusterBPTX.Mod_On = False
 SiStripMonitorClusterBPTX.TH1TotalNumberOfClusters.subdetswitchon   = True
 SiStripMonitorClusterBPTX.TProfClustersApvCycle.subdetswitchon      = True
-SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True
+SiStripMonitorClusterBPTX.TProfTotalNumberOfClusters.subdetswitchon = True 
+SiStripMonitorClusterBPTX.TrendVsLS = True
 SiStripMonitorClusterBPTX.TH2CStripVsCpixel.globalswitchon       = True
 SiStripMonitorClusterBPTX.TH1MultiplicityRegions.globalswitchon  = True
 SiStripMonitorClusterBPTX.TH1MainDiagonalPosition.globalswitchon = True
@@ -93,7 +94,6 @@ SiStripMonitorTrackMB.andOrHlt = cms.bool(True) # True:=OR; False:=AND
 ### TrackerMonitorTrack defined and used only for MinimumBias ####
 from DQM.TrackerMonitorTrack.MonitorTrackResiduals_cfi import *
 MonitorTrackResiduals.trajectoryInput = 'generalTracks'
-MonitorTrackResiduals.OutputMEsInRootFile = False
 MonitorTrackResiduals.Mod_On        = False
 MonitorTrackResiduals.andOr         = cms.bool( False )
 MonitorTrackResiduals.dbLabel       = cms.string("SiStripDQMTrigger")

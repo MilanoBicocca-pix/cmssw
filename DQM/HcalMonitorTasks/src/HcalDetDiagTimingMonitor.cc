@@ -137,9 +137,10 @@ void HcalDetDiagTimingMonitor::setup(DQMStore::IBooker &ib)
 
 void HcalDetDiagTimingMonitor::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+  HcalBaseDQMonitor::analyze(iEvent, iSetup);
   if (!IsAllowedCalibType()) return;
   if (LumiInOrder(iEvent.luminosityBlock())==false) return;
-  HcalBaseDQMonitor::analyze(iEvent, iSetup);
+//  HcalBaseDQMonitor::analyze(iEvent, iSetup);
   
   int eta,phi,depth,nTS,BXinEVENT=1,TRIGGER=0;
   
@@ -148,7 +149,12 @@ void HcalDetDiagTimingMonitor::analyze(const edm::Event& iEvent, const edm::Even
   iEvent.getByToken(tok_raw_,rawdata);
   //checking FEDs for calibration information
   if(!rawdata.isValid()) return;
-  for(int i=FEDNumbering::MINHCALFEDID;i<=FEDNumbering::MAXHCALFEDID; i++) {
+  for(int i=FEDNumbering::MINHCALFEDID;
+		  i<=FEDNumbering::MAXHCALuTCAFEDID; i++) 
+  {
+	if (i>FEDNumbering::MAXHCALFEDID && i<FEDNumbering::MINHCALuTCAFEDID)
+		continue;
+
     const FEDRawData& fedData = rawdata->FEDData(i) ;
     if ( fedData.size() < 24 ) continue ;
     if(((const HcalDCCHeader*)(fedData.data()))->getCalibType()!=hc_Null) return;

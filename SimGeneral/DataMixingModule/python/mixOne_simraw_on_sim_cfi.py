@@ -7,6 +7,7 @@
 import FWCore.ParameterSet.Config as cms
 from SimCalorimetry.HcalSimProducers.hcalUnsuppressedDigis_cfi import hcalSimBlock
 from SimGeneral.MixingModule.SiStripSimParameters_cfi import SiStripSimBlock
+from SimGeneral.MixingModule.SiPixelSimParameters_cfi import SiPixelSimBlock
 from SimCalorimetry.EcalSimProducers.ecalDigiParameters_cff import *
 from SimCalorimetry.EcalSimProducers.apdSimParameters_cff import *
 from SimCalorimetry.EcalSimProducers.ecalSimParameterMap_cff import *
@@ -58,6 +59,7 @@ hcalSimBlock.HcalPreMixStage2 = cms.bool(True)
 mixData = cms.EDProducer("DataMixingModule",
           hcalSimBlock,
           SiStripSimBlock,
+          SiPixelSimBlock,
           ecal_digi_parameters,
           apd_sim_parameters,
           ecal_electronics_sim,
@@ -94,7 +96,7 @@ mixData = cms.EDProducer("DataMixingModule",
     #
     mixProdStep1 = cms.bool(False),
     mixProdStep2 = cms.bool(False),
-    IsThisFastSim = cms.string('NO'),  # kludge for fast simulation flag...
+    TrackerMergeType = cms.string('Digis'),  # kludge for fast simulation flag...
     # Merge Pileup Info?
     MergePileupInfo = cms.bool(True),                         
     # Use digis?               
@@ -107,6 +109,7 @@ mixData = cms.EDProducer("DataMixingModule",
     #
 
     PileupInfoInputTag = cms.InputTag("addPileupInfo"),
+    BunchSpacingInputTag = cms.InputTag("addPileupInfo","bunchSpacing"),
     CFPlaybackInputTag = cms.InputTag("mix"),
     #
     SistripLabelSig = cms.InputTag("simSiStripDigis","ZeroSuppressed"),

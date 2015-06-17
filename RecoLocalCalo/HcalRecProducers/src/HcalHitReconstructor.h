@@ -13,7 +13,7 @@
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalSimpleRecAlgo.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalHFStatusBitFromRecHits.h"
 #include "RecoLocalCalo/HcalRecAlgos/interface/HcalHFStatusBitFromDigis.h"
-#include "RecoLocalCalo/HcalRecAlgos/interface/HcalCaloFlagLabels.h"
+#include "DataFormats/METReco/interface/HcalCaloFlagLabels.h"
 
 #include "CondFormats/HcalObjects/interface/HcalChannelQuality.h"
 #include "CondFormats/HcalObjects/interface/HcalChannelStatus.h"
@@ -54,7 +54,6 @@ class HcalTopology;
 
     private:      
       typedef void (HcalSimpleRecAlgo::*SetCorrectionFcn)(boost::shared_ptr<AbsOOTPileupCorrection>);
-      typedef void (HBHENegativeFlagSetter::*SetCorrectionFcnForNegative)(boost::shared_ptr<AbsOOTPileupCorrection>);
 
       HcalSimpleRecAlgo reco_;
       HcalADCSaturationFlag* saturationFlagSetter_;
@@ -106,7 +105,6 @@ class HcalTopology;
       std::string mcOOTCorrectionName_;
       std::string mcOOTCorrectionCategory_;
       SetCorrectionFcn setPileupCorrection_;
-      SetCorrectionFcnForNegative setPileupCorrectionForNegative_;
 
       HcalRecoParams* paramTS;  // firstSample & sampleToAdd from DB  
       std::unique_ptr<HcalFlagHFDigiTimeParams> HFDigiTimeParams; // HF DigiTime parameters

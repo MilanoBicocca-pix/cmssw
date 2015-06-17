@@ -10,8 +10,10 @@
 #include "FWCore/Utilities/interface/CPUTimer.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "Utilities/StorageFactory/interface/StatisticsSenderService.h"
 
+#include "XrdStatistics.h"
 #include "Utilities/XrdAdaptor/src/XrdRequestManager.h"
 #include "Utilities/XrdAdaptor/src/XrdHostHandler.hh"
 
@@ -935,6 +937,9 @@ XrdAdaptor::RequestManager::OpenHandler::HandleResponseWithHosts(XrdCl::XRootDSt
   {
     return;
   }
+  //if we need to delete the File object we must do it outside
+  // of the lock to avoid a potential deadlock
+  std::unique_ptr<XrdCl::File> releaseFile;
   {
     std::lock_guard<std::recursive_mutex> sentry(m_mutex);
 
@@ -952,7 +957,7 @@ XrdAdaptor::RequestManager::OpenHandler::HandleResponseWithHosts(XrdCl::XRootDSt
     }
     else
     {
-        m_file.reset();
+        releaseFile = std::move(m_file);
         edm::Exception ex(edm::errors::FileOpenError);
         ex << "XrdCl::File::Open(name='" << manager->m_name
            << "', flags=0x" << std::hex << manager->m_flags

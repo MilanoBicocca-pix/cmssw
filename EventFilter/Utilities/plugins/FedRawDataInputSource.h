@@ -59,6 +59,7 @@ private:
   virtual void rewind_() override;
 
   void maybeOpenNewLumiSection(const uint32_t lumiSection);
+  void createBoLSFile(const uint32_t lumiSection,bool checkIfExists);
   evf::EvFDaqDirector::FileStatus nextEvent();
   evf::EvFDaqDirector::FileStatus getNextEvent();
   edm::Timestamp fillFEDRawDataCollection(FEDRawDataCollection&);
@@ -89,6 +90,7 @@ private:
   // get LS from filename instead of event header
   const bool getLSFromFilename_;
   const bool verifyAdler32_;
+  const bool verifyChecksum_;
   const bool useL1EventID_;
   const bool testModeNoBuilderUnit_;
 

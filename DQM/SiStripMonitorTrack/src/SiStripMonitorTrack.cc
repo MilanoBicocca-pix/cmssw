@@ -22,7 +22,6 @@
 #include "TMath.h"
 
 SiStripMonitorTrack::SiStripMonitorTrack(const edm::ParameterSet& conf):
-  dbe(edm::Service<DQMStore>().operator->()),
   conf_(conf),
   tracksCollection_in_EventTree(true),
   firstEvent(-1),
@@ -86,15 +85,6 @@ void SiStripMonitorTrack::bookHistograms(DQMStore::IBooker & ibooker , const edm
   book(ibooker , tTopo);
 }
 
-//------------------------------------------------------------------------
-void SiStripMonitorTrack::endJob(void)
-{
-  if(conf_.getParameter<bool>("OutputMEsInRootFile")){
-    //dbe->showDirStructure();
-    dbe->save(conf_.getParameter<std::string>("OutputFileName"));
-  }
-}
-
 // ------------ method called to produce the data  ------------
 void SiStripMonitorTrack::analyze(const edm::Event& e, const edm::EventSetup& es)
 {
@@ -107,10 +97,9 @@ void SiStripMonitorTrack::analyze(const edm::Event& e, const edm::EventSetup& es
   //initialization of global quantities
   LogDebug("SiStripMonitorTrack") << "[SiStripMonitorTrack::analyse]  " << "Run " << e.id().run() << " Event " << e.id().event() << std::endl;
   eventNb = e.id().event();
-//  vPSiStripCluster.clear();
   vPSiStripCluster.clear();
 
-  iOrbitSec = e.orbitNumber()/11223.0;
+  iLumisection = e.orbitNumber()/262144.0;
 
   // initialise # of clusters
   for (std::map<std::string, SubDetMEs>::iterator iSubDet = SubDetMEsMap.begin();
@@ -138,8 +127,8 @@ void SiStripMonitorTrack::analyze(const edm::Event& e, const edm::EventSetup& es
     }
     fillME(subdet_mes.nClustersOffTrack, subdet_mes.totNClustersOffTrack);
     if (Trend_On_) {
-      fillME(subdet_mes.nClustersTrendOnTrack,iOrbitSec,subdet_mes.totNClustersOnTrack);
-      fillME(subdet_mes.nClustersTrendOffTrack,iOrbitSec,subdet_mes.totNClustersOffTrack);
+      fillME(subdet_mes.nClustersTrendOnTrack,iLumisection,subdet_mes.totNClustersOnTrack);
+      fillME(subdet_mes.nClustersTrendOffTrack,iLumisection,subdet_mes.totNClustersOffTrack);
     }
   }
 }
@@ -215,7 +204,7 @@ void SiStripMonitorTrack::book(DQMStore::IBooker & ibooker , const TrackerTopolo
 }
 
 //--------------------------------------------------------------------------------
-void SiStripMonitorTrack::bookModMEs(DQMStore::IBooker & ibooker , const uint32_t & id)//Histograms at MODULE level
+void SiStripMonitorTrack::bookModMEs(DQMStore::IBooker & ibooker , const uint32_t id)//Histograms at MODULE level
 {
   std::string name = "det";
   SiStripHistoId hidmanager;
@@ -282,7 +271,7 @@ MonitorElement* SiStripMonitorTrack::handleBookMEs(DQMStore::IBooker & ibooker ,
 // -- Book Layer Level Histograms and Trend plots
 //
 //------------------------------------------------------------------------
-void SiStripMonitorTrack::bookLayerMEs(DQMStore::IBooker & ibooker , const uint32_t& mod_id, std::string& layer_id)
+void SiStripMonitorTrack::bookLayerMEs(DQMStore::IBooker & ibooker , const uint32_t mod_id, std::string& layer_id)
 {
   std::string name = "layer";
   std::string view = "layerView";
@@ -370,7 +359,7 @@ void SiStripMonitorTrack::bookLayerMEs(DQMStore::IBooker & ibooker , const uint3
 
 }
 
-void SiStripMonitorTrack::bookRingMEs(DQMStore::IBooker & ibooker , const uint32_t& mod_id, std::string& ring_id)
+void SiStripMonitorTrack::bookRingMEs(DQMStore::IBooker & ibooker , const uint32_t mod_id, std::string& ring_id)
 {
 
   std::string name = "ring";
@@ -511,9 +500,9 @@ void SiStripMonitorTrack::bookSubDetMEs(DQMStore::IBooker & ibooker , std::strin
   if(Trend_On_){
     // TotalNumber of Cluster
     completeName = "Trend_TotalNumberOfClusters_OnTrack"  + subdet_tag;
-    theSubDetMEs.nClustersTrendOnTrack = bookMETrend(ibooker , "TH1nClustersOn", completeName.c_str());
+    theSubDetMEs.nClustersTrendOnTrack = bookMETrend(ibooker , completeName.c_str());
     completeName = "Trend_TotalNumberOfClusters_OffTrack"  + subdet_tag;
-    theSubDetMEs.nClustersTrendOffTrack = bookMETrend(ibooker , "TH1nClustersOff", completeName.c_str());
+    theSubDetMEs.nClustersTrendOffTrack = bookMETrend(ibooker , completeName.c_str());
   }
 
   //bookeeping
@@ -578,22 +567,18 @@ MonitorElement* SiStripMonitorTrack::bookMEProfile(DQMStore::IBooker & ibooker ,
 }
 
 //--------------------------------------------------------------------------------
-MonitorElement* SiStripMonitorTrack::bookMETrend(DQMStore::IBooker & ibooker , const char* ParameterSetLabel, const char* HistoName)
+MonitorElement* SiStripMonitorTrack::bookMETrend(DQMStore::IBooker & ibooker , const char* HistoName)
 {
-  Parameters =  conf_.getParameter<edm::ParameterSet>(ParameterSetLabel);
   edm::ParameterSet ParametersTrend =  conf_.getParameter<edm::ParameterSet>("Trending");
   MonitorElement* me = ibooker.bookProfile(HistoName,HistoName,
-					ParametersTrend.getParameter<int32_t>("Nbins"),
-					0,
-					ParametersTrend.getParameter<int32_t>("Nbins"),
-					100, //that parameter should not be there !?
-					Parameters.getParameter<double>("xmin"),
-					Parameters.getParameter<double>("xmax"),
-					"" );
-  if (me->kind() == MonitorElement::DQM_KIND_TPROFILE) me->getTH1()->SetBit(TH1::kCanRebin);
+					   ParametersTrend.getParameter<int32_t>("Nbins"),
+					   ParametersTrend.getParameter<double>("xmin"),
+					   ParametersTrend.getParameter<double>("xmax"),
+					   0 , 0 , "" );
+  if (me->kind() == MonitorElement::DQM_KIND_TPROFILE) me->getTH1()->SetCanExtend(TH1::kAllAxes);
 
   if(!me) return me;
-  me->setAxisTitle("Event Time in Seconds",1);
+  me->setAxisTitle("Lumisection",1);
   return me;
 }
 
@@ -890,7 +875,8 @@ template <class T> void SiStripMonitorTrack::RecHitInfo(const T* tkrecHit, Local
       const SiStripCluster* SiStripCluster_ = &*(tkrecHit->cluster());
       SiStripClusterInfo SiStripClusterInfo_(*SiStripCluster_,es,detid);
 
-      if ( clusterInfos(&SiStripClusterInfo_,detid, tTopo, OnTrack, LV ) )
+      const Det2MEs MEs = findMEs(tTopo, detid);
+      if (clusterInfos(&SiStripClusterInfo_,detid, OnTrack, LV, MEs))
       {
         vPSiStripCluster.insert(SiStripCluster_);
       }
@@ -918,13 +904,13 @@ void SiStripMonitorTrack::AllClusters(const edm::Event& ev, const edm::EventSetu
   }
   else
   {
-
     //Loop on Dets
     for (edmNew::DetSetVector<SiStripCluster>::const_iterator DSViter=siStripClusterHandle->begin();
          DSViter!=siStripClusterHandle->end();
          DSViter++)
     {
       uint32_t detid=DSViter->id();
+      const Det2MEs MEs = findMEs(tTopo, detid);
 
       LogDebug("SiStripMonitorTrack") << "on detid "<< detid << " N Cluster= " << DSViter->size();
 
@@ -936,7 +922,7 @@ void SiStripMonitorTrack::AllClusters(const edm::Event& ev, const edm::EventSetu
         if (vPSiStripCluster.find(&*ClusIter) == vPSiStripCluster.end())
         {
           SiStripClusterInfo SiStripClusterInfo_(*ClusIter,es,detid);
-          clusterInfos(&SiStripClusterInfo_,detid,tTopo,OffTrack,LV);
+          clusterInfos(&SiStripClusterInfo_,detid,OffTrack,LV,MEs);
         }
       }
     }
@@ -944,7 +930,38 @@ void SiStripMonitorTrack::AllClusters(const edm::Event& ev, const edm::EventSetu
 }
 
 //------------------------------------------------------------------------
-bool SiStripMonitorTrack::clusterInfos(SiStripClusterInfo* cluster, const uint32_t& detid, const TrackerTopology* tTopo, enum ClusterFlags flag, const LocalVector LV)
+SiStripMonitorTrack::Det2MEs SiStripMonitorTrack::findMEs(const TrackerTopology* tTopo, const uint32_t detid) {
+  SiStripHistoId hidmanager1;
+
+  std::string layer_id = hidmanager1.getSubdetid(detid, tTopo, false);
+  std::string ring_id  = hidmanager1.getSubdetid(detid, tTopo, true);
+  std::string sdet_tag = folderOrganizer_.getSubDetFolderAndTag(detid, tTopo).second;
+
+  Det2MEs me;
+  me.iLayer = nullptr;
+  me.iRing = nullptr;
+  me.iSubdet = nullptr;
+
+  std::map<std::string, LayerMEs>::iterator iLayer  = LayerMEsMap.find(layer_id);
+  if (iLayer != LayerMEsMap.end()) {
+    me.iLayer = &(iLayer->second);
+  }
+
+  std::map<std::string, RingMEs>::iterator iRing  = RingMEsMap.find(ring_id);
+  if (iRing != RingMEsMap.end()) {
+    me.iRing = &(iRing->second);
+  }
+
+  std::map<std::string, SubDetMEs>::iterator iSubdet  = SubDetMEsMap.find(sdet_tag);
+  if (iSubdet != SubDetMEsMap.end()) {
+    me.iSubdet = &(iSubdet->second);
+  }
+
+  return me;
+}
+
+//------------------------------------------------------------------------
+bool SiStripMonitorTrack::clusterInfos(SiStripClusterInfo* cluster, const uint32_t detid, enum ClusterFlags flag, const LocalVector LV, const Det2MEs& MEs)
 {
 
   if (cluster==NULL) return false;
@@ -956,11 +973,9 @@ bool SiStripMonitorTrack::clusterInfos(SiStripClusterInfo* cluster, const uint32
        cluster->width() > widthUpperLimit_) ) return false;
   // start of the analysis
 
-  std::pair<std::string,std::string> sdet_pair = folderOrganizer_.getSubDetFolderAndTag(detid,tTopo);
-  std::map<std::string, SubDetMEs>::iterator iSubdet  = SubDetMEsMap.find(sdet_pair.second);
-  if(iSubdet != SubDetMEsMap.end()){
-    if (flag == OnTrack) iSubdet->second.totNClustersOnTrack++;
-    else if (flag == OffTrack) iSubdet->second.totNClustersOffTrack++;
+  if (MEs.iSubdet != nullptr) {
+    if (flag == OnTrack) MEs.iSubdet->totNClustersOnTrack++;
+    else if (flag == OffTrack) MEs.iSubdet->totNClustersOffTrack++;
   }
 
   float cosRZ = -2;
@@ -972,8 +987,7 @@ bool SiStripMonitorTrack::clusterInfos(SiStripClusterInfo* cluster, const uint32
   std::string name;
 
   // Filling SubDet/Layer Plots (on Track + off Track)
-  fillMEs(cluster,detid,tTopo,cosRZ,flag,LV);
-
+  fillMEs(cluster,detid,cosRZ,flag,LV,MEs);
 
   //******** TkHistoMaps
   if (TkHistoMap_On_) {
@@ -1005,7 +1019,7 @@ bool SiStripMonitorTrack::clusterInfos(SiStripClusterInfo* cluster, const uint32
 }
 #include "DataFormats/SiStripCluster/interface/SiStripClusterTools.h"
 //--------------------------------------------------------------------------------
-void SiStripMonitorTrack::fillModMEs(SiStripClusterInfo* cluster,std::string name,float cos,uint32_t detid, const LocalVector LV)
+void SiStripMonitorTrack::fillModMEs(SiStripClusterInfo* cluster,std::string name,float cos,const uint32_t detid, const LocalVector LV)
 {
   std::map<std::string, ModMEs>::iterator iModME  = ModMEsMap.find(name);
   if(iModME!=ModMEsMap.end()){
@@ -1051,15 +1065,10 @@ void SiStripMonitorTrack::fillModMEs(SiStripClusterInfo* cluster,std::string nam
   }
 }
 
-//------------------------------------------------------------------------
-void SiStripMonitorTrack::fillMEs(SiStripClusterInfo* cluster,uint32_t detid, const TrackerTopology* tTopo, float cos, enum ClusterFlags flag,  const LocalVector LV)
-{
-  std::pair<std::string,int32_t> SubDetAndLayer = folderOrganizer_.GetSubDetAndLayer(detid,tTopo,false);
-  SiStripHistoId hidmanager1;
-  std::string layer_id = hidmanager1.getSubdetid(detid,tTopo,false);
-  std::string ring_id  = hidmanager1.getSubdetid(detid, tTopo, true);
 
-  std::pair<std::string,std::string> sdet_pair = folderOrganizer_.getSubDetFolderAndTag(detid,tTopo);
+//------------------------------------------------------------------------
+void SiStripMonitorTrack::fillMEs(SiStripClusterInfo* cluster, const uint32_t detid, float cos, enum ClusterFlags flag,  const LocalVector LV, const Det2MEs& MEs)
+{
   float    StoN     = cluster->signalOverNoise();
   float    noise    = cluster->noiseRescaledByGain();
   uint16_t charge   = cluster->charge();
@@ -1076,68 +1085,55 @@ void SiStripMonitorTrack::fillMEs(SiStripClusterInfo* cluster,uint32_t detid, co
   float dQdx_fromOrigin = siStripClusterTools::chargePerCM(detid, *cluster, locDir);
   
   // layerMEs
-  std::map<std::string, LayerMEs>::iterator iLayer  = LayerMEsMap.find(layer_id);
-  if (iLayer != LayerMEsMap.end()) {
+  if (MEs.iLayer != nullptr) {
     if(flag==OnTrack){
-      if(noise > 0.0) fillME(iLayer->second.ClusterStoNCorrOnTrack, StoN*cos);
+      if(noise > 0.0) fillME(MEs.iLayer->ClusterStoNCorrOnTrack, StoN*cos);
       if(noise == 0.0) LogDebug("SiStripMonitorTrack") << "Module " << detid << " in Event " << eventNb << " noise " << cluster->noiseRescaledByGain() << std::endl;
-      fillME(iLayer->second.ClusterChargeCorrOnTrack, charge*cos);
-      fillME(iLayer->second.ClusterChargeOnTrack, charge);
-      fillME(iLayer->second.ClusterNoiseOnTrack, noise);
-      fillME(iLayer->second.ClusterWidthOnTrack, width);
-      fillME(iLayer->second.ClusterPosOnTrack, position);
-      fillME(iLayer->second.ClusterChargePerCMfromTrack, dQdx_fromTrack);
-      fillME(iLayer->second.ClusterChargePerCMfromOriginOnTrack, dQdx_fromOrigin);
+      fillME(MEs.iLayer->ClusterChargeCorrOnTrack, charge*cos);
+      fillME(MEs.iLayer->ClusterChargeOnTrack, charge);
+      fillME(MEs.iLayer->ClusterNoiseOnTrack, noise);
+      fillME(MEs.iLayer->ClusterWidthOnTrack, width);
+      fillME(MEs.iLayer->ClusterPosOnTrack, position);
+      fillME(MEs.iLayer->ClusterChargePerCMfromTrack, dQdx_fromTrack);
+      fillME(MEs.iLayer->ClusterChargePerCMfromOriginOnTrack, dQdx_fromOrigin);
     } else {
-      fillME(iLayer->second.ClusterChargeOffTrack, charge);
-      fillME(iLayer->second.ClusterNoiseOffTrack, noise);
-      fillME(iLayer->second.ClusterWidthOffTrack, width);
-      fillME(iLayer->second.ClusterPosOffTrack, position);
-      fillME(iLayer->second.ClusterChargePerCMfromOriginOffTrack, dQdx_fromOrigin);
+      fillME(MEs.iLayer->ClusterChargeOffTrack, charge);
+      fillME(MEs.iLayer->ClusterNoiseOffTrack, noise);
+      fillME(MEs.iLayer->ClusterWidthOffTrack, width);
+      fillME(MEs.iLayer->ClusterPosOffTrack, position);
+      fillME(MEs.iLayer->ClusterChargePerCMfromOriginOffTrack, dQdx_fromOrigin);
     }
   }
+
   // ringMEs
-  std::map<std::string, RingMEs>::iterator iRing  = RingMEsMap.find(ring_id);
-  if (iRing != RingMEsMap.end()) {
+  if (MEs.iRing != nullptr) {
     if(flag==OnTrack){
-      if(noise > 0.0) fillME(iRing->second.ClusterStoNCorrOnTrack, StoN*cos);
+      if(noise > 0.0) fillME(MEs.iRing->ClusterStoNCorrOnTrack, StoN*cos);
       if(noise == 0.0) LogDebug("SiStripMonitorTrack") << "Module " << detid << " in Event " << eventNb << " noise " << cluster->noiseRescaledByGain() << std::endl;
-      fillME(iRing->second.ClusterChargeCorrOnTrack, charge*cos);
-      fillME(iRing->second.ClusterChargeOnTrack, charge);
-      fillME(iRing->second.ClusterNoiseOnTrack, noise);
-      fillME(iRing->second.ClusterWidthOnTrack, width);
-      fillME(iRing->second.ClusterChargePerCMfromTrack, dQdx_fromTrack);
-      fillME(iRing->second.ClusterChargePerCMfromOriginOnTrack, dQdx_fromOrigin);
+      fillME(MEs.iRing->ClusterChargeCorrOnTrack, charge*cos);
+      fillME(MEs.iRing->ClusterChargeOnTrack, charge);
+      fillME(MEs.iRing->ClusterNoiseOnTrack, noise);
+      fillME(MEs.iRing->ClusterWidthOnTrack, width);
+      fillME(MEs.iRing->ClusterChargePerCMfromTrack, dQdx_fromTrack);
+      fillME(MEs.iRing->ClusterChargePerCMfromOriginOnTrack, dQdx_fromOrigin);
     } else {
-      fillME(iRing->second.ClusterChargeOffTrack, charge);
-      fillME(iRing->second.ClusterNoiseOffTrack, noise);
-      fillME(iRing->second.ClusterWidthOffTrack, width);
-      fillME(iRing->second.ClusterChargePerCMfromOriginOffTrack, dQdx_fromOrigin);
+      fillME(MEs.iRing->ClusterChargeOffTrack, charge);
+      fillME(MEs.iRing->ClusterNoiseOffTrack, noise);
+      fillME(MEs.iRing->ClusterWidthOffTrack, width);
+      fillME(MEs.iRing->ClusterChargePerCMfromOriginOffTrack, dQdx_fromOrigin);
     }
   }
   // subdetMEs
-  std::map<std::string, SubDetMEs>::iterator iSubdet  = SubDetMEsMap.find(sdet_pair.second);
-  if(iSubdet != SubDetMEsMap.end() ){
+  if(MEs.iSubdet != nullptr){
     if(flag==OnTrack){
-      fillME(iSubdet->second.ClusterChargeOnTrack,charge);
-      if(noise > 0.0) fillME(iSubdet->second.ClusterStoNCorrOnTrack,StoN*cos);
-      fillME(iSubdet->second.ClusterChargePerCMfromTrack,dQdx_fromTrack);
-      fillME(iSubdet->second.ClusterChargePerCMfromOriginOnTrack,dQdx_fromOrigin);
+      fillME(MEs.iSubdet->ClusterChargeOnTrack,charge);
+      if(noise > 0.0) fillME(MEs.iSubdet->ClusterStoNCorrOnTrack,StoN*cos);
+      fillME(MEs.iSubdet->ClusterChargePerCMfromTrack,dQdx_fromTrack);
+      fillME(MEs.iSubdet->ClusterChargePerCMfromOriginOnTrack,dQdx_fromOrigin);
     } else {
-      fillME(iSubdet->second.ClusterChargeOffTrack,charge);
-      if(noise > 0.0) fillME(iSubdet->second.ClusterStoNOffTrack,StoN);
-      fillME(iSubdet->second.ClusterChargePerCMfromOriginOffTrack,dQdx_fromOrigin);
+      fillME(MEs.iSubdet->ClusterChargeOffTrack,charge);
+      if(noise > 0.0) fillME(MEs.iSubdet->ClusterStoNOffTrack,StoN);
+      fillME(MEs.iSubdet->ClusterChargePerCMfromOriginOffTrack,dQdx_fromOrigin);
     }
-  }
-}
-//
-// -- Get Subdetector Tag from the Folder name
-//
-/* mia: what am I supposed to do w/ thi function ? */
-void SiStripMonitorTrack::getSubDetTag(std::string& folder_name, std::string& tag){
-
-  tag =  folder_name.substr(folder_name.find("MechanicalView")+15);
-  if (tag.find("side_") != std::string::npos) {
-    tag.replace(tag.find_last_of("/"),1,"_");
   }
 }

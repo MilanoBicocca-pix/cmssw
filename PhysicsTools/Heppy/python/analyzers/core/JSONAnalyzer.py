@@ -1,4 +1,5 @@
 import json
+import os
 from PhysicsTools.Heppy.analyzers.core.Analyzer import Analyzer
 
 from FWCore.PythonUtilities.LumiList import LumiList
@@ -31,15 +32,15 @@ class JSONAnalyzer( Analyzer ):
         if not cfg_comp.isMC:
             if self.cfg_comp.json is None:
                 raise ValueError('component {cname} is not MC, and contains no JSON file. Either remove the JSONAnalyzer for your path or set the "json" attribute of this component'.format(cname=cfg_comp.name))
-            self.lumiList = LumiList(self.cfg_comp.json)
+            self.lumiList = LumiList(os.path.expandvars(self.cfg_comp.json))
         else:
             self.lumiList = None
         
 
         self.rltInfo = RLTInfo()
 
-    def beginLoop(self):
-        super(JSONAnalyzer,self).beginLoop()
+    def beginLoop(self, setup):
+        super(JSONAnalyzer,self).beginLoop(setup)
         self.counters.addCounter('JSON')
         self.count = self.counters.counter('JSON')
         self.count.register('All Lumis')
@@ -71,7 +72,7 @@ class JSONAnalyzer( Analyzer ):
             return False
         
 
-    def write(self):
-        super(JSONAnalyzer, self).write()
+    def write(self, setup):
+        super(JSONAnalyzer, self).write(setup)
         self.rltInfo.write( self.dirName )
 

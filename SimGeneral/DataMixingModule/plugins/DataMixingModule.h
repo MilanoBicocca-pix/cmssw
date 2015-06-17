@@ -22,7 +22,6 @@
 #include "DataFormats/Common/interface/Handle.h"
 
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-#include "SimDataFormats/CrossingFrame/interface/CrossingFramePlaybackInfoExtended.h"
 
 #include "SimGeneral/DataMixingModule/plugins/DataMixingEMWorker.h"
 #include "SimGeneral/DataMixingModule/plugins/DataMixingHcalWorker.h"
@@ -35,13 +34,14 @@
 #include "SimGeneral/DataMixingModule/plugins/DataMixingSiStripMCDigiWorker.h"
 #include "SimGeneral/DataMixingModule/plugins/DataMixingSiStripRawWorker.h"
 #include "SimGeneral/DataMixingModule/plugins/DataMixingSiPixelWorker.h"
-#include "SimGeneral/DataMixingModule/plugins/DataMixingGeneralTrackWorker.h"
+#include "SimGeneral/DataMixingModule/plugins/DataMixingSiPixelMCDigiWorker.h"
 #include "SimGeneral/DataMixingModule/plugins/DataMixingPileupCopy.h"
 
 #include <map>
 #include <vector>
 #include <string>
 
+class DigiAccumulatorMixMod;
 
 namespace edm {
 
@@ -117,11 +117,8 @@ namespace edm {
       // SiPixels
       std::string PixelDigiCollectionDM_  ; // secondary name to be given to new SiPixel digis
 
-      // Tracks
-      std::string GeneralTrackCollectionDM_;
-      // FastSimulation or not?
-
-      bool DoFastSim_;
+      // merge tracker digis or tracks?
+      bool MergeTrackerDigis_;
 
       // Submodules to handle the individual detectors
 
@@ -175,11 +172,12 @@ namespace edm {
 
       // Pixels
 
+      DataMixingSiPixelMCDigiWorker *SiPixelMCDigiWorker_ ;
       DataMixingSiPixelWorker *SiPixelWorker_ ;
 
       // Tracks
 
-      DataMixingGeneralTrackWorker *GeneralTrackWorker_;
+      DigiAccumulatorMixMod * GeneralTrackWorker_;
 
       virtual void getSubdetectorNames();  
 

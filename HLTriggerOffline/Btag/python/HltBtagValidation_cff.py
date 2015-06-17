@@ -16,6 +16,7 @@ hltBtagJetsbyRef.jets = cms.InputTag("hltSelector4CentralJetsL1FastJet")
 
 #define HltVertexValidationVertices for the vertex DQM validation
 HltVertexValidationVertices= cms.EDAnalyzer("HLTVertexPerformanceAnalyzer",
+        SimVertexCollection = cms.InputTag("g4SimHits"),
 	TriggerResults = cms.InputTag('TriggerResults','',"HLT"),
 	HLTPathNames =cms.vstring(
 	'HLT_PFMET120_NoiseCleaned_BTagCSV07_', 
@@ -31,7 +32,7 @@ HltVertexValidationVertices= cms.EDAnalyzer("HLTVertexPerformanceAnalyzer",
 hltbTagValidation = cms.EDAnalyzer("HLTBTagPerformanceAnalyzer",
 	TriggerResults = cms.InputTag('TriggerResults','','HLT'),
 	HLTPathNames = cms.vstring('HLT_PFMET120_NoiseCleaned_BTagCSV07_'),
-	JetTag = cms.VInputTag(cms.InputTag("hltL3CombinedSecondaryVertexBJetTags")),
+	JetTag = cms.VInputTag(cms.InputTag("hltCombinedSecondaryVertexBJetTagsCalo")),
 	MinJetPT = cms.double(20),
 	mcFlavours = cms.PSet(
 		light = cms.vuint32(1, 2, 3, 21), # udsg

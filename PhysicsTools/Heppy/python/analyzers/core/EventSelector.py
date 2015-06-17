@@ -7,18 +7,29 @@ class EventSelector( Analyzer ):
     Example:
 
     eventSelector = cfg.Analyzer(
-    'EventSelector',
-    toSelect = [
-    1239742,
-    38001,
-    159832
-    ]
+        'EventSelector',
+        toSelect = [
+            1239742, 
+            38001,
+            159832
+        ]
     )
+
+    it can also be used with (run,lumi,event) tuples:
+
+    eventSelector = cfg.Analyzer(
+        'EventSelector',
+        toSelect = [
+            (1,40,1239742),
+            (1,38,38001),
+        ]
+    )
+
 
     The process function of this analyzer returns False if the event number
     is not in the toSelect list.
     In this list, put actual CMS event numbers obtained by doing:
-       iEvent.eventAuxiliary().id().event()
+       event.input.eventAuxiliary().id().event()
 
     not event processing number
     in this python framework.
@@ -34,11 +45,11 @@ class EventSelector( Analyzer ):
     with an other person at the event level. 
     """
 
-    def process(self, iEvent, event):
-        run = iEvent.eventAuxiliary().id().run()
-        lumi = iEvent.eventAuxiliary().id().luminosityBlock()
-        eId = iEvent.eventAuxiliary().id().event()
-        if eId in self.cfg_ana.toSelect:
+    def process(self, event):
+        run = event.input.eventAuxiliary().id().run()
+        lumi = event.input.eventAuxiliary().id().luminosityBlock()
+        eId = event.input.eventAuxiliary().id().event()
+        if eId in self.cfg_ana.toSelect or (run, lumi, eId) in self.cfg_ana.toSelect:
             # raise ValueError('found')
             print 'Selecting', run, lumi, eId
             return True 

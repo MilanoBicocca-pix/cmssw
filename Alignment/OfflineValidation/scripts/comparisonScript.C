@@ -1,104 +1,142 @@
-#include <string>
-#include <sstream>
+#include <TROOT.h>
+#include <TApplication.h>
 
-#include "TFile.h"
-#include "TList.h"
-#include "TNtuple.h"
-#include "TTree.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TStyle.h"
-#include "TCut.h"
+#include <sys/stat.h>
 
-void comparisonScript(string inFile="../test/testComparison.root",string outDir="outputDir/")
+#include "GeometryComparisonPlotter.cc" // TO DO: only include the header and provide the .o file
+
+///////////////////////////////////////////////////////////////////////////////////////
+// README:                                                                           //
+///////////////////////////////////////////////////////////////////////////////////////
+// This script is an example highly documented to present the production             //
+// of comparison plots between to geometries of the tracker.                         //
+// The main idea is to provide some input file and output destination                //
+// and to provide the couples to plot. Each combination gives rise to a single plot  //
+// and within a global output.                                                       //
+// Some options/cuts/specifications may be added.                                    //
+///////////////////////////////////////////////////////////////////////////////////////
+// Any question can be asked to Patrick Connor at the address patrick.connor@desy.de //
+///////////////////////////////////////////////////////////////////////////////////////
+
+int GeometryComparisonPlotter::canvas_index = 0;
+
+
+void comparisonScript (TString inFile,//="mp1510_vs_mp1509.Comparison_commonTracker.root",
+                       TString outDir="outputDir/")
 {
-	gStyle->SetOptStat("emr");
-	gROOT->ProcessLine(".L comparisonPlots.cc+");
-		
-	// create plots object for given input
-	// arg1 = input ROOT comparison, arg2 = output directory, arg3 = name of output ROOT file
-	comparisonPlots c1(inFile.c_str(),outDir.c_str());
-	
-	// ------------ COMMON CUTS -----------
-	// LEVEL CUT - which hierarchy to plot
-	// for convention, see: http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/Alignment/CommonAlignment/interface/StructureType.h?view=log
-	TCut levelCut = "(level == 1)"; // plotting DetUnits
-	// SUBLEVEL CUT - plot only alignables belongnig to this subdetector
-	TCut PXBCut = "(sublevel == 1)"; // PXB
-	TCut PXFCut = "(sublevel == 2)"; // PXF
-	TCut TIBCut = "(sublevel == 3)"; // TIB
-	TCut TIDCut = "(sublevel == 4)"; // TID
-	TCut TOBCut = "(sublevel == 5)"; // TOB
-	TCut TECCut = "(sublevel == 6)"; // TEC
+    // the output directory is created if it does not exist
+    mkdir(outDir, S_IRWXU);
+    // display canvases: be careful, as there are many many ... canvases
 
-	TCut Det1dCut = "(detDim==1)";
-	TCut Det2dCut = "(detDim==2)";  
+    // the name of the variables are the names of the branches
+    // REMARK: a supplementary branch for rdphi is calculated automatically
+    //         from r and dphi
 
-		
-	// for plot3x5:
-	// arg1 = cuts, arg2 = bool to save the 3x5 plot, arg3 = name of saved plot
-	// for plot3x5Profile:
-	// arg1 = cuts, arg2 = nBins for profile, arg3 = bool to save 3x5 profile plot, arg4 = name of saved plot
-	
-	// plots the normal 3x3 plus dx/dy vs. r/z/phi
-	// stores each histogram to output file (including dr/dz/r*dphi 1D plots)
-	//syntax (TCut Cut, dirrectory name, bool savePlot, std::string plotName, bool autolimits, int ColorCode (0=z/-z separation| 1= subdetector seperation ))
-	
-	c1.plot3x5( levelCut, "Tracker",true,"Tracker.pdf", true,1 );
-	c1.plot3x5( levelCut+PXBCut, "PXB", true,  "PXB.pdf", true ,0);
-	c1.plot3x5( levelCut+PXFCut, "PXF", true,  "PXF.pdf", true ,0);
-	c1.plot3x5( levelCut+TIBCut, "TIB", true,  "TIB.pdf", true ,0);
-	c1.plot3x5( levelCut+TIDCut, "TID", true,  "TID.pdf", true ,0);
-	c1.plot3x5( levelCut+TOBCut, "TOB", true,  "TOB.pdf", true ,0);
-	c1.plot3x5( levelCut+TECCut, "TEC", true,  "TEC.pdf", true ,0);
+    // now the object to produce the comparison plots is created
+    
+    // Plot Translations
+    GeometryComparisonPlotter * trans = new GeometryComparisonPlotter (inFile, outDir);
+    // x and y contain the couples to plot
+    // -> every combination possible will be performed
+    // /!\ always give units (otherwise, unexpected bug from root...)
+    vector<TString> x,y;
+    x.push_back("r");                                           	trans->SetBranchUnits("r",     "cm");  
+    x.push_back("phi");                                         	trans->SetBranchUnits("phi",   "rad");
+    x.push_back("z");                                           	trans->SetBranchUnits("z",     "cm");      //trans->SetBranchMax("z", 100); trans->SetBranchMin("z", -100);
+    y.push_back("dr");		trans->SetBranchSF("dr", 	10000);     trans->SetBranchUnits("dr",    "#mum");
+    y.push_back("dz");		trans->SetBranchSF("dz", 	10000);     trans->SetBranchUnits("dz",    "#mum");
+    y.push_back("rdphi");	trans->SetBranchSF("rdphi",10000);      trans->SetBranchUnits("rdphi", "#mum rad");
+    y.push_back("dx");		trans->SetBranchSF("dx", 	10000);     trans->SetBranchUnits("dx",    "#mum");    //trans->SetBranchMax("dx", 10); trans->SetBranchMin("dx", -10);
+    y.push_back("dy");		trans->SetBranchSF("dy", 	10000);     trans->SetBranchUnits("dy",    "#mum");    //trans->SetBranchMax("dy", 10); trans->SetBranchMin("dy", -10);
+    trans->MakePlots(x, y); // default output is pdf, but png gives a nicer result, so we use it as well
+    // remark: what takes the more time is the creation of the output files,
+    //         not the looping on the tree (because the code is perfect, of course :p)
+    trans->SetGrid(1,1);
+    trans->SetPrintOption("png");
+    trans->MakePlots(x, y);
 
-	c1.plot3x3Rot( levelCut,        "Tracker", true, "Tracker.pdf", true, 1);
-	c1.plot3x3Rot( levelCut+PXBCut, "PXB",     true, "PXB.pdf",     true ,0);
-	c1.plot3x3Rot( levelCut+PXFCut, "PXF",     true, "PXF.pdf",     true ,0);
-	c1.plot3x3Rot( levelCut+TIBCut, "TIB",     true, "TIB.pdf",     true ,0);
-	c1.plot3x3Rot( levelCut+TIDCut, "TID",     true, "TID.pdf",     true ,0);
-	c1.plot3x3Rot( levelCut+TOBCut, "TOB",     true, "TOB.pdf",     true ,0);
-	c1.plot3x3Rot( levelCut+TECCut, "TEC",     true, "TEC.pdf",     true ,0);
+    
+    // Plot Rotations
+    GeometryComparisonPlotter * rot = new GeometryComparisonPlotter (inFile, outDir);
+    // x and y contain the couples to plot
+    // -> every combination possible will be performed
+    // /!\ always give units (otherwise, unexpected bug from root...)
+    vector<TString> a,b;
+    a.push_back("alpha");       									rot->SetBranchUnits("alpha",    "rad");  
+    a.push_back("beta");        									rot->SetBranchUnits("beta",   "rad");
+    a.push_back("gamma");       									rot->SetBranchUnits("gamma",   "rad");
+    b.push_back("dalpha");	rot->SetBranchSF("dalpha", 	1000);      rot->SetBranchUnits("dalpha",    "mrad");      
+    b.push_back("dbeta");   rot->SetBranchSF("dbeta", 	1000);    	rot->SetBranchUnits("dbeta",    "mrad");     
+    b.push_back("dgamma");  rot->SetBranchSF("dgamma", 	1000);    	rot->SetBranchUnits("dgamma",    "mrad");    
+    rot->MakePlots(a, b); // default output is pdf, but png gives a nicer result, so we use it as well
+    // remark: what takes the more time is the creation of the output files,
+    //         not the looping on the tree (because the code is perfect, of course :p)
+    rot->SetGrid(1,1);
+    rot->SetPrintOption("png");
+    rot->MakePlots(a, b);
+    
+    // Plot cross talk
+    GeometryComparisonPlotter * cross = new GeometryComparisonPlotter (inFile, outDir);
+    // x and y contain the couples to plot
+    // -> every combination possible will be performed
+    // /!\ always give units (otherwise, unexpected bug from root...)
+    vector<TString> dx,dy;
+    dx.push_back("dalpha"); cross->SetBranchSF("dalpha", 1000);     cross->SetBranchUnits("dalpha", "mrad");      
+    dx.push_back("dbeta");  cross->SetBranchSF("dbeta", 1000);     	cross->SetBranchUnits("dbeta",  "mrad");     
+    dx.push_back("dgamma"); cross->SetBranchSF("dgamma", 1000);     cross->SetBranchUnits("dgamma", "mrad"); 
+    dy.push_back("dr");		cross->SetBranchSF("dr", 	10000);     cross->SetBranchUnits("dr",    "#mum");
+    dy.push_back("dz");		cross->SetBranchSF("dz", 	10000);     cross->SetBranchUnits("dz",    "#mum");
+    dy.push_back("rdphi");	cross->SetBranchSF("rdphi",10000);      cross->SetBranchUnits("rdphi", "#mum rad");
+    dy.push_back("dx");		cross->SetBranchSF("dx", 	10000);     cross->SetBranchUnits("dx",    "#mum");  
+    dy.push_back("dy");		cross->SetBranchSF("dy", 	10000);     cross->SetBranchUnits("dy",    "#mum");     
+    cross->MakePlots(dx,dy); // default output is pdf, but png gives a nicer result, so we use it as well
+    // remark: what takes the more time is the creation of the output files,
+    //         not the looping on the tree (because the code is perfect, of course :p)
+    cross->SetGrid(1,1);
+    cross->SetPrintOption("png");
+    cross->MakePlots(dx, dy);
 
-        c1.plotTwist( levelCut, "TwistTracker",true,"Tracker.pdf", true,1 );
-	c1.plotTwist( levelCut+PXBCut, "TwistPXB", true,  "PXB.pdf", true ,0);
-	c1.plotTwist( levelCut+PXFCut, "TwistPXF", true,  "PXF.pdf", true ,0);
-	c1.plotTwist( levelCut+TIBCut, "TwistTIB", true,  "TIB.pdf", true ,0);
-	c1.plotTwist( levelCut+TIDCut, "TwistTID", true,  "TID.pdf", true ,0);
-	c1.plotTwist( levelCut+TOBCut, "TwistTOB", true,  "TOB.pdf", true ,0);
-	c1.plotTwist( levelCut+TECCut, "TwistTEC", true,  "TEC.pdf", true ,0);
-
-	//again this time only for 2D modules
-
-	c1.plot3x5( levelCut+Det2dCut,        "Tracker2D",true,"Tracker2D.pdf", true ,1);
-	c1.plot3x5( levelCut+PXBCut+Det2dCut, "PXB2D", true,  "PXB2D.pdf", true );
-	c1.plot3x5( levelCut+PXFCut+Det2dCut, "PXF2D", true,  "PXF2D.pdf", true );
-	c1.plot3x5( levelCut+TIBCut+Det2dCut, "TIB2D", true,  "TIB2D.pdf", true ,0);
-	c1.plot3x5( levelCut+TIDCut+Det2dCut, "TID2D", true,  "TID2D.pdf", true ,0);
-	c1.plot3x5( levelCut+TOBCut+Det2dCut, "TOB2D", true,  "TOB2D.pdf", true,0 );
-	c1.plot3x5( levelCut+TECCut+Det2dCut, "TEC2D", true,  "TEC2D.pdf", true ,0);
-	
-
-	c1.plotTwist( levelCut+Det2dCut,        "TwistTracker2D",true,"Tracker2D.pdf", true ,1);
-	c1.plotTwist( levelCut+PXBCut+Det2dCut, "TwistPXB2D", true,  "PXB2D.pdf", true );
-	c1.plotTwist( levelCut+PXFCut+Det2dCut, "TwistPXF2D", true,  "PXF2D.pdf", true );
-	c1.plotTwist( levelCut+TIBCut+Det2dCut, "TwistTIB2D", true,  "TIB2D.pdf", true ,0);
-	c1.plotTwist( levelCut+TIDCut+Det2dCut, "TwistTID2D", true,  "TID2D.pdf", true ,0);
-	c1.plotTwist( levelCut+TOBCut+Det2dCut, "TwistTOB2D", true,  "TOB2D.pdf", true,0 );
-	c1.plotTwist( levelCut+TECCut+Det2dCut, "TwistTEC2D", true,  "TEC2D.pdf", true ,0);
-	
-	// plots the normal 3x3 plus dx/dy vs. r/z/phi 2D profile plots
-	// second argument is the nBinsX for profile plot
-	// all arguments are stored to output file
-	//syntax (TCut Cut, dirrectory name, bool savePlot, std::string plotName, bool autolimits, int ColorCode (0=z/-z separation| 1= subdetector seperation ))
-	c1.plot3x5Profile( levelCut,       "Tracker", 50, true, "Tracker.pdf", true, 1);
-	c1.plot3x5Profile( levelCut+PXBCut,"PXB",     50, true, "PXB.pdf",     true, 0);
-	c1.plot3x5Profile( levelCut+PXFCut,"PXF",     50, true, "PXF.pdf",     true, 0);
-	c1.plot3x5Profile( levelCut+TIBCut,"TIB",     50 ,true, "TIB.pdf",     true, 0);
-	c1.plot3x5Profile( levelCut+TIDCut,"TID",     50, true, "TID.pdf",     true, 0);
-	c1.plot3x5Profile( levelCut+TOBCut,"TOB",     50, true, "TOB.pdf",     true, 0);
-	c1.plot3x5Profile( levelCut+TECCut,"TEC",     50, true, "TEC.pdf",     true, 0);
-	
-	return ; 
-	
+    // now the same object can be reused with other specifications/cuts
+    //void SetPrint               (const bool);           // activates the printing of the individual and global pdf
+    //void SetLegend              (const bool);           // activates the legends
+    //void SetWrite               (const bool);           // activates the writing into a Root file
+    //void Set1dModule            (const bool);           // cut to include 1D modules
+    //void Set2dModule            (const bool);           // cut to include 2D modules
+    //void SetLevelCut            (const int);            // module level: level=1 (default)
+    //void SetBatchMode           (const bool);           // activates the display of the canvases
+    //void SetGrid                (const int,             // activates the display of the grids
+    //                             const int);
+    //void SetBranchMax           (const TString,         // sets a max value for the variable
+    //                             const float);          // by giving the name and the value
+    //void SetBranchMin           (const TString,         // sets a min value for the variable
+    //                             const float);          // by giving the name and the value
+    //void SetBranchSF            (const TString,         // sets a rescaling factor for the variable
+    //                             const float);          // by giving the name and the value
+    //void SetBranchUnits         (const TString,         // writes de units next on the axis
+    //                             const TString);
+    //void SetOutputDirectoryName (const TString);        // sets the output name of the directory
+    //void SetOutputFileName      (const TString);        // sets the name of the root file (if applicable)
+    //void SetPrintOption         (const Option_t *);     // litteraly the print option of the TPad::Print()
+    //void SetCanvasSize          (const int window_width  = DEFAULT_WINDOW_WIDTH,
+    //                             const int window_height = DEFAULT_WINDOW_HEIGHT);
 }
+
+// the following line is necessary for standalone applications
+// so in this case just run the makefile and the standalone executable with right arguments:
+// - root file containing the tree
+// - name of the output directory
+// otherwise, juste ignore this part of the code
+#ifndef __CINT__
+int main (int argc, char * argv[])
+{
+    TApplication * app = new TApplication ("comparisonScript", &argc, argv);
+    comparisonScript(app->Argv(1),
+                     app->Argv(2));
+    app->Run();
+    // ask René Brun if you wonder why it is needed, I have no damned idea :p
+#ifndef DEBUG
+    delete app;
+#endif
+    return 0;
+}
+#endif

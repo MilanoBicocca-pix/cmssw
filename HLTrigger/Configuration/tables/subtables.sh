@@ -15,7 +15,7 @@ function cleanup() {
 }
 
 function getPathList() {
-  local DATA=$(edmConfigFromDB --cff --configName $MASTER --noedsources --noes --noservices --nosequences --nomodules)
+  local DATA=$(hltConfigFromDB --cff --configName $MASTER --noedsources --noes --noservices --nosequences --nomodules)
   if echo "$DATA" | grep -q 'Exhausted Resultset\|CONFIG_NOT_FOUND'; then
     echo "Error: $MASTER is not a valid HLT menu"
     exit 1
@@ -54,6 +54,7 @@ function loadConfiguration() {
 function runCreateConfig() {
   loadConfiguration "$1"
   java \
+    -Djava.security.egd=file:///dev/urandom \
     -Xmx1024m \
     -classpath "$CMSSW_BASE/hlt-confdb/ext/ojdbc6.jar:$CMSSW_BASE/hlt-confdb/lib/cmssw-evf-confdb-gui.jar" \
     confdb.db.ConfDBCreateConfig \

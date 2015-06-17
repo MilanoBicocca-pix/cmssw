@@ -67,9 +67,6 @@ process.load("DQM.L1TMonitor.L1TFED_cfi")
 process.l1tfed.FEDDirName=cms.untracked.string("L1T/FEDIntegrity_SM")
 
 # Pixel DQM sequences
-process.load("Geometry.TrackerSimData.trackerSimGeometryXML_cfi")
-process.load("Geometry.TrackerGeometryBuilder.trackerGeometry_cfi")
-process.load("Geometry.TrackerNumberingBuilder.trackerNumberingGeometry_cfi")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 # Pixel RawToDigi conversion
 process.load("EventFilter.SiPixelRawToDigi.SiPixelRawToDigi_cfi")
@@ -81,7 +78,7 @@ process.SiPixelHLTSource.saveFile = False
 process.SiPixelHLTSource.slowDown = False
 process.SiPixelHLTSource.DirName = cms.untracked.string('Pixel/FEDIntegrity_SM/')
 
-process.load("Configuration.StandardSequences.Geometry_cff")
+process.load("Configuration.StandardSequences.GeometryRecoDB_cff")
 
 # SiStrip DQM sequences
 process.load("DQM.SiStripMonitorHardware.siStripFEDCheck_cfi")
@@ -117,7 +114,7 @@ process.dqmmodules = cms.Sequence(process.dqmEnv + process.dqmSaver)
 #-----------------------------
 process.evfDQMPath = cms.Path(#process.physicsEventsFilter+
                               process.cscDQMEvF +
- 			      process.dtunpacker +
+ 			      process.dtunpacker + process.DTDataIntegrityTask +
  			      process.ecalDigis  + process.ecalFEDMonitor + 
 			      process.l1tfed +
  			      process.siPixelDigis + process.SiPixelHLTSource +
@@ -167,3 +164,8 @@ if (process.runType.getRunType() == process.runType.hi_run):
     process.hcalDataIntegrityMonitor.RawDataLabel = cms.untracked.InputTag("rawDataRepacker")
     process.l1tfed.rawTag = cms.InputTag("rawDataRepacker")
     process.siStripFEDCheck.RawDataTag = cms.InputTag("rawDataRepacker")
+
+
+### process customizations included here
+from DQM.Integration.test.online_customizations_cfi import *
+process = customise(process)

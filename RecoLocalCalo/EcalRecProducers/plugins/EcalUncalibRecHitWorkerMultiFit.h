@@ -14,7 +14,6 @@
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitTimeWeightsAlgo.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitRecChi2Algo.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitRatioMethodAlgo.h"
-#include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitLeadingEdgeAlgo.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
@@ -25,28 +24,32 @@
 #include "CondFormats/EcalObjects/interface/EcalTBWeights.h"
 #include "CondFormats/EcalObjects/interface/EcalSampleMask.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeBiasCorrections.h"
+#include "CondFormats/EcalObjects/interface/EcalSamplesCorrelation.h"
+#include "CondFormats/EcalObjects/interface/EcalPulseShapes.h"
+#include "CondFormats/EcalObjects/interface/EcalPulseCovariances.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EigenMatrixTypes.h"
+
 
 namespace edm {
         class Event;
         class EventSetup;
         class ParameterSet;
+        class ParameterSetDescription;
 }
 
 class EcalUncalibRecHitWorkerMultiFit : public EcalUncalibRecHitWorkerBaseClass {
 
         public:
                 EcalUncalibRecHitWorkerMultiFit(const edm::ParameterSet&, edm::ConsumesCollector& c);
-				//EcalUncalibRecHitWorkerMultiFit(const edm::ParameterSet&);
+		EcalUncalibRecHitWorkerMultiFit() {};
                 virtual ~EcalUncalibRecHitWorkerMultiFit() {};
 
                 void set(const edm::EventSetup& es) override;
                 void set(const edm::Event& evt) override;
                 bool run(const edm::Event& evt, const EcalDigiCollection::const_iterator & digi, EcalUncalibratedRecHitCollection & result) override;
-
+		
+		edm::ParameterSetDescription getAlgoDescription();
         protected:
-
-                edm::ParameterSet EcalPulseShapeParameters_;
 
                 double pedVec[3];
 		double pedRMSVec[3];
@@ -54,6 +57,9 @@ class EcalUncalibRecHitWorkerMultiFit : public EcalUncalibRecHitWorkerBaseClass 
 
                 edm::ESHandle<EcalPedestals> peds;
                 edm::ESHandle<EcalGainRatios>  gains;
+                edm::ESHandle<EcalSamplesCorrelation> noisecovariances;
+                edm::ESHandle<EcalPulseShapes> pulseshapes;
+                edm::ESHandle<EcalPulseCovariances> pulsecovariances;
 
                 double timeCorrection(float ampli,
                     const std::vector<float>& amplitudeBins, const std::vector<float>& shiftBins);
@@ -90,6 +96,10 @@ class EcalUncalibRecHitWorkerMultiFit : public EcalUncalibRecHitWorkerBaseClass 
                 const EcalWeightSet::EcalWeightMatrix* weights[2];
                 EcalUncalibRecHitTimeWeightsAlgo<EBDataFrame> weightsMethod_barrel_;
                 EcalUncalibRecHitTimeWeightsAlgo<EEDataFrame> weightsMethod_endcap_;
+                bool doPrefitEB_;
+                bool doPrefitEE_;
+		double prefitMaxChiSqEB_;
+		double prefitMaxChiSqEE_;
 
                 // ratio method
                 std::vector<double> EBtimeFitParameters_; 
@@ -104,16 +114,26 @@ class EcalUncalibRecHitWorkerMultiFit : public EcalUncalibRecHitWorkerBaseClass 
 
                 double EBtimeConstantTerm_;
                 double EEtimeConstantTerm_;
+                double EBtimeNconst_;
+                double EEtimeNconst_;
+                double outOfTimeThreshG12pEB_;
+                double outOfTimeThreshG12mEB_;
+                double outOfTimeThreshG61pEB_;
+                double outOfTimeThreshG61mEB_;
+                double outOfTimeThreshG12pEE_;
+                double outOfTimeThreshG12mEE_;
+                double outOfTimeThreshG61pEE_;
+                double outOfTimeThreshG61mEE_;
+                double amplitudeThreshEB_;
+                double amplitudeThreshEE_;
+                double ebSpikeThresh_;
 
                 edm::ESHandle<EcalTimeBiasCorrections> timeCorrBias_;
 
-                // leading edge method
                 edm::ESHandle<EcalTimeCalibConstants> itime;
 		edm::ESHandle<EcalTimeOffsetConstant> offtime;
                 std::vector<double> ebPulseShape_;
                 std::vector<double> eePulseShape_;
-                EcalUncalibRecHitLeadingEdgeAlgo<EBDataFrame> leadingEdgeMethod_barrel_;
-                EcalUncalibRecHitLeadingEdgeAlgo<EEDataFrame> leadingEdgeMethod_endcap_;
 
 
                 // chi2 thresholds for flags settings
@@ -122,9 +142,6 @@ class EcalUncalibRecHitWorkerMultiFit : public EcalUncalibRecHitWorkerBaseClass 
                 double chi2ThreshEB_;
                 double chi2ThreshEE_;
 
-
- private:
-                void fillInputs(const edm::ParameterSet& params);
 
 };
 

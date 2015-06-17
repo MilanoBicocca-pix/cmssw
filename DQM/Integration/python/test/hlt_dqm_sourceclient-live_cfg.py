@@ -27,8 +27,6 @@ process.load("DQM.Integration.test.FrontierCondition_GT_cfi")
 # Condition for lxplus
 #process.load("DQM.Integration.test.FrontierCondition_GT_Offline_cfi") 
 
-process.load("DQM.HLTEvF.HLTMonitor_cff")
-process.load("DQM.HLTEvF.HLTMonitorClient_cff")
 # added for hlt scalars
 process.load("DQM.TrigXMonitor.HLTSeedL1LogicScalers_cfi")
 # added for hlt scalars
@@ -43,3 +41,7 @@ process.pp = cms.Path(process.dqmEnv+process.dqmSaver)
 process.dqmEnv.subSystemFolder = 'HLT'
 #process.hltResults.plotAll = True
 
+
+### process customizations included here
+from DQM.Integration.test.online_customizations_cfi import *
+process = customise(process)
