@@ -12,18 +12,29 @@
 
 
  ________________________________________________________________**/
+#include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
+#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 
-#include "FWCore/Framework/interface/Event.h"
-#include "DataFormats/Provenance/interface/Timestamp.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Provenance/interface/Timestamp.h"
+#include "DataFormats/TrackReco/interface/HitPattern.h"
 #include "DataFormats/TrackReco/interface/TrackBase.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/TrackCandidate/interface/TrackCandidate.h"
 #include "DataFormats/TrackCandidate/interface/TrackCandidateCollection.h"
-#include "RecoVertex/BeamSpotProducer/interface/BSTrkParameters.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+
 #include "RecoVertex/BeamSpotProducer/interface/BSFitter.h"
+#include "RecoVertex/BeamSpotProducer/interface/BSTrkParameters.h"
 #include "RecoVertex/BeamSpotProducer/interface/PVFitter.h"
 
 // ROOT
@@ -241,6 +252,26 @@ class BeamFitter {
   double fwidthY;
   double fwidthXErr;
   double fwidthYErr;
+
+
+  //beam fit combined results
+  TTree* ftreeResults_;
+  double fx_pv;
+  double fy_pv;
+  double fz_pv;
+  double fsigmaZ_pv;
+  double fdxdz_pv;
+  double fdydz_pv;
+  double fxErr_pv;
+  double fyErr_pv;
+  double fzErr_pv;
+  double fsigmaZErr_pv;
+  double fdxdzErr_pv;
+  double fdydzErr_pv;
+  double fwidthX_pv;
+  double fwidthY_pv;
+  double fwidthXErr_pv;
+  double fwidthYErr_pv;
 
   TH1F *h1ntrks;
   TH1F *h1vz_event;

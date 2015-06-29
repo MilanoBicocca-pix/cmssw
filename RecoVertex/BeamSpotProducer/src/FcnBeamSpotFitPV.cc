@@ -20,8 +20,8 @@ FcnBeamSpotFitPV::FcnBeamSpotFitPV(const vector<BeamSpotFitPVData>& data) :
 
 void 
 FcnBeamSpotFitPV::setLimits (float xmin, float xmax,
-			  float ymin, float ymax,
-			  float zmin, float zmax) 
+			                 float ymin, float ymax,
+		                     float zmin, float zmax) 
 {
   lowerLimits_[0] = xmin;
   lowerLimits_[1] = ymin;
@@ -62,16 +62,16 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   //
   // fit parameters
   //
-  double vb1 = pars[0];
-  double vb2 = pars[1];
-  double vb3 = pars[2];
-  double sigb1 = pars[3]; 
+  double vb1     = pars[0];
+  double vb2     = pars[1];
+  double vb3     = pars[2];
+  double sigb1   = pars[3]; 
   double corrb12 = pars[4];
-  double sigb2 = pars[5];
-  double dxdz = pars[6];
-  double dydz = pars[7];
-  double sigb3 = pars[8];
-  double escale = pars[9];
+  double sigb2   = pars[5];
+  double dxdz    = pars[6];
+  double dydz    = pars[7];
+  double sigb3   = pars[8];
+  double escale  = pars[9];
   //
   // covariance matrix of the beamspot distribution
   //
@@ -81,7 +81,7 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   double varb1 = sigb1*sigb1;
   double varb2 = sigb2*sigb2;
   double varb3 = sigb3*sigb3;
-// parametrisation: rotation (dx/dz, dy/dz); covxy
+  // parametrisation: rotation (dx/dz, dy/dz); covxy
   covb(0,0) = varb1;
   covb(1,0) = covb(0,1) = corrb12*sigb1*sigb2;
   covb(1,1) = varb2;
@@ -125,12 +125,12 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
     //
     // vertex errors (after scaling) and correlations
     //
-    ev1 = (*ipv).posError[0];
+    ev1    = (*ipv).posError[0];
     corr12 = (*ipv).posCorr[0];
-    ev2 = (*ipv).posError[1];
+    ev2    = (*ipv).posError[1];
     corr13 = (*ipv).posCorr[1];
     corr23 = (*ipv).posCorr[2];
-    ev3 = (*ipv).posError[2];
+    ev3    = (*ipv).posError[2];
     ev1 *= escale;
     ev2 *= escale;
     ev3 *= escale;

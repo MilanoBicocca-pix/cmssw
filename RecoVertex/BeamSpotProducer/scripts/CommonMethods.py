@@ -578,7 +578,7 @@ def readBeamSpotFile(fileName,listbeam=[],IOVbase="runbase", firstRun='1',lastRu
                 tmpBX = 0
 
     tmpfile.close()
-    print " got total number of IOVs = " + str(len(listbeam)) + " from file " + fileName
+    #print " got total number of IOVs = " + str(len(listbeam)) + " from file " + fileName
     #print " run " + str(listbeam[3].IOVfirst ) + " " + str( listbeam[3].X )
     if hasBX:
         return maplist
@@ -648,15 +648,15 @@ def createWeightedPayloads(fileName,listbeam=[],weighted=True):
             if ii < len(listbeam) -2:
                 iNNbeam = listbeam[ii+2]
         else:
-            print "close payload because end of data has been reached. Run "+ibeam.Run
+            #print "close payload because end of data has been reached. Run "+ibeam.Run
             docreate = True
         # check we run over the same run
         if ibeam.Run != inextbeam.Run:
-            print "close payload because end of run "+ibeam.Run
+            #print "close payload because end of run "+ibeam.Run
             docreate = True
         # check maximum lumi counts
         if countlumi == maxNlumis -1:
-            print "close payload because maximum lumi sections accumulated within run "+ibeam.Run
+            #print "close payload because maximum lumi sections accumulated within run "+ibeam.Run
             docreate = True
             countlumi = 0
         # weighted average position
@@ -774,7 +774,7 @@ def createWeightedPayloads(fileName,listbeam=[],weighted=True):
                 #print "Lumi1: "+str(ibeam.IOVfirst) + " Lumi2: "+str(inextbeam.IOVfirst)
                 #print " x= "+ibeam.X+" +/- "+ibeam.Xerr
                 #print "weighted average x = "+tmpbeam.X +" +//- "+tmpbeam.Xerr
-                print "close payload because of movement in X= "+str(deltaX)+", Y= "+str(deltaY) + ", Z= "+str(deltaZ)+", sigmaZ= "+str(deltasigmaZ)+", dxdz= "+str(deltadxdz)+", dydz= "+str(deltadydz)+", widthX= "+str(deltawidthX)+", widthY= "+str(deltawidthY)
+                #print "close payload because of movement in X= "+str(deltaX)+", Y= "+str(deltaY) + ", Z= "+str(deltaZ)+", sigmaZ= "+str(deltasigmaZ)+", dxdz= "+str(deltadxdz)+", dydz= "+str(deltadydz)+", widthX= "+str(deltawidthX)+", widthY= "+str(deltawidthY)
         if docreate:
             #if ii == len(listbeam)-1:
             tmpbeam.IOVlast = ibeam.IOVlast
@@ -840,7 +840,7 @@ def createWeightedPayloadsNew(fileName,listbeam=[],weighted=True):
         
         #WARNING this will only be fine for Run based IOVs
         if ii >= len(listbeam) - 1 or listbeam[ii].Run != listbeam[ii+1].Run :
-            print "close payload because end of run has been reached. Run " + listbeam[ii].Run
+            #print "close payload because end of run has been reached. Run " + listbeam[ii].Run
             docreate = True
             lastToUse = ii
         
