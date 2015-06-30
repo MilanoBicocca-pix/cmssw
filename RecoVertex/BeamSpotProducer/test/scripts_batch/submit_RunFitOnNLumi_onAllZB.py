@@ -41,9 +41,11 @@ unpackedmyjson = unpackList(myjson)
 lumilists = {}
 
 for k, v in unpackedmyjson.items():
-    lumiPairs = group(v, groupLength = thelumirange)
+    lumiPairs = group(v, thelumirange, 3)
     lumilist = ['%d:%d-%d:%d' %(k, p[0], k, p[1]) for p in lumiPairs]
     lumilists[k] = lumilist
+
+# import pdb; pdb.set_trace()
 
 
 # now loop on the runlist 
@@ -59,11 +61,13 @@ for counter, theirun in enumerate(therunlist):
         # print 'dataset names: ', k
         list_toprocess.append(k)
 
-  if counter > 0:  break 
-
+#   if counter > 0:  break 
+#   import pdb; pdb.set_trace()
   # recover list of lumi ranges for this run 
-  lumiforthisrun = lumilists[int(theirun)]
-
+  if int(theirun) in lumilists.keys():
+    lumiforthisrun = lumilists[int(theirun)]
+  else: 
+    continue
   # create a new folder for this run
   newFolder = 'rerunBS_{RUN}'.format(RUN=theirun)
   if os.path.exists('{FOLDER}'.format(FOLDER=newFolder)):
@@ -78,6 +82,7 @@ for counter, theirun in enumerate(therunlist):
   # eval the number of jobs to be submitted -> one for each lumirange
   njobs = len(lumiforthisrun)
   print 'njobs: ', njobs
+
 
   for j in range(njobs): 
 
@@ -101,7 +106,11 @@ for counter, theirun in enumerate(therunlist):
       elif 'thefilelist' in line:
         thestringlist = ''
         for iii in range(len(list_toprocess) ):
-            thestringlist += list_toprocess[iii] + ' + ' 
+            if iii == 0:
+              thestringlist += list_toprocess[iii]  
+            else:
+              thestringlist += ' + '  + list_toprocess[iii]  
+#         thestringlist = thestringlist.strip('+')    
         line = line.replace('thefilelist', str(thestringlist) + ' \n').rstrip()
         print >> f1, line
       else:
@@ -123,9 +132,10 @@ for counter, theirun in enumerate(therunlist):
         else: 
           print >> sh1, shline.rstrip()
 
-  # submit to the queue
-  if not options.test:
-    print 'submit'
-    os.system("bsub -q {QUEUE} {SH}".format(QUEUE=options.queue, SH=shName))   
+    # submit to the queue
+    if not options.test:
+      print 'submit'
+      os.system("bsub -q {QUEUE} {SH}".format(QUEUE=options.queue, SH=shName))   
+  
   # go back to master folder
   os.chdir('../')
