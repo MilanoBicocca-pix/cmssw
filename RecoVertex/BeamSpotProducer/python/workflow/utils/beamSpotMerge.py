@@ -209,7 +209,7 @@ def drift(x, xe, y, ye, z, ze, minDeviation = 0.,
 
     return drifted    
     
-def averageBeamSpot(bslist):
+def averageBeamSpot(bslist, doNotCheck = []):
     '''
     Returns a Beam Spot object containing the weighed average position
     of the Beam Spots in the list.
@@ -260,8 +260,10 @@ def averageBeamSpot(bslist):
     averageBS.IOVBeginTime = firstBS.IOVBeginTime
     averageBS.IOVEndTime   = lastBS .IOVEndTime  
 
-    # check that these attributes are the same for all BS in the list.    
+    # check that these attributes are the same for all BS in the list.  
     for attr in ('Type', 'Run', 'EmittanceX', 'EmittanceY', 'betastar'):
+        if attr in doNotCheck:
+            continue
         for i, bs in enumerate(bslist):
             if getattr(bs, attr) != getattr(firstBS, attr):
                 print 'ERROR: "%s" for the %d element of the '    \
