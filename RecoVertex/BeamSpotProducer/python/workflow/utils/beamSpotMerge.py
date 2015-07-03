@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import ROOT
 from math import sqrt, pow
 from numpy import average
 from collections import OrderedDict # only with python >= 2.7
@@ -35,7 +36,7 @@ def delta(x, xe, y, ye):
 
     return delta, deltaErr, significance
 
-def splitByDrift(fullList, maxLumi = 60):
+def splitByDrift(fullList, maxLumi = 60, splitInfo = False, run = -1):
     '''
     Group lumi sections where the Beam Spot position does not 
     drift beyond the parameters specified by the user.
@@ -49,6 +50,13 @@ def splitByDrift(fullList, maxLumi = 60):
     The lumi section where the fit hasn't converged properly
     are excluded (Type > 0 is required).
     '''
+    # instantiate a TH1 to check what drifts how often
+    if splitInfo:
+        histo = ROOT.TH1F('histoRun%d' %run,
+                          'Run %d where the drift occurs' %run, 
+                          8, 0, 8)
+        file = ROOT.TFile.Open('splitInfo.root', 'update')
+    
     # Clean up badly converged fits and sort the dictionary
     fullList = cleanAndSort(fullList)
     
@@ -118,6 +126,10 @@ def splitByDrift(fullList, maxLumi = 60):
                 breaks.append(lumi_before)  # append ending lumi
                 breaks.append(lumi)         # append starting lumi
                 i = 0                       # reset lumi counter
+                if drifted and splitInfo:
+                    histo.Fill(variable[0], 1.)
+                elif splitInfo:
+                    histo.Fill('max lumi', 1.)    
                 break
 
     # Last LS is the first breaking point by definition
@@ -133,6 +145,12 @@ def splitByDrift(fullList, maxLumi = 60):
     for b in range(0, len(breaks), 2):
         pairs.append( (breaks[b], breaks[b+1]) )
     
+    if splitInfo:
+        histo.Draw()
+        file.cd()
+        histo.Write()
+        file.Close()
+        
     return pairs
 
 def drift(x, xe, y, ye, z, ze, minDeviation = 0., 

@@ -111,6 +111,59 @@ class Payload(object):
 
         return runsAndLumis
 
+    def fillNtuple(self, filename = 'beamspot_tree.root'):
+        '''
+        Fill a simple ntuple with one entry for each BS.
+        '''
+        f = ROOT.TFile(filename, 'recreate')
+
+        ntuple = ROOT.TNtuple('ntuple','ntuple',
+                      'Type:X:Xerr:Y:Yerr:Z:Zerr:sigmaZ:sigmaZerr:dxdz:dxdzerr'\
+                      ':dydz:dydzerr:beamWidthX:beamWidthXerr:beamWidthY'      \
+                      ':beamWidthYerr:EmittanceX:EmittanceY:betastar:IOVfirst' \
+                      ':IOVlast:IOVBeginTime:IOVEndTime:Run:XYerr:YXerr'       \
+                      ':dxdzdydzerr:dydzdxdzerr')
+        
+        allbs = self.fromTextToBS()
+        
+        for run, lsbs in allbs.items():
+            for bs in lsbs.values():
+                unpackedBs = array('f',[bs.Type         ,
+                                        bs.X            ,
+                                        bs.Xerr         ,
+                                        bs.Y            ,
+                                        bs.Yerr         ,
+                                        bs.Z            ,
+                                        bs.Zerr         ,
+                                        bs.sigmaZ       ,
+                                        bs.sigmaZerr    ,
+                                        bs.dxdz         ,
+                                        bs.dxdzerr      ,
+                                        bs.dydz         ,
+                                        bs.dydzerr      ,
+                                        bs.beamWidthX   ,
+                                        bs.beamWidthXerr,
+                                        bs.beamWidthY   ,
+                                        bs.beamWidthYerr,
+                                        bs.EmittanceX   ,
+                                        bs.EmittanceY   ,
+                                        bs.betastar     ,
+                                        bs.IOVfirst     ,
+                                        bs.IOVlast      ,
+                                        bs.IOVBeginTime ,
+                                        bs.IOVEndTime   ,
+                                        bs.Run          ,
+                                        bs.XYerr        ,
+                                        bs.YXerr        ,
+                                        bs.dxdzdydzerr  ,
+                                        bs.dydzdxdzerr  ])      
+                ntuple.Fill(unpackedBs)
+        
+        f.cd()
+        ntuple.Write()
+        f.Close()        
+
+
     def plot(self, variable, iRun, fRun, iLS = -1, fLS = 1e6, 
              savePdf = False, returnHisto = False, dilated = 0):
         '''
