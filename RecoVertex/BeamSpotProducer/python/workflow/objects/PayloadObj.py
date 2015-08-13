@@ -4,6 +4,7 @@ import ROOT
 from array import array
 from RecoVertex.BeamSpotProducer.workflow.objects.BeamSpotObj import BeamSpot
 from RecoVertex.BeamSpotProducer.workflow.objects.IOVObj import IOV
+from RecoVertex.BeamSpotProducer.workflow.utils.fillRunDict import labelByFill
 
 class Payload(object):
     '''
@@ -165,7 +166,7 @@ class Payload(object):
 
 
     def plot(self, variable, iRun, fRun, iLS = -1, fLS = 1e6, 
-             savePdf = False, returnHisto = False, dilated = 0):
+             savePdf = False, returnHisto = False, dilated = 0, byFill = False):
         '''
         Plot a BS parameter as a function of LS.
         Allows multiple LS bins.
@@ -283,6 +284,9 @@ class Payload(object):
         ROOT.gStyle.SetGridWidth(gridLineWidth)
         ROOT.gStyle.SetOptStat(False)
         ROOT.gPad.SetBottomMargin(0.27)
+        if byFill:
+            labelByFill(histo)
+            histo.GetXaxis().SetTitle('Fill')
         histo.Draw()
         if savePdf: 
             c1.SaveAs('BS_plot_%d_%d_%s.pdf' %(iRun, fRun, variable))
