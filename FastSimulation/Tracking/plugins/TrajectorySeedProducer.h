@@ -14,8 +14,6 @@
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 #include "FastSimulation/Tracking/interface/TrajectorySeedHitCandidate.h"
 
-#include "DataFormats/TrackerRecHit2D/interface/SiTrackerGSRecHit2DCollection.h"
-#include "DataFormats/TrackerRecHit2D/interface/SiTrackerGSMatchedRecHit2DCollection.h"
 #include "DataFormats/TrajectorySeed/interface/TrajectorySeedCollection.h"
 
 #include "FastSimulation/Tracking/interface/SeedingTree.h"
@@ -58,7 +56,9 @@ class TrajectorySeedProducer:
         double ptMin;
         double originHalfLength;
         double nSigmaZ;
-        
+
+	bool hitMasks_exists;
+	bool hitCombinationMasks_exists;
         bool testBeamspotCompatibility;
         const reco::BeamSpot* beamSpot;
         bool testPrimaryVertexCompatibility;
@@ -67,10 +67,11 @@ class TrajectorySeedProducer:
         edm::EDGetTokenT<reco::BeamSpot> beamSpotToken;
         edm::EDGetTokenT<edm::SimTrackContainer> simTrackToken;
         edm::EDGetTokenT<edm::SimVertexContainer> simVertexToken;
-        edm::EDGetTokenT<SiTrackerGSMatchedRecHit2DCollection> recHitToken;
+        edm::EDGetTokenT<FastTMRecHitCombinations> recHitTokens;
+        edm::EDGetTokenT<FastTMRecHitCombination> recHitToken;
         edm::EDGetTokenT<reco::VertexCollection> recoVertexToken;
-        std::vector<edm::EDGetTokenT<std::vector<unsigned int> > > skipSimTrackIdTokens;
-
+	edm::EDGetTokenT<std::vector<bool> > hitMasksToken;        
+        edm::EDGetTokenT<std::vector<bool> > hitCombinationMasksToken;
     public:
 
     TrajectorySeedProducer(const edm::ParameterSet& conf);

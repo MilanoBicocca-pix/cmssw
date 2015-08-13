@@ -31,21 +31,27 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 
   void bookSimHistos(DQMStore::IBooker& ibook) override;
   void bookSimTrackHistos(DQMStore::IBooker& ibook) override;
+  void bookSimTrackPVAssociationHistos(DQMStore::IBooker& ibook) override;
   void bookRecoHistos(DQMStore::IBooker& ibook) override;
+  void bookRecoPVAssociationHistos(DQMStore::IBooker& ibook) override;
   void bookRecodEdxHistos(DQMStore::IBooker& ibook) override;
 
 
-  void fill_generic_simTrack_histos(int counter,const TrackingParticle::Vector&,const TrackingParticle::Point& vertex, int bx);
+  void fill_generic_simTrack_histos(const TrackingParticle::Vector&,const TrackingParticle::Point& vertex, int bx);
+  void fill_simTrackBased_histos(int numSimTracks);
 
 
   void fill_recoAssociated_simTrack_histos(int count,
 					   const TrackingParticle& tp,
 					   const TrackingParticle::Vector& momentumTP, const TrackingParticle::Point& vertexTP,
-					   double dxy, double dz, int nSimHits,
+					   double dxy, double dz,
+                                           double dxyPV, double dzPV,
+                                           int nSimHits,
                                            int nSimLayers, int nSimPixelLayers, int nSimStripMonoAndStereoLayers,
 					   const reco::Track* track,
 					   int numVertices,
-					   double dR);
+					   double dR,
+					   const math::XYZPoint *pvPosition);
 
   void fill_recoAssociated_simTrack_histos(int count,
 					   const reco::GenParticle& tp,
@@ -54,12 +60,11 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
 					   const reco::Track* track,
 					   int numVertices);
 
-  void fill_simTrackBased_histos(int count, int numSimTracks);
-
 
   void fill_generic_recoTrack_histos(int count,
 				     const reco::Track& track,
 				     const math::XYZPoint& bsPosition,
+				     const math::XYZPoint *pvPosition,
 				     bool isMatched,
 				     bool isSigMatched,
 				     bool isChargeMatched,
@@ -141,9 +146,11 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   double dxyRes_rangeMin,dxyRes_rangeMax; int dxyRes_nbin;
   double dzRes_rangeMin,dzRes_rangeMax; int dzRes_nbin;
 
+  double maxDzpvCum; int nintDzpvCum;
+  double maxDzpvsigCum; int nintDzpvsigCum;
 
   //sim
-  std::vector<MonitorElement*> h_ptSIM, h_etaSIM, h_tracksSIM, h_vertposSIM, h_bunchxSIM;
+  MonitorElement *h_ptSIM, *h_etaSIM, *h_tracksSIM, *h_vertposSIM, *h_bunchxSIM;
 
   //1D
   std::vector<MonitorElement*> h_tracks, h_fakes, h_hits, h_charge, h_algo;;
@@ -157,6 +164,8 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_recophi, h_assocphi, h_assoc2phi, h_simulphi, h_looperphi, h_misidphi, h_pileupphi;
   std::vector<MonitorElement*> h_recodxy, h_assocdxy, h_assoc2dxy, h_simuldxy, h_looperdxy, h_misiddxy, h_pileupdxy;
   std::vector<MonitorElement*> h_recodz, h_assocdz, h_assoc2dz, h_simuldz, h_looperdz, h_misiddz, h_pileupdz;
+  std::vector<MonitorElement*> h_recodxypv, h_assocdxypv, h_assoc2dxypv, h_simuldxypv, h_looperdxypv, h_misiddxypv, h_pileupdxypv;
+  std::vector<MonitorElement*> h_recodzpv, h_assocdzpv, h_assoc2dzpv, h_simuldzpv, h_looperdzpv, h_misiddzpv, h_pileupdzpv;
 
   std::vector<MonitorElement*> h_assocvertpos, h_simulvertpos, h_assoczpos, h_simulzpos;
   std::vector<MonitorElement*> h_assocdr, h_assoc2dr, h_simuldr, h_recodr, h_pileupdr;
@@ -168,6 +177,11 @@ class MTVHistoProducerAlgoForTracker: public MTVHistoProducerAlgo {
   std::vector<MonitorElement*> h_reco_ootpu_eta, h_reco_ootpu_vertcount;
   std::vector<MonitorElement*> h_con_eta, h_con_vertcount, h_con_zpos;
 
+  std::vector<MonitorElement*> h_reco_dzpvcut, h_assoc_dzpvcut, h_assoc2_dzpvcut, h_simul_dzpvcut, h_simul2_dzpvcut, h_pileup_dzpvcut;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut, h_assoc_dzpvsigcut, h_assoc2_dzpvsigcut, h_simul_dzpvsigcut, h_simul2_dzpvsigcut, h_pileup_dzpvsigcut;
+
+  std::vector<MonitorElement*> h_reco_dzpvcut_pt, h_assoc_dzpvcut_pt, h_assoc2_dzpvcut_pt, h_simul_dzpvcut_pt, h_simul2_dzpvcut_pt, h_pileup_dzpvcut_pt;
+  std::vector<MonitorElement*> h_reco_dzpvsigcut_pt, h_assoc_dzpvsigcut_pt, h_assoc2_dzpvsigcut_pt, h_simul_dzpvsigcut_pt, h_simul2_dzpvsigcut_pt, h_pileup_dzpvsigcut_pt;
 
   // dE/dx
   // in the future these might become an array

@@ -8,6 +8,7 @@ quickTrackAssociatorByHits.useClusterTPAssociation = False
 #TrackAssociatorByHitsRecoDenom.ROUList = ['famosSimHitsTrackerHits']
 trackValidator.useLogPt=cms.untracked.bool(True)
 trackValidator.dodEdxPlots = False
+trackValidator.doPVAssociationPlots = False
 trackValidator.sim = [cms.InputTag('famosSimHits','TrackerHits')]
 
 trackValidator.stableOnlyTP = True
@@ -21,4 +22,6 @@ trackValidator.histoProducerAlgoBlock.TpSelectorForEfficiencyVsVTXZ.stableOnly =
 ###must be commented in normal running
 ###multiTrackValidator.outputFile='validationPlots.root'
 
-
+tracksValidationStandalone.remove(trackValidatorFromPVStandalone)
+tracksValidationStandalone.remove(trackValidatorFromPVAllTPStandalone)
+tracksValidationStandalone.remove(trackValidatorAllTPEfficStandalone)

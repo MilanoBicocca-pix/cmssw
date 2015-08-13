@@ -234,8 +234,8 @@ void MultiTrackValidatorGenPs::analyze(const edm::Event& event, const edm::Event
       // - dxyGen
       // - dzGen
       
-      if(doSimPlots_) {
-        histoProducerAlgo_->fill_generic_simTrack_histos(w,momentumTP,vertexTP, tp->collisionId());//fixme: check meaning of collisionId
+      if(doSimPlots_ && w == 0) {
+        histoProducerAlgo_->fill_generic_simTrack_histos(momentumTP,vertexTP, tp->collisionId());//fixme: check meaning of collisionId
       }
       if(!doSimTrackPlots_)
         continue;
@@ -280,8 +280,8 @@ void MultiTrackValidatorGenPs::analyze(const edm::Event& event, const edm::Event
       
     } // End  for (GenParticleCollection::size_type i=0; i<tPCeff.size(); i++){
     
-    if(doSimPlots_) {
-      histoProducerAlgo_->fill_simTrackBased_histos(w, st);
+    if(doSimPlots_ && w == 0) {
+      histoProducerAlgo_->fill_simTrackBased_histos(st);
     }
     
     
@@ -345,7 +345,7 @@ void MultiTrackValidatorGenPs::analyze(const edm::Event& event, const edm::Event
       
       
       double dR=0;//fixme: plots vs dR not implemented for now
-      histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(),isGenMatched,isSigGenMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), nSimHits, sharedFraction,dR);
+      histoProducerAlgo_->fill_generic_recoTrack_histos(w,*track,bs.position(), nullptr, isGenMatched,isSigGenMatched, isChargeMatched, numAssocRecoTracks, puinfo.getPU_NumInteractions(), nSimHits, sharedFraction,dR);
       
       // dE/dx
       if (dodEdxPlots_) histoProducerAlgo_->fill_dedx_recoTrack_histos(w,track, v_dEdx);

@@ -10,7 +10,8 @@ from L1Trigger.Configuration.L1Trigger_custom import customiseL1Menu
 def customiseSimL1EmulatorForStage1(process):
 
     process.load("L1Trigger.L1TCommon.l1tDigiToRaw_cfi")
-    process.load("L1Trigger.L1TCommon.l1tRawToDigi_cfi")
+    process.load("EventFilter.L1TRawToDigi.caloStage1Digis_cfi") 
+
     process.load("L1Trigger.L1TCommon.caloStage1LegacyFormatDigis_cfi")
 
     process.load('L1Trigger.L1TCalorimeter.caloStage1Params_cfi')
@@ -100,9 +101,10 @@ def customiseSimL1EmulatorForPostLS1_25ns(process):
     process = L1Menu_Collisions2015_25ns_v2(process)
     return process
 
-def customiseSimL1EmulatorForPostLS1_HI(process):
-    # load the Stage 1 configuration
-    process = customiseSimL1EmulatorForStage1(process)
+# additional customizations needed for HI:
+# -> no L1 Menu added here
+# -> common post LS1 customizations not called here
+def customiseSimL1EmulatorForPostLS1_Additional_HI(process):
     # set the Stage 1 heavy ions-specific parameters
     # all of these should eventually end up in a GT
     if hasattr(process,'RCTConfigProducers'):
@@ -117,6 +119,12 @@ def customiseSimL1EmulatorForPostLS1_HI(process):
         process.caloStage1Params.regionPUSType = cms.string("zeroWall")
     if hasattr(process,'caloConfig'):
         process.caloConfig.fwVersionLayer2 = cms.uint32(1)
-    # move to the heavy ions draft L1 menu once the HLT has been updated accordingly
-    process = L1Menu_CollisionsHeavyIons2015_v0(process)
+    return process
+
+# This (UNTESTED/UNUSED) should allow for unpacking RAW data created with legacy 74X MC.
+def customiseL1RawToDigiFor74XMC(process):
+    if hasattr(process,'caloStage1Digis'):     
+        process.caloStage1Digis.FWId = cms.uint32(0xff000000)
+    if hasattr(process,'hltCaloStage1Digis'):     
+        process.hltCaloStage1Digis.FWId = cms.uint32(0xff000000)
     return process

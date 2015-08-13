@@ -6,7 +6,7 @@ trajectorySeedProducer = cms.EDProducer("TrajectorySeedProducer",
          # The smallest pT (in GeV) to create a track candidate 
          pTMin = cms.double(-1),
          # skip SimTracks processed in previous iterations
-         skipSimTrackIds = cms.VInputTag(),
+         #skipSimTrackIds = cms.VInputTag(),
          maxZ0 = cms.double(-1),
          maxD0 = cms.double(-1),
     ),
@@ -25,8 +25,10 @@ trajectorySeedProducer = cms.EDProducer("TrajectorySeedProducer",
     ptMin = cms.double(-1),
 
     # Inputs: tracker rechits, beam spot position.
-    recHits = cms.InputTag("siTrackerGaussianSmearingRecHits","TrackerGSMatchedRecHits"),
-
+    recHits = cms.InputTag("siTrackerGaussianSmearingRecHits"),
+    #hitMasks = cms.InputTag("hitMasks"),
+    #hitCombinationMasks = cms.InputTag("hitCombinationMasks"),
+        
     layerList = cms.vstring(),
 )
 
