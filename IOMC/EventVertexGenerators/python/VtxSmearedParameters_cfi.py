@@ -462,6 +462,31 @@ Realistic50ns13TeVCollisionVtxSmearingParameters = cms.PSet(
     Z0 = cms.double(-1.0985)
 )
 
+# From Run 260039, 0T data
+# Post LHC cogging retuning. See discussion
+# https://hypernews.cern.ch/HyperNews/CMS/get/beamspot/138.html
+#
+# Centroid absolute positions extracted from fills:
+# X =  0.066089 cm
+# Y =  0.094699 cm
+# Z = -0.056050 cm
+#
+# BPIX barycentre
+# X = -0.0274173 cm
+# Y = -0.0747485 cm
+# Z = -0.515853  cm
+Realistic25ns13TeVCollisionZeroTeslaVtxSmearingParameters = cms.PSet(
+    Phi = cms.double(0.0),
+    BetaStar = cms.double(80.0),
+    Emittance = cms.double(5.411e-08),
+    Alpha = cms.double(0.0),
+    SigmaZ = cms.double(4.3),
+    TimeOffset = cms.double(0.0),
+    X0 = cms.double(0.08533),
+    Y0 = cms.double(0.16973),
+    Z0 = cms.double(0.4598 )
+)
+
 # Test HF offset
 ShiftedCollision2015VtxSmearingParameters = cms.PSet(
     Phi = cms.double(0.0),
