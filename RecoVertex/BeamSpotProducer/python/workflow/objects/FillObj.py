@@ -40,7 +40,7 @@ class Fill():
         self.Runs            = []               #
         self.Comments        = ''               #
         
-        # remove weird xls instructions
+        # remove html tags
         self.pattern = re.compile('\<[^>]+\>')
  
     def readLine(self, line):
@@ -54,8 +54,8 @@ class Fill():
         elements = line.split('\t')
              
         self.Fill            = int  (elements[0])
-        self.CreateTime      = elements[1]          # to be implemented
-        self.DurationStable  = elements[2]          # to be implemented
+        self.CreateTime      = elements[1]
+        self.DurationStable  = elements[2]
         self.Bfield          = float(elements[3])
         self.PeakInstLumi    = float(elements[4])
         self.PeakPileup      = float(elements[5])
@@ -64,12 +64,12 @@ class Fill():
         self.RecordedLumi    = float(elements[8])
         self.EffByLumi       = float(elements[9])
         self.EffByTime       = float(elements[10])
-        self.BeginTime       = elements[11]         # to be implemented
+        self.BeginTime       = elements[11]
         try:
             self.toReady         = float(elements[12])
         except:
             self.toReady         = None
-        self.EndTime         = elements[13]         # to be implemented
+        self.EndTime         = elements[13]
         self.Type            = str  (elements[14])
         self.Energy          = float(elements[15])
         self.IBeam1          = float(elements[16])
@@ -82,48 +82,79 @@ class Fill():
         self.InjectionScheme = str  (elements[23])
         self.Runs            = [int(i) for i in elements[24].split()]
         self.Comments        = str  (elements[25])
+        
+        duration_hours   = int(re.findall(r'\d+', self.DurationStable)[0])
+        duration_minutes = int(re.findall(r'\d+', self.DurationStable)[1])
+        
+        td = datetime.timedelta(hours = duration_hours, 
+                                minutes = duration_minutes)
+        
+        self.DurationStable = td 
+        
+        for el in ['EndTime', 'BeginTime', 'CreateTime']:
+
+            element = getattr(self, el)
+            
+            year  = int(element.split()[0].split('.')[0])
+            month = int(element.split()[0].split('.')[1])
+            day   = int(element.split()[0].split('.')[2])
+
+            hour   = int(element.split()[1].split(':')[0])
+            minute = int(element.split()[1].split(':')[1])
+            second = int(element.split()[1].split(':')[2])
+            
+            dt = datetime.datetime(year, month, day, hour, minute, second)
+            setattr(self, el, dt)
 
     def Print(self):
         '''
+        Nicely formatting printing
         '''
-        for k, v in vars(self):
-            print k, '\t=\t', v
+        print ''
+        for k, v in vars(self).items():
+            print k, '=', v
 
 if __name__ == '__main__':
     
     fname = 'fills.txt'
-    myFill = Fill()
-    
+    myFills = {}
+
     with open(fname) as f:
         content = f.readlines()
-    
+
     for c in content[1:]:
+        myFill = Fill()
         myFill.readLine(c)
-        print myFill.Fill, ' : ', myFill.Runs
+        myFills[myFill.Fill] = myFill
+
+    
+    Fills3p8T  = []
+    Fills0T    = []
+    Fills2p8T  = []
+    FillsOther = []
+
+    for k, v in myFills.items():
+        if v.Bfield > 3.7:
+            Fills3p8T.append(k)
+        elif v.Bfield < 0.1:
+            Fills0T.append(k)
+        elif v.Bfield > 2.7 and v.Bfield < 2.9:
+            Fills2p8T.append(k)
+        else:
+            FillsOther.append(k)
+
+    Fills3p8T .sort()
+    Fills0T   .sort()
+    Fills2p8T .sort()
+    FillsOther.sort()
+
+    print '\n\nFills 3.8 T\n', Fills3p8T 
+    print '\n\nFills   0 T\n', Fills0T   
+    print '\n\nFills 2.8 T\n', Fills2p8T 
+    print '\n\nOther Fills\n', FillsOther
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
- 
 
 # Fill            = 4681 
 # CreateTime      = 2015.12.01 02:39:55 
