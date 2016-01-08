@@ -462,6 +462,114 @@ Realistic50ns13TeVCollisionVtxSmearingParameters = cms.PSet(
     Z0 = cms.double(-1.0985)
 )
 
+# From fill < 4386 (run < 256801), 3p8T data
+# Pre LHC cogging retuning. See discussion
+# https://hypernews.cern.ch/HyperNews/CMS/get/beamspot/138.html
+#
+# Centroid absolute positions extracted from fills:
+# X =  0.076777 cm
+# Y =  0.092451 cm
+# Z = -2.187416 cm
+#
+# BPIX barycentre
+# X = -0.0274173 cm
+# Y = -0.0747485 cm
+# Z = -0.515853  cm
+#
+# Actual Beta* and sigmaZ in 2015 Run
+Realistic25ns13TeVCollisionPreCoggingAdjVtxSmearingParameters = cms.PSet(
+    Phi        = cms.double(0.),
+    BetaStar   = cms.double(80.),
+    Emittance  = cms.double(5.411e-08),
+    Alpha      = cms.double(0.),
+    SigmaZ     = cms.double(4.2),
+    TimeOffset = cms.double(0.),
+    X0         = cms.double(0.10419),
+    Y0         = cms.double(0.16720),
+    Z0         = cms.double(-1.6716),
+)
+
+# From fill >= 4386 (run >= 256801), 3p8T data
+# Post LHC cogging retuning. See discussion
+# https://hypernews.cern.ch/HyperNews/CMS/get/beamspot/138.html
+#
+# Centroid absolute positions extracted from fills:
+# X =  0.077015 cm
+# Y =  0.091942 cm
+# Z = -0.390814 cm
+#
+# BPIX barycentre
+# X = -0.0274173 cm
+# Y = -0.0747485 cm
+# Z = -0.515853  cm
+#
+# Actual Beta* and sigmaZ in 2015 Run
+Realistic25ns13TeVCollisionPostCoggingAdjVtxSmearingParameters = cms.PSet(
+    Phi        = cms.double(0.),
+    BetaStar   = cms.double(80.),
+    Emittance  = cms.double(5.411e-08),
+    Alpha      = cms.double(0.),
+    SigmaZ     = cms.double(4.4),
+    TimeOffset = cms.double(0.),
+    X0         = cms.double(0.10443),
+    Y0         = cms.double(0.16669),
+    Z0         = cms.double(0.1250 ),
+)
+
+# From Run 260039, 0T data
+# Post LHC cogging retuning. See discussion
+# https://hypernews.cern.ch/HyperNews/CMS/get/beamspot/138.html
+#
+# Centroid absolute positions extracted from fills:
+# X =  0.066089 cm
+# Y =  0.094699 cm
+# Z = -0.056050 cm
+#
+# BPIX barycentre
+# X = -0.0274173 cm
+# Y = -0.0747485 cm
+# Z = -0.515853  cm
+#
+# Beta* and sigmaZ as foresaw to be in 2015
+Nominal25ns13TeVCollisionZeroTeslaVtxSmearingParameters = cms.PSet(
+    Phi = cms.double(0.0),
+    BetaStar = cms.double(65.0),
+    Emittance = cms.double(5.411e-08),
+    Alpha = cms.double(0.0),
+    SigmaZ = cms.double(5.3),
+    TimeOffset = cms.double(0.0),
+    X0 = cms.double(0.09351),
+    Y0 = cms.double(0.16945),
+    Z0 = cms.double(0.4598 )
+)
+
+# From Run 260039, 0T data
+# Post LHC cogging retuning. See discussion
+# https://hypernews.cern.ch/HyperNews/CMS/get/beamspot/138.html
+#
+# Centroid absolute positions extracted from fills:
+# X =  0.066089 cm
+# Y =  0.094699 cm
+# Z = -0.056050 cm
+#
+# BPIX barycentre
+# X = -0.0274173 cm
+# Y = -0.0747485 cm
+# Z = -0.515853  cm
+#
+# Actual Beta* and sigmaZ in 2015 Run
+Realistic25ns13TeVCollisionZeroTeslaVtxSmearingParameters = cms.PSet(
+    Phi = cms.double(0.0),
+    BetaStar = cms.double(80.0),
+    Emittance = cms.double(5.411e-08),
+    Alpha = cms.double(0.0),
+    SigmaZ = cms.double(4.3),
+    TimeOffset = cms.double(0.0),
+    X0 = cms.double(0.09351),
+    Y0 = cms.double(0.16945),
+    Z0 = cms.double(0.4598 )
+)
+
 # Test HF offset
 ShiftedCollision2015VtxSmearingParameters = cms.PSet(
     Phi = cms.double(0.0),
