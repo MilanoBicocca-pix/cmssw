@@ -36,7 +36,8 @@ def delta(x, xe, y, ye):
 
     return delta, deltaErr, significance
 
-def splitByDrift(fullList, maxLumi = 60, splitInfo = False, run = -1):
+def splitByDrift(fullList, maxLumi = 60, splitInfo = False, run = -1, 
+                 slopes = False, relaxedCriteria = False):
     '''
     Group lumi sections where the Beam Spot position does not 
     drift beyond the parameters specified by the user.
@@ -52,6 +53,7 @@ def splitByDrift(fullList, maxLumi = 60, splitInfo = False, run = -1):
     '''
     # instantiate a TH1 to check what drifts how often
     if splitInfo:
+        ROOT.gROOT.SetBatch(True)
         histo = ROOT.TH1F('histoRun%d' %run,
                           'Run %d where the drift occurs' %run, 
                           8, 0, 8)
@@ -89,17 +91,31 @@ def splitByDrift(fullList, maxLumi = 60, splitInfo = False, run = -1):
         #  full drift check, partial drift check)
         #
         # this mess is inherited from the old code...
-        
-        variables = [
-          ('X'         , 'Xerr'      , 'beamWidthX', 0.0025, 3.5, True , True ),
-          ('Y'         , 'Yerr'      , 'beamWidthY', 0.0025, 3.5, True , True ),
-          ('Z'         , 'Zerr'      , 'sigmaZ'    , 0.    , 3.5, False, False),
-#           ('dxdz'      , 'dxdzerr'   , ''          , 0.    , 5. , False, True ),
-#           ('dydz'      , 'dydzerr'   , ''          , 0.    , 5. , False, True ),
-          ('sigmaZ'    , 'sigmaZerr' , ''          , 0.    , 5. , False, False),
-          ('beamWidthX', 'beamWidthX', ''          , 0.    , 5. , False, True ),
-          ('beamWidthY', 'beamWidthY', ''          , 0.    , 5. , False, True ),
-        ]
+
+        if relaxedCriteria:
+            variables = [
+              ('X'         , 'Xerr'      , 'beamWidthX', 0.05, 7., True , True ),
+              ('Y'         , 'Yerr'      , 'beamWidthY', 0.05, 7., True , True ),
+              ('Z'         , 'Zerr'      , 'sigmaZ'    , 0.  , 7., False, False),
+              ('sigmaZ'    , 'sigmaZerr' , ''          , 0.  , 7., False, False),
+              ('beamWidthX', 'beamWidthX', ''          , 0.  , 7., False, True ),
+              ('beamWidthY', 'beamWidthY', ''          , 0.  , 7., False, True )
+            ]
+            if slopes:
+                variables += [('dxdz', 'dxdzerr', '', 0., 10., False, True ),
+                              ('dydz', 'dydzerr', '', 0., 10., False, True )]
+        else:
+            variables = [
+              ('X'         , 'Xerr'      , 'beamWidthX', 0.0025, 3.5, True , True ),
+              ('Y'         , 'Yerr'      , 'beamWidthY', 0.0025, 3.5, True , True ),
+              ('Z'         , 'Zerr'      , 'sigmaZ'    , 0.    , 3.5, False, False),
+              ('sigmaZ'    , 'sigmaZerr' , ''          , 0.    , 5. , False, False),
+              ('beamWidthX', 'beamWidthX', ''          , 0.    , 5. , False, True ),
+              ('beamWidthY', 'beamWidthY', ''          , 0.    , 5. , False, True )
+            ]
+            if slopes:
+                variables += [('dxdz', 'dxdzerr', '', 0., 5., False, True ),
+                              ('dydz', 'dydzerr', '', 0., 5., False, True )]
         
         for variable in variables:
             
