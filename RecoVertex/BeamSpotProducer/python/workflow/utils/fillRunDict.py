@@ -112,13 +112,60 @@ def labelByTime(histo, granularity = 1, fromRun = False):
             creationTime = monthDict[creationTime]
         
         histo.GetXaxis().SetBinLabel(ibin + 1, str(creationTime))
-        
-def splitByMagneticField(histo):
-    '''
-    Gets a histogram with fills on the X axis and returns different histograms, 
-    one for 0T fills, one for 3.8T fills one for 2.8T fills and 
-    one for other fills. 
-    '''
+ 
+ 
+def _splitByMagneticFieldJson(histo, json3p8, json2p8, json0, irun, frun):
+    from RecoVertex.BeamSpotProducer.workflow.utils.readJson import readJson
+    if json3p8: myjson3p8 = readJson(fileName = json3p8)
+    if json2p8: myjson2p8 = readJson(fileName = json2p8)
+    if json0  : myjson0   = readJson(fileName = json0  )
+    
+    runs3p8T   = sorted([i for i in myjson3p8.keys() if i >= irun and i <= frun])
+    runs2p8T   = sorted([i for i in myjson2p8.keys() if i >= irun and i <= frun])
+    runs0T     = sorted([i for i in myjson0  .keys() if i >= irun and i <= frun])
+    runsOther = []
+
+    histo0T = histo.Clone()
+    histo0T.SetName(histo.GetName() + '0T')
+    
+    histo3p8T = histo.Clone()
+    histo3p8T.SetName(histo.GetName() + '3p8T')
+
+    histo2p8T = histo.Clone()
+    histo2p8T.SetName(histo.GetName() + '2p8T')
+
+    histoOther = histo.Clone()
+    histoOther.SetName(histo.GetName() + 'Other')
+
+    mydict = {
+        histo0T   : runs0T   , 
+        histo3p8T : runs3p8T ,
+        histo2p8T : runs2p8T ,
+        histoOther: runsOther,
+    }
+    
+    for k, v in mydict.items():
+        k.Reset()
+        add = False
+        for ibin in range(k.GetNbinsX()):
+            irun  = k.GetXaxis().GetBinLabel(ibin+1)
+            binc  = histo.GetBinContent(ibin+1)
+            bine  = histo.GetBinError  (ibin+1)
+            if not irun:
+                if add:
+                    k.SetBinContent(ibin+1, binc)
+                    k.SetBinError  (ibin+1, bine)
+            elif int(irun) in v:
+                k.SetBinContent(ibin+1, binc)
+                k.SetBinError  (ibin+1, bine)
+                add = True
+            else:
+                add = False
+                    
+    return histo0T, histo3p8T, histo2p8T, histoOther    
+
+
+def _splitByMagneticFieldFill(histo):
     
     myFills = _createFillList()
 
@@ -179,7 +226,25 @@ def splitByMagneticField(histo):
             else:
                 add = False
                     
-    return  histo0T, histo3p8T, histo2p8T, histoOther    
+    return histo0T, histo3p8T, histo2p8T, histoOther    
+    
+      
+def splitByMagneticField(histo, json = False, json3p8 = None, 
+                         json2p8 = None, json0 = None, irun = -1, frun = 1E6):
+    '''
+    Gets a histogram with fills on the X axis and returns different histograms, 
+    one for 0T fills, one for 3.8T fills one for 2.8T fills and 
+    one for other fills. 
+    '''
+ 
+    if json:
+        histo0T, histo3p8T, histo2p8T, histoOther = _splitByMagneticFieldJson(histo, json3p8, json2p8, json0, irun, frun)
+    else:
+        histo0T, histo3p8T, histo2p8T, histoOther = _splitByMagneticFieldFill(histo)
+    
+    return histo0T, histo3p8T, histo2p8T, histoOther    
+
+
 
         
 
