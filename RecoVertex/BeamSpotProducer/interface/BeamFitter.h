@@ -165,6 +165,7 @@ class BeamFitter {
   std::vector<std::string> trk_Quality_;
   std::vector<reco::TrackBase::TrackQuality> quality_;
   std::vector<reco::TrackBase::TrackAlgorithm> algorithm_;
+  std::vector<double> bxs_;
   double inputBeamWidth_;
   double convergence_;
   

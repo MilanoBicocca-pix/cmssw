@@ -71,6 +71,7 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   min_Ntrks_         = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<int>("MinimumInputTracks");
   convergence_       = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("FractionOfFittedTrks");
   inputBeamWidth_    = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("InputBeamWidth",-1.);
+  bxs_               = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<std::vector<double> >("BunchCrossings");
   onlyd0phi_         = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<bool>("FitOnlyd0Phi", false);
 
   for (unsigned int j=0;j<trk_Algorithm_.size();j++)
@@ -234,6 +235,24 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
   edm::Handle<reco::TrackCollection> TrackCollection;
   iEvent.getByToken(tracksToken_, TrackCollection);
+
+  // select specific bunch crossings if needed
+  int evbx = -1;
+  bool selectedBx = false;
+  if (iEvent.isRealData()) {
+   evbx  = iEvent.bunchCrossing();
+  }
+  if ( bxs_.size() == 0) selectedBx = true; 
+  else{
+    for (unsigned int ibx = 0; ibx < bxs_.size(); ibx ++){
+      if (evbx == bxs_[ibx]) {
+        selectedBx = true; 
+        break;
+      }
+    }
+  }
+  if (!selectedBx) return;
+
 
   //------ Primary Vertices
   edm::Handle< edm::View<reco::Vertex> > PVCollection;
