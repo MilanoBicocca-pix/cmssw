@@ -71,6 +71,7 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   min_Ntrks_         = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<int>("MinimumInputTracks");
   convergence_       = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("FractionOfFittedTrks");
   inputBeamWidth_    = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("InputBeamWidth",-1.);
+  onlyd0phi_         = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<bool>("FitOnlyd0Phi", false);
 
   for (unsigned int j=0;j<trk_Algorithm_.size();j++)
     algorithm_.push_back(reco::TrackBase::algoByName(trk_Algorithm_[j]));
@@ -455,34 +456,62 @@ bool BeamFitter::runPVandTrkFitter() {
             matrix(j,k) = bspotTrk.covariance(j,k);
         }
     }
+
+    if (onlyd0phi_ && fit_ok ) {
+
+      reco::BeamSpot tmpbs(reco::BeamSpot::Point(
+               bspotTrk.x0(), 
+               bspotTrk.y0(),
+               bspotTrk.z0() ),
+               bspotTrk.sigmaZ() ,
+               bspotTrk.dxdz(),
+               bspotTrk.dydz(),
+               bspotTrk.BeamWidthX(),
+               matrix,
+               bspotTrk.type() );
+               
+      tmpbs.setBeamWidthY( bspotTrk.BeamWidthY() );
+      // overwrite beam spot result
+      fbeamspot = tmpbs;
+    }
     // change beam width error to one from PV
-    if (pv_fit_ok && fit_ok ) {
+    else if (pv_fit_ok && fit_ok ) { 
       matrix(6,6) = MyPVFitter->getWidthXerr() * MyPVFitter->getWidthXerr();
 
       // get Z and sigmaZ from PV fit
       matrix(2,2) = bspotPV.covariance(2,2);
       matrix(3,3) = bspotPV.covariance(3,3);
-      reco::BeamSpot tmpbs(reco::BeamSpot::Point(bspotTrk.x0(), bspotTrk.y0(),
-						 bspotPV.z0() ),
+      reco::BeamSpot tmpbs(reco::BeamSpot::Point(
+               bspotTrk.x0(), 
+               bspotTrk.y0(),
+			   bspotPV.z0() ),
 			   bspotPV.sigmaZ() ,
 			   bspotTrk.dxdz(),
 			   bspotTrk.dydz(),
 			   bspotPV.BeamWidthX(),
 			   matrix,
 			   bspotPV.type() );
+			   
       tmpbs.setBeamWidthY( bspotPV.BeamWidthY() );
       // overwrite beam spot result
       fbeamspot = tmpbs;
     }
-    if (pv_fit_ok && fit_ok) {
+
+    bool isValidBSFit = false; 
+    if (onlyd0phi_ && fit_ok) { 
+      fbeamspot.setType(bspotTrk.type());
+      isValidBSFit = true;
+    }
+    else if (pv_fit_ok && fit_ok) {
       fbeamspot.setType(bspotPV.type());
+      isValidBSFit = true;
     }
-    else if(!pv_fit_ok && fit_ok){
+    else if( (!pv_fit_ok && fit_ok) || (pv_fit_ok && !fit_ok) ){
       fbeamspot.setType(reco::BeamSpot::Unknown);
     }
-    else if(pv_fit_ok && !fit_ok){
-      fbeamspot.setType(reco::BeamSpot::Unknown);
-    }
+//     else if(pv_fit_ok && !fit_ok){
+//       fbeamspot.setType(reco::BeamSpot::Unknown);
+//     }
     else if(!pv_fit_ok && !fit_ok){
       fbeamspot.setType(reco::BeamSpot::Fake);
     }
@@ -493,7 +522,7 @@ bool BeamFitter::runPVandTrkFitter() {
         for(size_t i= 0; i < 7; i++)ForDIPPV_.push_back(0.0);
     }
 
-    return fit_ok && pv_fit_ok;
+    return isValidBSFit;
 }
 
 bool BeamFitter::runFitterNoTxt() {

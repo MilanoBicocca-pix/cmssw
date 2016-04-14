@@ -167,6 +167,9 @@ class BeamFitter {
   std::vector<reco::TrackBase::TrackAlgorithm> algorithm_;
   double inputBeamWidth_;
   double convergence_;
+  
+  bool onlyd0phi_;
+  
   int ftotal_tracks;
   int min_Ntrks_;
   bool isMuon_;
