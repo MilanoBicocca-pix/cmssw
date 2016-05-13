@@ -216,6 +216,9 @@ class BeamFitter {
   bool falgo;
   bool fpvValid;
   double fpvx, fpvy, fpvz;
+//+++++++++++++++++++++++++++++++++++++
+  double fpvxe, fpvye, fpvze;
+//+++++++++++++++++++++++++++++++++++++
   std::time_t freftime[2];
 
   //beam fit results

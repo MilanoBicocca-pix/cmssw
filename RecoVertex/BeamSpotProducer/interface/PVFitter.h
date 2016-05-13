@@ -28,11 +28,22 @@
 
 
 // ROOT
+#include "Minuit2/FCNBase.h"
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnPrint.h"   // Defines operator<< for cout << ierr  (Dario)
+#include "Minuit2/MnContours.h" 
+#include "Minuit2/MnPlot.h" 
 #include "TFile.h"
 #include "TTree.h"
 #include "TH2F.h"
 
 #include <fstream>
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#include <vector>
+#include <map>
+using namespace std;
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 namespace edm {class ConsumesCollector;}
 
@@ -164,6 +175,23 @@ class PVFitter {
   std::time_t freftime[2];
 
   TH2F* hPVx; TH2F* hPVy; 
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  vector<TH1F*> positionH_    ;
+  vector<TH1F*> errorH_       ;
+  vector<TH1F*> correlationH_ ;
+  TH2F* 	spacePosXY_   ;
+  TH2F* 	spacePosXZ_   ;
+  TH2F* 	spacePosYZ_   ;
+
+  bool guideTheFit(ROOT::Minuit2::MnMigrad& migrad, int) ;
+  
+  multimap<string,int> fixRelMap_ ;
+  unsigned int maxTries_          ; 
+  double       tolerance_         ;
+  vector<double> results_ ;
+  vector<double> errors_  ;
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   TTree* ftree_;
   //bool saveNtuple_;

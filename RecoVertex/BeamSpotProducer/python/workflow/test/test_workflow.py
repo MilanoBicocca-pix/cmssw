@@ -5,17 +5,11 @@ from RecoVertex.BeamSpotProducer.workflow.utils.beamSpotMerge import averageBeam
 from RecoVertex.BeamSpotProducer.workflow.utils.readJson      import readJson
 from RecoVertex.BeamSpotProducer.workflow.utils.compareLists  import compareLists
 from collections import OrderedDict
-
+from getFiles    import get_files
 import os
-import ROOT
-from os.path import isfile, join
-
-def getfiles(mypath, pattern):
-    onlyfiles = ['/'.join([mypath, f]) for f in os.listdir(mypath) if isfile(join(mypath, f)) and pattern in f]
-    return onlyfiles
-
 
 # input parameters
+runNumber = 247324
 initlumi  = 1  
 endlumi   = 100000  
 
@@ -35,11 +29,15 @@ lastRun_2015D  = 258158
 #   os.system('cmsStage ' + file + ' copy_of_crab_Run2015D_6Oct15_74X_dataRun2_Candidate_2015_10_06_09_25_21/')
 # exit()
 
-myPayload = Payload(
-    getfiles('/afs/cern.ch/work/m/manzoni/public/eoyReReco_anyT/2015Dv3'      , 'BeamFit_LumiBased_NewAlignWorkflow_alcareco_') 
-)
 
-# # Plot fit results from txt file
+
+# myPayload = Payload(['copy_of_crab_Run2015A_6Oct15_74X_dataRun2_Candidate_2015_10_06_09_25_21/BeamFit_LumiBased_NewAlignWorkflow_alcareco_%d.txt' % i for i in range(1,532) ])
+# myPayload = Payload(['copy_of_crab_Run2015B_6Oct15_74X_dataRun2_Candidate_2015_10_06_09_25_21/BeamFit_LumiBased_NewAlignWorkflow_alcareco_%d.txt' % i for i in range(1,542) ])
+myPayload = Payload(['copy_of_crab_Run2015C_6Oct15_74X_dataRun2_Candidate_2015_10_06_09_25_21/BeamFit_LumiBased_NewAlignWorkflow_alcareco_%d.txt' % i for i in range(1,1028) ])
+# myPayload = Payload(['copy_of_crab_Run2015D-v3_6Oct15_74X_dataRun2_Candidate_2015_10_06_09_25_21/BeamFit_LumiBased_NewAlignWorkflow_alcareco_%d.txt' % i for i in range(1,582) ])
+
+
+# Plot fit results from txt file
 # variables = [
 #   'X'         ,
 #   'Y'         ,
@@ -51,15 +49,8 @@ myPayload = Payload(
 #   'beamWidthY'
 # ]
 # 
-# histos_pre_merging  = []
-# for var in variables:
-#     h1 = myPayload.plot(var,  0, 999999, savePdf = True, returnHisto = True, dilated = 6, byFill = False)
-#     histos_pre_merging.append(h1)
-# 
-# file_pre_merging.cd()
-# for h1 in histos_pre_merging:
-#     h1.Write()
-
+# for ivar in variables: 
+#   myPayload.plot(ivar , runNumber, runNumber, savePdf = True)
 
 # convert results into a dictionary  { Run : {Lumi Range: BeamSpot Fit Object} }
 allBS            = myPayload.fromTextToBS() 
@@ -67,30 +58,30 @@ for irun,ivalues in allBS.items():
   allBS[irun] = cleanAndSort(allBS[irun])
 
 # check if any run is missing
-theJson   = "../../../Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt"
+theJson   = "../../../test/Cert_246908-257599_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt"
 # theJson   = "../../../test/total_DCS_json_upTo256869.txt"
 
-# # this returns a dictionary of runs and LS in the txt file, like {195660 : [1,2,3,...]}
+# this returns a dictionary of runs and LS in the txt file, like {195660 : [1,2,3,...]}
 runsLumisCrab = myPayload.getProcessedLumiSections() 
 runsCrab      = runsLumisCrab.keys()
 
-# # this returns a dictionary of runs and LS in the json file
-# runsLumisJson = readJson(firstRun_2015C, lastRun_2015C, theJson, False)
-# runsJson      = runsLumisJson.keys()
+# this returns a dictionary of runs and LS in the json file
+runsLumisJson = readJson(firstRun_2015C, lastRun_2015C, theJson, False)
+runsJson      = runsLumisJson.keys()
 
 # filter for json file 
-# runsCommon      = set(runsCrab) & set(runsJson)
-# inCrabNotInJson = set(runsCrab) - set(runsJson)
-# inJsonNotInCrab = set(runsJson) - set(runsCrab)
-# print 'missing runs:'
-# print inJsonNotInCrab
+runsCommon      = set(runsCrab) & set(runsJson)
+inCrabNotInJson = set(runsCrab) - set(runsJson)
+inJsonNotInCrab = set(runsJson) - set(runsCrab)
+print 'missing runs:'
+print inJsonNotInCrab
 
-# for irun in runsCommon:
-#   inJsonNotCrab, inCrabNotJson = compareLists(runsLumisCrab[irun], runsLumisJson[irun], 100, 'crab', 'json' )
-#   if len(inJsonNotCrab) > 0:
-#     print 'run ' + str(irun) 
-#     for ls in inJsonNotCrab:
-#       print str(ls) 
+for irun in runsCommon:
+  inJsonNotCrab, inCrabNotJson = compareLists(runsLumisCrab[irun], runsLumisJson[irun], 100, 'crab', 'json' )
+  if len(inJsonNotCrab) > 0:
+    print 'run ' + str(irun) 
+    for ls in inJsonNotCrab:
+      print str(ls) 
 
 # remove LS not in json file 
 #   for ls in inCrabNotJson:
@@ -99,17 +90,13 @@ runsCrab      = runsLumisCrab.keys()
 
 
 # check drifts and create IOV
-for irun,ivalues in allBS.items():
-#   pairs = splitByDrift(allBS[irun], slopes = True, )                         #2015B 3.8T, 2015C 3.8T 2015D 3.8T
-  pairs = splitByDrift(allBS[irun], slopes = False, )                          #2015B 0T, 2015C 0T 2015D 0T
-#   pairs = splitByDrift(allBS[irun], slopes = False, relaxedCriteria = True ) #2015A
-  for p in pairs:
-    print p
-    myrange = set(range(p[0], p[1] + 1)) & set(allBS[irun].keys())
-    bs_list = [allBS[irun][i] for i in sorted(list(myrange))]
-    aveBeamSpot = averageBeamSpot(bs_list)
-    aveBeamSpot.Dump('2015D/bs_weighted_results_' + str(irun) + '_' + str(p[0]) +'_LumiIOV.txt', 'a+')
-  # nb: the LumiIOV file is opened in "append mode"
+#   pairs = splitByDrift(allBS[irun])
+#   for p in pairs:
+#     myrange = set(range(p[0], p[1] + 1)) & set(allBS[irun].keys())
+#     bs_list = [allBS[irun][i] for i in sorted(list(myrange))]
+#     aveBeamSpot = averageBeamSpot(bs_list)
+#     aveBeamSpot.Dump('2015D/bs_weighted_results_' + str(irun) + '_' + str(p[0]) +'_LumiIOV.txt', 'a+')
+    # nb: the LumiIOV file is opened in "append mode"
 
 
 

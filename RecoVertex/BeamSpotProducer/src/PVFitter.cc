@@ -31,14 +31,14 @@ ________________________________________________________________**/
 #include "RecoVertex/BeamSpotProducer/interface/FcnBeamSpotFitPV.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 
-#include "Minuit2/FCNBase.h"
-#include "Minuit2/FunctionMinimum.h"
-#include "Minuit2/MnMigrad.h"
-#include "Minuit2/MnPrint.h" // Defines operator<< for cout << ierr  (Dario)
 #include "TF1.h"
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#include "RecoVertex/BeamSpotProducer/interface/BeamSpotUtils.h"
 
 #include <iostream>    // Dario
+#include <iomanip>     // Dario
 using namespace std ;  // Dario
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // ----------------------------------------------------------------------
 // Useful function:
 // ----------------------------------------------------------------------
@@ -93,16 +93,53 @@ void PVFitter::initialize(const edm::ParameterSet& iConfig,
 
   hPVx = new TH2F("hPVx","PVx vs PVz distribution",200,-maxVtxR_, maxVtxR_, 200, -maxVtxZ_, maxVtxZ_);
   hPVy = new TH2F("hPVy","PVy vs PVz distribution",200,-maxVtxR_, maxVtxR_, 200, -maxVtxZ_, maxVtxZ_);
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//   positionH_   .push_back(new TH1F("positionX","X of vertices" ,500, -1.  , 1.  )) ;
+//   positionH_   .push_back(new TH1F("positionY","Y of vertices" ,500, -1.  , 1.  )) ;
+//   positionH_   .push_back(new TH1F("positionZ","Z of vertices" ,500,-50.  ,50.  )) ;
+//   errorH_      .push_back(new TH1F("errorX"   ,"X error"       ,500,  0.  ,  .1 )) ;
+//   errorH_      .push_back(new TH1F("errorY"   ,"Y error"       ,500,  0.  ,  .1 )) ;
+//   errorH_      .push_back(new TH1F("errorZ"   ,"Z error"       ,500,  0.  , 1.  )) ;
+//   correlationH_.push_back(new TH1F("correlXY" ,"XY correlation",500,  0.  , 1.  )) ;
+//   correlationH_.push_back(new TH1F("correlXZ" ,"XZ correlation",500,  0.  , 1.  )) ;
+//   correlationH_.push_back(new TH1F("correlYZ" ,"YZ correlation",500,  0.  , 1.  )) ;
+//   spacePosXY_  = 	  new TH2F("XvsY"     ,"X versus Y"    ,500,  0.02, 0.11
+//                  	  				       ,500,  0.03, 0.15)  ;
+//   spacePosXZ_  = 	  new TH2F("XvsZ"     ,"X versus Z"    ,500,  0.02, 0.11
+//                  	  				       ,500,-12.0 ,12.0 )  ;
+//   spacePosYZ_  = 	  new TH2F("YvsZ"     ,"Y versus Z"    ,500,  0.03, 0.15
+//                  	  				       ,500,-12.0 ,12.0 )  ; 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 }
 
 PVFitter::~PVFitter() {
-
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//  CO("Eccchecazzo!","") ;
+//  TFile fout("temp.root","recreate") ;
+//  positionH_   [0]->Write() ;
+//  positionH_   [1]->Write() ;
+//  positionH_   [2]->Write() ;
+//  errorH_      [0]->Write() ;
+//  errorH_      [1]->Write() ;
+//  errorH_      [2]->Write() ;
+//  correlationH_[0]->Write() ;
+//  correlationH_[1]->Write() ;
+//  correlationH_[2]->Write() ;
+//  spacePosXY_	 ->Write() ;
+//  spacePosXZ_	 ->Write() ;
+//  spacePosYZ_ 	 ->Write() ;
+//  fout.Close() ;
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 }
 
 
 void PVFitter::readEvent(const edm::Event& iEvent)
 {
 
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  hPVx->Reset();
+  hPVy->Reset();
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //   frun = iEvent.id().run();
 //   const edm::TimeValue_t ftimestamp = iEvent.time().value();
 //   const std::time_t ftmptime = ftimestamp >> 32;
@@ -336,7 +373,8 @@ bool PVFitter::runFitter() {
 
     using namespace ROOT::Minuit2;
     edm::LogInfo("PVFitter") << " Number of PVs collected for PVFitter: " << pvStore_.size() << std::endl;
-
+    CO("pvStore_.size()",pvStore_.size() ) ;
+    CO("minNrVertices_" ,minNrVertices_  ) ;
     if ( pvStore_.size() <= minNrVertices_ ) return false;
 
     //bool fit_ok = false;
@@ -356,19 +394,25 @@ bool PVFitter::runFitter() {
     TF1 *gausy  = h1PVy->GetFunction("localGaus");
     TF1 *gausz  = h1PVz->GetFunction("localGaus");
 
-    fwidthX     = gausx->GetParameter(2);
-    fwidthY     = gausy->GetParameter(2);
-    fwidthZ     = gausz->GetParameter(2);
-    fwidthXerr  = gausx->GetParError(2);
-    fwidthYerr  = gausy->GetParError(2);
-    fwidthZerr  = gausz->GetParError(2);
+    fwidthX     = gausx->GetParameter(2); // First estimate of beam width X size
+    fwidthY     = gausy->GetParameter(2); // First estimate of beam width Y size
+    fwidthZ     = gausz->GetParameter(2); // First estimate of beam width Z size
+    fwidthXerr  = gausx->GetParError (2);
+    fwidthYerr  = gausy->GetParError (2);
+    fwidthZerr  = gausz->GetParError (2);
     
-    double estX = gausx->GetParameter(1);
-    double estY = gausy->GetParameter(1); 
-    double estZ = gausz->GetParameter(1);
-    double errX = fwidthX*3.;
-    double errY = fwidthY*3.; 
-    double errZ = fwidthZ*3.;
+    double estXpos = gausx->GetParameter(1); // First estimate of X beamspot position
+    double estYpos = gausy->GetParameter(1); // First estimate of Y beamspot position 
+    double estZpos = gausz->GetParameter(1); // First estimate of Z beamspot position
+    double estXerr = gausx->GetParError (1); // First estimate of X beamspot position error
+    double estYerr = gausy->GetParError (1); // First estimate of Y beamspot position error
+    double estZerr = gausz->GetParError (1); // First estimate of Z beamspot position error
+    double estXWid = gausx->GetParameter(2); // First estimate of beam width X size 
+    double estYWid = gausy->GetParameter(2); // First estimate of beam width Y size 
+    double estZWid = gausz->GetParameter(2); // First estimate of beam width Z size 
+    double estXWer = gausx->GetParError (2); // First estimate of beam width X size error 
+    double estYWer = gausy->GetParError (2); // First estimate of beam width Y size error
+    double estZWer = gausz->GetParError (2); // First estimate of beam width Z size error
 
     if ( ! do3DFit_ ) {
 
@@ -393,80 +437,136 @@ bool PVFitter::runFitter() {
       //
       // LL function and fitter
       //
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//      CO("++++++++++++++++++++++++++++++++++++++++++++++++++++++","") ;
+//       double meanPosX = 0, meanPosY = 0, meanPosZ = 0;
+//       double meanErrX = 0, meanErrY = 0, meanErrZ = 0;
+//       for(std::vector<BeamSpotFitPVData>::iterator it=pvStore_.begin(); it!=pvStore_.end(); ++it)
+//       {
+//        positionH_   [0]->Fill((*it).position[0]) ; meanPosX += (*it).position[0] ;
+//        positionH_   [1]->Fill((*it).position[1]) ; meanPosY += (*it).position[1] ;
+//        positionH_   [2]->Fill((*it).position[2]) ; meanPosZ += (*it).position[2] ;
+//        errorH_      [0]->Fill((*it).posError[0]) ; meanErrX += (*it).posError[0] ;
+//        errorH_      [1]->Fill((*it).posError[1]) ; meanErrY += (*it).posError[1] ;
+//        errorH_      [2]->Fill((*it).posError[2]) ; meanErrZ += (*it).posError[2] ;
+//        correlationH_[0]->Fill((*it).posCorr [0]) ;
+//        correlationH_[1]->Fill((*it).posCorr [1]) ;
+//        correlationH_[2]->Fill((*it).posCorr [2]) ;
+//        spacePosXY_     ->Fill((*it).position[0],(*it).position[1]) ;  
+//        spacePosXZ_     ->Fill((*it).position[0],(*it).position[2]) ;  
+//        spacePosYZ_     ->Fill((*it).position[1],(*it).position[2]) ;  
+//       }
+//       meanPosX /= (double)pvStore_.size() ;
+//       meanPosY /= (double)pvStore_.size() ;
+//       meanPosZ /= (double)pvStore_.size() ;
+//       meanErrX /= (double)pvStore_.size() ;
+//       meanErrY /= (double)pvStore_.size() ;
+//       meanErrZ /= (double)pvStore_.size() ;
+//       CO("estXpos",estXpos) ; 
+//       CO("estYpos",estYpos) ; 
+//       CO("estZpos",estZpos) ;  
+//       CO("estXerr",estXerr) ;  
+//       CO("estYerr",estYerr) ;  
+//       CO("estZerr",estZerr) ;  
+//       CO("estXWid",estXWid) ;  
+//       CO("estYWid",estYWid) ;  
+//       CO("estZWid",estZWid) ;  
+//       CO("estXWer",estXWer) ;  
+//       CO("estYWer",estYWer) ;  
+//       CO("estZWer",estZWer) ;  
+//      CO("++++++++++++++++++++++++++++++++++++++++++++++++++++++","") ;
+      maxTries_  = 1000 ; 
+      tolerance_ = 1    ;
+      MnStrategy strategy(2) ;
+      fixRelMap_.clear() ;
+      errorScale_ = 1.0 ;
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       FcnBeamSpotFitPV* fcn = new FcnBeamSpotFitPV(pvStore_);
       //
       // fit parameters: positions, widths, x-y correlations, tilts in xz and yz
       //
+      debug_ = true ; // debugging
       MnUserParameters upar;
-      upar.Add("x"     , estX       , errX	     , -10.	    , 10.	    ); // 0
-      upar.Add("y"     , estY       , errY	     , -10.	    , 10.	    ); // 1
-      upar.Add("z"     , estZ       , errZ	     , -30.	    , 30.	    ); // 2
-      upar.Add("ex"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 3
-      upar.Add("corrxy", 0.   	    , 0.02  	     , -1.  	    , 1.  	    ); // 4
-      upar.Add("ey"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 5
-      upar.Add("dxdz"  , 0.   	    , 0.0002	     , -0.1 	    , 0.1 	    ); // 6
-      upar.Add("dydz"  , 0.   	    , 0.0002	     , -0.1 	    , 0.1 	    ); // 7
-      upar.Add("ez"    , 1.   	    , 0.1   	     , 0.   	    , 30. 	    ); // 8
-      upar.Add("scale" , errorScale_, errorScale_/10.,errorScale_/2., errorScale_*2.); // 9  
+      upar.Add("x"     , estXpos    , estXerr	     , -2. 	     , 2.	     ); // 0
+      upar.Add("y"     , estYpos    , estYerr	     , -2. 	     , 2.	     ); // 1
+      upar.Add("z"     , estZpos    , estZerr	     , -5. 	     , 5.	     ); // 2
+      upar.Add("ex"    , estXWid    , estXWer        ,  0.	     , 0.1	     ); // 3
+      upar.Add("corrxy", 0.25       , 0.5  	     ,  0.	     , 1.	     ); // 4
+      upar.Add("ey"    , estYWid    , estYWer        ,  0.	     , 0.1	     ); // 5
+      upar.Add("dxdz"  , 0.001      , 0.0002	     , -0.1 	     , 0.1 	     ); // 6
+      upar.Add("dydz"  , 0.001      , 0.0002	     , -0.1 	     , 0.1 	     ); // 7
+      upar.Add("ez"    , estZWid    , estZWer        , 0.   	     , 20	     ); // 8
+      upar.Add("scale" , errorScale_, errorScale_/10.,-errorScale_*2., errorScale_*2.); // 9  
       MnMigrad migrad(*fcn, upar);
-      //
-      // first iteration without correlations
-      //
-      migrad.Fix(4);
-      migrad.Fix(6);
-      migrad.Fix(7);
-      migrad.Fix(9);
-      FunctionMinimum ierr = migrad(0,1.);
-      if ( !ierr.IsValid() ) {
-          edm::LogWarning("PVFitter") << "3D beam spot fit failed in 1st iteration" << std::endl;
-          return false;
-      }
-      //
-      // refit with harder selection on vertices
-      //
 
-      vector<double> results ;
-      vector<double> errors  ;
-      results = ierr.UserParameters().Params() ;					       \
-      errors  = ierr.UserParameters().Errors() ;					       \
+      int iteration = 1 ;
+      // Free position, fix the rest
+      fixRelMap_.insert(pair<string,int>("Fix",0)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",1)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",2)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",3)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",4)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",5)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",6)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",7)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",8)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",9)) ;
+      if( ! guideTheFit(migrad,iteration++)) return false ;
+
+      // Free position and width, fix the rest
+      fixRelMap_.insert(pair<string,int>("Rel",0)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",1)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",2)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",3)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",4)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",5)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",6)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",7)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",8)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",9)) ;
+      if( ! guideTheFit(migrad,iteration++)) return false ; 
+
+      // Free width, slopes and correlation, fix the rest
+      fixRelMap_.insert(pair<string,int>("Rel",0)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",1)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",2)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",3)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",4)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",5)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",6)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",7)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",8)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",9)) ;
+      if( ! guideTheFit(migrad,iteration++)) return false ; 
+
+      // Free width and slopes, fix the rest
+//       fixRelMap_.insert(pair<string,int>("Fix",0)) ;
+//       fixRelMap_.insert(pair<string,int>("Fix",1)) ;
+//       fixRelMap_.insert(pair<string,int>("Fix",2)) ;
+//       fixRelMap_.insert(pair<string,int>("Rel",3)) ;
+//       fixRelMap_.insert(pair<string,int>("Fix",4)) ;
+//       fixRelMap_.insert(pair<string,int>("Rel",5)) ;
+//       fixRelMap_.insert(pair<string,int>("Rel",6)) ;
+//       fixRelMap_.insert(pair<string,int>("Rel",7)) ;
+//       fixRelMap_.insert(pair<string,int>("Rel",8)) ;
+//       fixRelMap_.insert(pair<string,int>("Fix",9)) ;
+//       if( ! guideTheFit(migrad,iteration++)) return false ; 
+/*
+      fixRelMap_.insert(pair<string,int>("Fix",6)) ;
+      fixRelMap_.insert(pair<string,int>("Fix",7)) ;
+      fixRelMap_.insert(pair<string,int>("Rel",4)) ;
+      if( ! guideTheFit(migrad,4)) return false ; 
+*/
+      for(int par=0; par<8; ++par)
+       fixRelMap_.insert(pair<string,int>("Rel",par)) ;
+      if( ! guideTheFit(migrad,iteration++)) return false ; 
       
-      fcn->setLimits(results[0]-sigmaCut_*results[3],
-                     results[0]+sigmaCut_*results[3],
-                     results[1]-sigmaCut_*results[5],
-                     results[1]+sigmaCut_*results[5],
-                     results[2]-sigmaCut_*results[8],
-                     results[2]+sigmaCut_*results[8]);
-      ierr = migrad(0,1.);
-      if ( !ierr.IsValid() ) {
-          edm::LogWarning("PVFitter") << "3D beam spot fit failed in 2nd iteration" << std::endl;
-          return false;
-      }
-      //
-      // refit with correlations
-      //
-      migrad.Release(4);
-      migrad.Release(6);
-      migrad.Release(7);
-      ierr = migrad(0,1.);
-      if ( !ierr.IsValid() ) {
-          edm::LogWarning("PVFitter") << "3D beam spot fit failed in 3rd iteration" << std::endl;
-          return false;
-      }
-      // refit with floating scale factor
-      //   minuitx.ReleaseParameter(9);
-      //   minuitx.Minimize();
-
-      //minuitx.PrintResults(0,0);
-
-      results = ierr.UserParameters().Params() ;					       \
-      errors  = ierr.UserParameters().Errors() ;					       \
-
-      fwidthX = results[3];
-      fwidthY = results[5];
-      fwidthZ = results[8];
-      fwidthXerr = errors[3];
-      fwidthYerr = errors[5];
-      fwidthZerr = errors[8];
+      fwidthX    = results_[3];
+      fwidthY    = results_[5];
+      fwidthZ    = results_[8];
+      fwidthXerr = errors_ [3];
+      fwidthYerr = errors_ [5];
+      fwidthZerr = errors_ [8];
 
       // check errors on widths and sigmaZ for nan
       if ( edm::isNotFinite(fwidthXerr) || edm::isNotFinite(fwidthYerr) || edm::isNotFinite(fwidthZerr) ) {
@@ -476,17 +576,17 @@ bool PVFitter::runFitter() {
 
       reco::BeamSpot::CovarianceMatrix matrix;
       // need to get the full cov matrix
-      matrix(0,0) = pow( errors[0], 2);
-      matrix(1,1) = pow( errors[1], 2);
-      matrix(2,2) = pow( errors[2], 2);
+      matrix(0,0) = pow( errors_[0], 2);
+      matrix(1,1) = pow( errors_[1], 2);
+      matrix(2,2) = pow( errors_[2], 2);
       matrix(3,3) = fwidthZerr * fwidthZerr;
       matrix(6,6) = fwidthXerr * fwidthXerr;
 
-      fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(results[0],
-                                                        results[1],
-                                                        results[2] ),
+      fbeamspot = reco::BeamSpot( reco::BeamSpot::Point(results_[0],
+                                                        results_[1],
+                                                        results_[2]),
                                   fwidthZ,
-                                  results[6], results[7],
+                                  results_[6], results_[7],
                                   fwidthX,
                                   matrix );
       fbeamspot.setBeamWidthX( fwidthX );
@@ -592,3 +692,61 @@ PVFitter::pvQuality (const BeamSpotFitPVData& pv) const
   double ey = pv.posError[1];
   return ex*ex*ey*ey*(1-pv.posCorr[0]*pv.posCorr[0]);
 }
+  
+  
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+bool PVFitter::guideTheFit(ROOT::Minuit2::MnMigrad& migrad, int num) 
+{
+
+ for(map<string,int>::iterator it =fixRelMap_.begin(); it!=fixRelMap_.end(); ++it)
+ {
+  if( it->first == "Fix" )
+   migrad.Fix    (it->second); 
+  else
+   migrad.Release(it->second); 
+  CO(it->first,it->second) ;
+ }
+ 
+ ROOT::Minuit2::FunctionMinimum ierr = migrad(maxTries_,tolerance_);
+ results_ = ierr.UserParameters().Params() ;						  
+ errors_  = ierr.UserParameters().Errors() ;
+ 
+ fixRelMap_.clear() ;
+ 						  
+ if( debug_ ) 
+ {
+  cout << "======== Iteration " << num << " =============" << endl ;
+  cout << ierr << endl ;
+ }
+ 
+ if ( !ierr.IsValid() ) 
+ {
+     CO("3D beam spot fit failed in iteration",num) ;
+     edm::LogWarning("PVFitter") << "3D beam spot fit failed in iteration " << num << std::endl;
+     return false;
+ }
+ for(unsigned int i=0; i<results_.size(); ++i)
+ {
+  if( edm::isNotFinite(results_[i]) )
+  {
+     CO("3D beam spot fit succeed in iteration",num) ;
+     CO("but parameter is nan",i) ;
+     edm::LogWarning("PVFitter") << "3D beam spot fit succeed in iteration " << num 
+                                 << " but parameter " << i << " is nan"
+                                 << std::endl;
+     return false;
+  }
+  if( edm::isNotFinite(errors_[i]) )
+  {
+     CO("3D beam spot fit succeed in iteration",num) ;
+     CO("but parameter error is nan",i) ;
+     edm::LogWarning("PVFitter") << "3D beam spot fit succeed in iteration " << num 
+                                 << " but parameter error " << i << " is nan"
+                                 << std::endl;
+     return false;
+  }
+ }
+ 
+ return true ;
+}
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

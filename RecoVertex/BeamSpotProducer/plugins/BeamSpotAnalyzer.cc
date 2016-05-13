@@ -102,6 +102,7 @@ BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
 
   //LogDebug("BeamSpotAnalyzer") <<
   std::cout <<
+    "%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_%_\n" <<
     "for lumis "<< beginLumiOfBSFit_ << " - " << endLumiOfBSFit_ << std::endl <<
     "number of selected tracks = " << theBeamFitter->getNTracks() << std::endl;
   std::cout << "number of selected PVs = " << theBeamFitter->getNPVs() << std::endl;
@@ -151,6 +152,7 @@ BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
 
     if (resetFitNLumi_ > 0 && countLumi_%resetFitNLumi_ == 0) {
       std::vector<BSTrkParameters> theBSvector = theBeamFitter->getBSvector();
+      std::cout << "===========================================================" << std::endl;
       std::cout << "Total number of tracks accumulated = " << theBSvector.size() << std::endl;
       std::cout << "Reset track collection for beam fit" <<std::endl;
       theBeamFitter->resetTrkVector();

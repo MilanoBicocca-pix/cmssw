@@ -2,11 +2,8 @@
    class:   BeamFitter.cc
    package: RecoVertex/BeamSpotProducer
 
-
-
    author: Francisco Yumiceva, Fermilab (yumiceva@fnal.gov)
            Geng-Yuan Jeng, UC Riverside (Geng-Yuan.Jeng@cern.ch)
-
 
 ________________________________________________________________**/
 
@@ -23,6 +20,7 @@ ________________________________________________________________**/
 #include "DataFormats/VertexReco/interface/Vertex.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "RecoVertex/BeamSpotProducer/interface/BeamSpotUtils.h"
 
 // Update the string representations of the time
 void BeamFitter::updateBTime() {
@@ -116,6 +114,11 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
     ftree_->Branch("pvx", &fpvx, "fpvx/D");
     ftree_->Branch("pvy", &fpvy, "fpvy/D");
     ftree_->Branch("pvz", &fpvz, "fpvz/D");
+//+++++++++++++++++++++++++++++++++++++
+    ftree_->Branch("pvxe", &fpvxe, "fpvxe/D");
+    ftree_->Branch("pvye", &fpvye, "fpvye/D");
+    ftree_->Branch("pvze", &fpvze, "fpvze/D");
+//+++++++++++++++++++++++++++++++++++++
   }
   if (saveBeamFit_){
     ftreeFit_ = new TTree("fitResults","fitResults");
@@ -151,14 +154,17 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   frunFit = fbeginLumiOfFit = fendLumiOfFit = -1;
   fquality = falgo = true;
   fpvValid = true;
-  fpvx = fpvy = fpvz = 0;
+  fpvx  = fpvy  = fpvz  = 0;
+//+++++++++++++++++++++++++++++++++++++
+  fpvxe = fpvye = fpvze = 0.0f;
+//+++++++++++++++++++++++++++++++++++++
   fitted_ = false;
   resetRefTime();
 
   //debug histograms
-  h1ntrks = new TH1F("h1ntrks","number of tracks per event",50,0,50);
-  h1vz_event = new TH1F("h1vz_event","track Vz", 50, -30, 30 );
-  h1cutFlow = new TH1F("h1cutFlow","Cut flow table of track selection", 9, 0, 9);
+  h1ntrks    = new TH1F("h1ntrks","number of tracks per event",1500,0,1500);
+  h1vz_event = new TH1F("h1vz_event","track Vz",               1000, -10, 10 );
+  h1cutFlow  = new TH1F("h1cutFlow","Cut flow table of track selection", 9, 0, 9);
   h1cutFlow->GetXaxis()->SetBinLabel(1,"No cut");
   h1cutFlow->GetXaxis()->SetBinLabel(2,"Traker hits");
   h1cutFlow->GetXaxis()->SetBinLabel(3,"Pixel hits");
@@ -240,6 +246,7 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
   edm::View<reco::Vertex> pv;
   if ( iEvent.getByToken(vertexToken_, PVCollection ) ) {
       pv = *PVCollection;
+//-->      CO("pv.size(): ", pv.size()) ;
       hasPVs = true;
   }
   //------
@@ -252,9 +259,11 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
   //-------
 
   const reco::TrackCollection *tracks = TrackCollection.product();
+//-->  CO("TrackCollection.size(): ", tracks->size()) ;
 
   double eventZ = 0;
   double averageZ = 0;
+//  fBSvector.clear();
 
   for (reco::TrackCollection::const_iterator track = tracks->begin();
           track != tracks->end(); ++track){
@@ -331,7 +340,13 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
             if (! pv[ipv].isFake() ) fpvValid = true;
 
-            if ( ipv==0 && !pv[0].isFake() ) { fpvx = pv[0].x(); fpvy = pv[0].y(); fpvz = pv[0].z(); } // fix this later
+            if ( ipv==0 && !pv[0].isFake() ) 
+	    { 
+	      fpvx = pv[0].x(); fpvy = pv[0].y(); fpvz = pv[0].z(); 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	      fpvxe = pv[0].xError(); fpvye = pv[0].yError(); fpvze = pv[0].zError(); 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	    } // fix this later
 
 
         }
@@ -344,15 +359,15 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
     countPass[0] = ftotal_tracks;
     // Track selection
-    if (fnTotLayerMeas >= trk_MinNTotLayers_) { countPass[1] += 1;
+    if (fnTotLayerMeas >= trk_MinNTotLayers_)     { countPass[1] += 1;
       if (fnPixelLayerMeas >= trk_MinNPixLayers_) { countPass[2] += 1;
-	if (fnormchi2 < trk_MaxNormChi2_) { countPass[3] += 1;
-	  if (falgo) {countPass[4] += 1;
-	    if (fquality) { countPass[5] += 1;
-	      if (std::abs( fd0 ) < trk_MaxIP_) { countPass[6] += 1;
-		if (std::abs( fz0 ) < trk_MaxZ_){ countPass[7] += 1;
+	if (fnormchi2 < trk_MaxNormChi2_)         { countPass[3] += 1;
+	  if (falgo)                              { countPass[4] += 1;
+	    if (fquality)                         { countPass[5] += 1;
+	      if (std::abs( fd0 ) < trk_MaxIP_)   { countPass[6] += 1;
+		if (std::abs( fz0 ) < trk_MaxZ_)  { countPass[7] += 1;
 		  if (fpt > trk_MinpT_) {
-		    countPass[8] += 1;
+		                                    countPass[8] += 1;
 		    if (std::abs( feta ) < trk_MaxEta_
 			//&& fpvValid
 			) {
@@ -385,10 +400,14 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
   }
 
+//  CO("fBSvector.size():", fBSvector.size()) ;
   h1ntrks->Fill( fBSvector.size() );
   h1vz_event->Fill( eventZ/(float)(fBSvector.size() ) ) ;
   for (unsigned int i=0; i < sizeof(countPass)/sizeof(countPass[0]); i++)
+  {
+//    CO(i,countPass[i]) ;
     h1cutFlow->SetBinContent(i+1,countPass[i]);
+  }
 
   MyPVFitter->readEvent(iEvent);
 
@@ -420,7 +439,6 @@ bool BeamFitter::runPVandTrkFitter() {
       }
       return pv_fit_ok;
     }
-
     if ( MyPVFitter->runFitter() ) {
 
         bspotPV = MyPVFitter->getBeamSpot();
