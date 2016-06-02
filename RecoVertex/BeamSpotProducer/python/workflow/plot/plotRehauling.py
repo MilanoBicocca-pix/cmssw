@@ -36,8 +36,9 @@ ROOT.gStyle.SetLegendFont(42)
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_2015C.root')
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_2015D.root')
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging.root')
-file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_no_slopes.root')
+# file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_no_slopes.root')
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_no_slopes_3p8T.root')
+file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/eoy0T/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/histos_post_merging_no_slopes.root')
 
 file.cd()
 
@@ -117,6 +118,11 @@ def saveHisto(var):
     histo3p8T .SetFillColor(ROOT.kBlack ) #   )
     histo2p8T .SetFillColor(ROOT.kGreen ) #+ 2)
     histoOther.SetFillColor(ROOT.kBlue  ) #+ 2)
+
+    # for 0T
+    histoOther.SetMarkerColor(ROOT.kRed  ) #+ 2)
+    histoOther.SetFillColor(ROOT.kRed  ) #+ 2)
+
     
     drawMyStyle(histo0T                     )
     drawMyStyle(histo3p8T , options = 'SAME')
@@ -133,7 +139,7 @@ def saveHisto(var):
     leg.AddEntry(histo0T   , '0 T runs'      , 'F')
     leg.AddEntry(histo2p8T , '2.8 T runs'    , 'F')
     leg.AddEntry(histoOther, 'magnet ramping', 'F')
-    leg.Draw('SAME')
+#     leg.Draw('SAME')
 
 
 #     ROOT.gPad.Print('BS_plot_246908_250932_%s.pdf' %histo.GetName())
@@ -143,7 +149,8 @@ def saveHisto(var):
 #     ROOT.gPad.Print('BS_plot_run2015C_254227_256464_%s.pdf' %histo.GetName())
 #     ROOT.gPad.Print('BS_plot_run2015D_256630_260627_%s.pdf' %histo.GetName())
 #     ROOT.gPad.Print('BS_plot_run2015_251027_260627_%s_3p8T.pdf' %histo.GetName())
-    ROOT.gPad.Print('BS_plot_run2015_251027_260627_%s.pdf' %histo.GetName())
+#     ROOT.gPad.Print('BS_plot_run2015_251027_260627_%s.pdf' %histo.GetName())
+    ROOT.gPad.Print('BS_plot_run0T_2015_251027_260627_%s.pdf' %histo.GetName())
 
 
 # PlotStyle.initStyle()

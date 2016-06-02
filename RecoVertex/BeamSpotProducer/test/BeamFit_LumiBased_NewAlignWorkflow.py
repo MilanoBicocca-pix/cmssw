@@ -28,7 +28,16 @@ process.load("Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 process.load('Configuration.Geometry.GeometryRecoDB_cff')
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
 # process.GlobalTag.globaltag = '74X_dataRun2_Candidate_2015_10_06_09_25_21'
-process.GlobalTag.globaltag = '74X_dataRun2_Candidate_2015_11_18_10_38_33'
+# process.GlobalTag.globaltag = '74X_dataRun2_Candidate_2015_11_18_10_38_33'
+process.GlobalTag.globaltag = '74X_dataRun2_EOY_Candidate_v0' # 2015 EOY 0T
+process.GlobalTag.toGet = cms.VPSet(
+    cms.PSet(record = cms.string("TrackerAlignmentRcd"),
+             tag = cms.string("TrackerAlignment_v14_0T_offline"),
+             connect = cms.untracked.string("frontier://FrontierPrep/CMS_CONDITIONS")
+            )
+)
+
+
 
 ## Track refit
 process.load("RecoTracker.TrackProducer.TrackRefitters_cff")

@@ -154,50 +154,107 @@ class BeamSpot(object):
         EmittanceX 0.0
         EmittanceY 0.0
         BetaStar 0.0
+        
+        
+        or -alternatively- it reads this format, which is what you get
+        from what's dumped from the database
+        
+        
+         for runs: 272760 - 272760
+        -----------------------------------------------------
+                      Beam Spot Data
+        
+         Beam type    = 2
+               X0     = 0.0669316 +/- 0.000111673 [cm]
+               Y0     = 0.0914736 +/- 0.00011168 [cm]
+               Z0     = -0.188811 +/- 0.508985 [cm]
+         Sigma Z0     = 2.48107 +/- 0.523828 [cm]
+         dxdz         = 7.98489e-05 +/- 2.74296e-05 [radians]
+         dydz         = 7.32328e-06 +/- 2.73298e-05 [radians]
+         Beam Width X = 3.13566e-06 +/- 0.0216995 [cm]
+         Beam Width Y = 4.14337e-06 +/- 0.0216995 [cm]
+         Emittance X  = 0 [cm]
+         Emittance Y  = 0 [cm]
+         Beta star    = 0 [cm]
         '''
-        self.Run           = int  ( payload[ 0].split()[1] )
-        self.IOVBeginTime  = int  ( payload[ 1].split('GMT')[1] )
-        self.IOVEndTime    = int  ( payload[ 2].split('GMT')[1] )
-        self.IOVfirst      = int  ( payload[ 3].split()[1] )
-        self.IOVlast       = int  ( payload[ 3].split()[3] )
-        self.Type          = int  ( payload[ 4].split()[1] )
-
-        self.X             = float( payload[ 5].split()[1] )
-        self.Y             = float( payload[ 6].split()[1] )
-        self.Z             = float( payload[ 7].split()[1] )
-
-        self.sigmaZ        = float( payload[ 8].split()[1] )
-        self.dxdz          = float( payload[ 9].split()[1] )
-        self.dydz          = float( payload[10].split()[1] )
-
-        self.beamWidthX    = float( payload[11].split()[1] )
-        self.beamWidthY    = float( payload[12].split()[1] )
         
-        # covariance matrix defined here
-        # https://github.com/MilanoBicocca-pix/cmssw/blob/CMSSW_7_5_X_beamspot_workflow_riccardo/RecoVertex/BeamSpotProducer/src/PVFitter.cc#L306
-        # diagonal terms 
-        self.Xerr          = sqrt( float(payload[13].split()[1]) )
-        self.Yerr          = sqrt( float(payload[14].split()[2]) )
-        self.Zerr          = sqrt( float(payload[15].split()[3]) )
-        self.sigmaZerr     = sqrt( float(payload[16].split()[4]) )
-        self.dxdzerr       = sqrt( float(payload[17].split()[5]) )
-        self.dydzerr       = sqrt( float(payload[18].split()[6]) )
-        self.beamWidthXerr = sqrt( float(payload[19].split()[7]) )
-        # self.beamWidthYerr = float( payload[16].split()[1] ) # not in cov matrix!
-        # RIC: we should save it in the covariance matrix!
-        #      workaround, for now
-        self.beamWidthYerr = self.beamWidthXerr
+        if any(['Runnumber' in i for i in  payload]):
         
-        # off diagonal terms
-        self.XYerr         = float( payload[13].split()[2] )
-        self.YXerr         = float( payload[14].split()[1] )
-        self.dxdzdydzerr   = float( payload[17].split()[6] )
-        self.dydzdxdzerr   = float( payload[18].split()[5] )
-
-        self.EmittanceX    = float( payload[20].split()[1] )
-        self.EmittanceY    = float( payload[21].split()[1] )
-
-        self.betastar      = float( payload[22].split()[1] )    
+            self.Run           = int  ( payload[ 0].split()[1] )
+            self.IOVBeginTime  = int  ( payload[ 1].split('GMT')[1] )
+            self.IOVEndTime    = int  ( payload[ 2].split('GMT')[1] )
+            self.IOVfirst      = int  ( payload[ 3].split()[1] )
+            self.IOVlast       = int  ( payload[ 3].split()[3] )
+            self.Type          = int  ( payload[ 4].split()[1] )
+    
+            self.X             = float( payload[ 5].split()[1] )
+            self.Y             = float( payload[ 6].split()[1] )
+            self.Z             = float( payload[ 7].split()[1] )
+    
+            self.sigmaZ        = float( payload[ 8].split()[1] )
+            self.dxdz          = float( payload[ 9].split()[1] )
+            self.dydz          = float( payload[10].split()[1] )
+    
+            self.beamWidthX    = float( payload[11].split()[1] )
+            self.beamWidthY    = float( payload[12].split()[1] )
+            
+            # covariance matrix defined here
+            # https://github.com/MilanoBicocca-pix/cmssw/blob/CMSSW_7_5_X_beamspot_workflow_riccardo/RecoVertex/BeamSpotProducer/src/PVFitter.cc#L306
+            # diagonal terms 
+            self.Xerr          = sqrt( float(payload[13].split()[1]) )
+            self.Yerr          = sqrt( float(payload[14].split()[2]) )
+            self.Zerr          = sqrt( float(payload[15].split()[3]) )
+            self.sigmaZerr     = sqrt( float(payload[16].split()[4]) )
+            self.dxdzerr       = sqrt( float(payload[17].split()[5]) )
+            self.dydzerr       = sqrt( float(payload[18].split()[6]) )
+            self.beamWidthXerr = sqrt( float(payload[19].split()[7]) )
+            # self.beamWidthYerr = float( payload[16].split()[1] ) # not in cov matrix!
+            # RIC: we should save it in the covariance matrix!
+            #      workaround, for now
+            self.beamWidthYerr = self.beamWidthXerr
+            
+            # off diagonal terms
+            self.XYerr         = float( payload[13].split()[2] )
+            self.YXerr         = float( payload[14].split()[1] )
+            self.dxdzdydzerr   = float( payload[17].split()[6] )
+            self.dydzdxdzerr   = float( payload[18].split()[5] )
+    
+            self.EmittanceX    = float( payload[20].split()[1] )
+            self.EmittanceY    = float( payload[21].split()[1] )
+    
+            self.betastar      = float( payload[22].split()[1] )    
+    
+        if any(['Beam Spot Data' in i for i in  payload]):
+            
+            self.Run           = int  ( payload[ 1].split()[-1]                              )
+            self.IOVfirst      = int  ( payload[ 0].split('LumiSection')[1].split()[0]       )
+            self.IOVlast       = self.IOVfirst
+            self.Type          = int  ( payload[ 5].split('=')[1]                            )
+    
+            self.X             = float( payload[ 6].split('=')[1].split('+/-')[0]            )
+            self.Y             = float( payload[ 7].split('=')[1].split('+/-')[0]            )
+            self.Z             = float( payload[ 8].split('=')[1].split('+/-')[0]            )
+               
+            self.sigmaZ        = float( payload[ 9].split('=')[1].split('+/-')[0]            )
+            self.dxdz          = float( payload[10].split('=')[1].split('+/-')[0]            )
+            self.dydz          = float( payload[11].split('=')[1].split('+/-')[0]            )
+               
+            self.beamWidthX    = float( payload[12].split('=')[1].split('+/-')[0]            )
+            self.beamWidthY    = float( payload[13].split('=')[1].split('+/-')[0]            )
+            
+            self.Xerr          = float( payload[ 6].split('=')[1].split('+/-')[1].split()[0] )
+            self.Yerr          = float( payload[ 7].split('=')[1].split('+/-')[1].split()[0] )
+            self.Zerr          = float( payload[ 8].split('=')[1].split('+/-')[1].split()[0] )
+            self.sigmaZerr     = float( payload[ 9].split('=')[1].split('+/-')[1].split()[0] )
+            
+            self.dxdzerr       = float( payload[10].split('=')[1].split('+/-')[1].split()[0] )
+            self.dydzerr       = float( payload[11].split('=')[1].split('+/-')[1].split()[0] )
+            
+            self.beamWidthXerr = float( payload[12].split('=')[1].split('+/-')[1].split()[0] )
+            self.beamWidthYerr = float( payload[13].split('=')[1].split('+/-')[1].split()[0] )
+                
+            self.EmittanceX    = float( payload[14].split('=')[1].split()[0]                 )
+            self.EmittanceY    = float( payload[15].split('=')[1].split()[0]                 )
 
     def Dump(self, file, mode = 'a'):
         '''
@@ -283,7 +340,7 @@ class BeamSpot(object):
         
         f.write(towrite)
 
-    def Print(self):
+    def __str__(self):
         '''
         Nice printer.
         '''
@@ -303,7 +360,7 @@ class BeamSpot(object):
                           self.sigmaZ    , self.sigmaZerr    ,
                           self.dxdz      , self.dxdzerr      ,
                           self.dydz      , self.dydzerr      )
-        print toWrite
+        return toWrite
 
  
     

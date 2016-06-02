@@ -49,6 +49,11 @@ class Payload(object):
                 singleFits.append([self.lines[j].rstrip() \
                                    for j in range(i-3, i+20)])
         
+            # make it read .dat files as dumped from the database as well
+            if 'Beam Spot Data' in line:
+                singleFits.append([self.lines[j].rstrip() \
+                                   for j in range(i-3, i+13)])
+
         return singleFits    
 
     def fromTextToBS(self, iov = False):
