@@ -1,8 +1,24 @@
 import ROOT
 from PlotStyle import PlotStyle
 from CMSStyle import CMS_lumi
-from RecoVertex.BeamSpotProducer.workflow.utils.fillRunDict import labelByTime, splitByMagneticField
+from RecoVertex.BeamSpotProducer.workflow.utils.fillRunDict import labelByTime, labelByFill, splitByMagneticField
 
+# 2015A ----------------------------------------------
+#  ===> run: 247642  ls: 75
+#  ===> run: 250932  ls: 135
+# 
+# 2015B ----------------------------------------------
+#  ===> run: 251027  ls: 1
+#  ===> run: 252126  ls: 100
+# 
+# 2015C ----------------------------------------------
+#  ===> run: 254227  ls: 20
+#  ===> run: 256464  ls: 1609
+# 
+# 2015D ----------------------------------------------
+#  ===> run: 256630  ls: 6
+#  ===> run: 260627  ls: 1818
+ 
 ROOT.gROOT.SetBatch(False)
 ROOT.gROOT.Reset()
 ROOT.gROOT.SetStyle('Plain')
@@ -17,7 +33,8 @@ ROOT.gStyle.SetTitleFontSize(0.05)
 ROOT.gStyle.SetTitleSize(0.06, 'XYZ')
 ROOT.gStyle.SetLabelSize(0.15, 'Y')
 ROOT.gStyle.SetLabelSize(0.35, 'X')
-ROOT.gStyle.SetNdivisions(510, 'XYZ')
+ROOT.gStyle.SetNdivisions(510, 'YZ')
+ROOT.gStyle.SetNdivisions(10, 'X')
 # ROOT.gStyle.SetPadGridX(True)
 ROOT.gStyle.SetPadGridY(True)
 # ROOT.gStyle.SetGridWidth(1)
@@ -38,7 +55,13 @@ ROOT.gStyle.SetLegendFont(42)
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging.root')
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_no_slopes.root')
 # file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/26nov/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/eoyReReco/histos_post_merging_no_slopes_3p8T.root')
-file = ROOT.TFile.Open('/afs/cern.ch/work/m/manzoni/beamspot/eoy0T/CMSSW_7_4_15_patch1/src/RecoVertex/BeamSpotProducer/test/histos_post_merging_no_slopes.root')
+# file = ROOT.TFile.Open('histos_final_by_run.root')
+# file = ROOT.TFile.Open('histos_final_by_fill.root')
+
+# file = ROOT.TFile.Open('histos_final_by_run_2015A.root')
+# file = ROOT.TFile.Open('histos_final_by_run_2015B.root')
+# file = ROOT.TFile.Open('histos_final_by_run_2015C.root')
+file = ROOT.TFile.Open('histos_final_by_run_2015D.root')
 
 file.cd()
 
@@ -51,29 +74,18 @@ beamWidthY = file.Get('beamWidthY')
 dxdz       = file.Get('dxdz'      )
 dydz       = file.Get('dydz'      )
 
-
 variables = [
-# Run 2015B
-(X         , 'beam spot x [cm]'         ,  0.050 , 0.120 ),
-(Y         , 'beam spot y [cm]'         ,  0.050 , 0.120 ),
-(Z         , 'beam spot z [cm]'         , -10.   ,10.    ),
-(sigmaZ    , 'beam spot #sigma_{z} [cm]',  2.0   , 7.    ),
-(beamWidthX, 'beam spot #sigma_{x} [cm]',  0.000 , 0.020 ),
-(beamWidthY, 'beam spot #sigma_{y} [cm]',  0.000 , 0.020 ),
-(dxdz      , 'beam spot dx/dz [rad]'    , -1.e-3 , 1.e-3 ),
-(dydz      , 'beam spot dy/dz [rad]'    , -1.e-3 , 1.e-3 ),
-# Run 2015A
-# (X         , 'beam spot x [cm]'         ,  0.055 , 0.072 ),
-# (Y         , 'beam spot y [cm]'         ,  0.090 , 0.105 ),
-# (Z         , 'beam spot z [cm]'         , -3.    , 0.    ),
-# (sigmaZ    , 'beam spot #sigma_{z} [cm]',  3.6   , 5.0   ),
-# (beamWidthX, 'beam spot #sigma_{x} [cm]',  0.001 , 0.0101),
-# (beamWidthY, 'beam spot #sigma_{y} [cm]',  0.001 , 0.0101),
-# (dxdz      , 'beam spot dx/dz [rad]'    , -1.e-4 , 4.e-4 ),
-# (dydz      , 'beam spot dy/dz [rad]'    , -1.e-4 , 4.e-4 ),
+    (X         , 'beam spot x [cm]'         ,  0.050 , 0.120 ),
+    (Y         , 'beam spot y [cm]'         ,  0.050 , 0.120 ),
+    (Z         , 'beam spot z [cm]'         , -10.   ,10.    ),
+    (sigmaZ    , 'beam spot #sigma_{z} [cm]',  2.0   , 7.    ),
+    (beamWidthX, 'beam spot #sigma_{x} [cm]',  0.000 , 0.020 ),
+    (beamWidthY, 'beam spot #sigma_{y} [cm]',  0.000 , 0.020 ),
+    (dxdz      , 'beam spot dx/dz [rad]'    , -1.e-3 , 1.e-3 ),
+    (dydz      , 'beam spot dy/dz [rad]'    , -1.e-3 , 1.e-3 ),
 ]
 
-def drawMyStyle(histo, options = '', title = ''):
+def drawMyStyle(histo, options = '', title = '', byFill = True, byTime = False):
     
     histo.SetLineColor(ROOT.kGray)
     histo.SetLineWidth(1)
@@ -83,7 +95,13 @@ def drawMyStyle(histo, options = '', title = ''):
     histo.GetXaxis().SetTitle('')
     histo.GetYaxis().SetRangeUser(var[2], var[3])
 
-    labelByTime(histo)
+    if byFill:
+        labelByFill(histo)
+        histo.GetXaxis().SetTitle('Fill')
+    
+    if byTime:
+        labelByFill(histo)
+        labelByTime(histo)
 
     histo.SetTitle('')
     histo.GetXaxis().SetTickLength(0.03)
@@ -107,53 +125,66 @@ def saveHisto(var):
 
     histo = var[0]
 
-    histo0T, histo3p8T, histo2p8T, histoOther = splitByMagneticField(histo)
+    histo0T, histo3p8T, histo2p8T, histoOther = splitByMagneticField(
+        histo, 
+        json    = True, 
+        json3p8 = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt', 
+        json2p8 = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY_2.8T.txt', 
+        json0   = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY_0T.txt',
+    )
     
-    histo0T   .SetMarkerColor(ROOT.kRed   ) #+ 2)
-    histo3p8T .SetMarkerColor(ROOT.kBlack ) #   )
-    histo2p8T .SetMarkerColor(ROOT.kGreen ) #+ 2)
-    histoOther.SetMarkerColor(ROOT.kBlue  ) #+ 2)
+    histo0T   .SetMarkerColor(ROOT.kRed   + 1)
+    histo3p8T .SetMarkerColor(ROOT.kBlack    )
+    histo2p8T .SetMarkerColor(ROOT.kGreen + 1)
 
-    histo0T   .SetFillColor(ROOT.kRed   ) #+ 2)
-    histo3p8T .SetFillColor(ROOT.kBlack ) #   )
-    histo2p8T .SetFillColor(ROOT.kGreen ) #+ 2)
-    histoOther.SetFillColor(ROOT.kBlue  ) #+ 2)
+    cloneHisto0T    = histo0T   .Clone()
+    cloneHisto3p8T  = histo3p8T .Clone()
+    cloneHisto2p8T  = histo2p8T .Clone()
 
-    # for 0T
-    histoOther.SetMarkerColor(ROOT.kRed  ) #+ 2)
-    histoOther.SetFillColor(ROOT.kRed  ) #+ 2)
-
+    cloneHisto0T   .SetMarkerSize(3.)
+    cloneHisto3p8T .SetMarkerSize(3.)
+    cloneHisto2p8T .SetMarkerSize(3.)
+  
+    cloneHisto0T   .SetLineColor(ROOT.kGray + 2)
+    cloneHisto3p8T .SetLineColor(ROOT.kGray + 2)
+    cloneHisto2p8T .SetLineColor(ROOT.kGray + 2)
     
-    drawMyStyle(histo0T                     )
-    drawMyStyle(histo3p8T , options = 'SAME')
-    drawMyStyle(histo2p8T , options = 'SAME')
-    drawMyStyle(histoOther, options = 'SAME')
+    byFill = True
+    byTime = False
+
+    toplot = [hist for hist in [histo0T, histo3p8T, histo2p8T] if hist.GetEntries() > 0]
+        
+    for j, hist in enumerate(toplot):
+        drawMyStyle(hist, options = 'SAME'*(j!=0), byFill = byFill, byTime = byTime)
+
+    for hist in [histo0T, histo3p8T, histo2p8T, histoOther]:
+        hist.SetTickLength(0, 'X')
+        
+    ROOT.gPad.Update()
+    
+    # SetNdivisions() does not work when bin labels are changed
+    # thank you ROOT
+    # https://root.cern.ch/phpBB3/viewtopic.php?t=6901
+    f1 = ROOT.TF1('f1', 'x', 0, 16)
+    labels = ROOT.TGaxis(ROOT.gPad.GetUxmin(), ROOT.gPad.GetUymin(), 
+                         ROOT.gPad.GetUxmax(), ROOT.gPad.GetUymin(), 
+                         'f1', 520)
+    labels.SetLabelSize(0)
+    labels.Draw()
     
     CMS_lumi(ROOT.gPad, 4, 0)
     ROOT.gPad.Update()
-
+    
     leg = ROOT.TLegend( 0.902, 0.5, 1.0, 0.75 )
     leg.SetFillColor(ROOT.kWhite)
     leg.SetLineColor(ROOT.kWhite)
-    leg.AddEntry(histo3p8T , '3.8 T runs'    , 'F')
-    leg.AddEntry(histo0T   , '0 T runs'      , 'F')
-    leg.AddEntry(histo2p8T , '2.8 T runs'    , 'F')
-    leg.AddEntry(histoOther, 'magnet ramping', 'F')
-#     leg.Draw('SAME')
+    leg.AddEntry(cloneHisto3p8T , 'B = 3.8 T' , 'EP')
+    leg.AddEntry(cloneHisto0T   , 'B = 0 T'   , 'EP')
+    leg.AddEntry(cloneHisto2p8T , 'B = 2.8 T' , 'EP')
+#     leg.AddEntry(histoOther, 'magnet ramping', 'F')
+    leg.Draw('SAME')
 
-
-#     ROOT.gPad.Print('BS_plot_246908_250932_%s.pdf' %histo.GetName())
-#     ROOT.gPad.Print('BS_plot_251027_251883_%s.pdf' %histo.GetName())
-
-#     ROOT.gPad.Print('BS_plot_run2015B_251027_252126_%s.pdf' %histo.GetName())
-#     ROOT.gPad.Print('BS_plot_run2015C_254227_256464_%s.pdf' %histo.GetName())
-#     ROOT.gPad.Print('BS_plot_run2015D_256630_260627_%s.pdf' %histo.GetName())
-#     ROOT.gPad.Print('BS_plot_run2015_251027_260627_%s_3p8T.pdf' %histo.GetName())
-#     ROOT.gPad.Print('BS_plot_run2015_251027_260627_%s.pdf' %histo.GetName())
-    ROOT.gPad.Print('BS_plot_run0T_2015_251027_260627_%s.pdf' %histo.GetName())
-
-
-# PlotStyle.initStyle()
+    ROOT.gPad.Print('BS_plot_full_by_fill_run2015D_%s.pdf' %histo.GetName())
 
 c1 = ROOT.TCanvas('', '', 3000, 1000)
 for var in variables:
