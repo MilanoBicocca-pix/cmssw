@@ -150,6 +150,14 @@ BeamSpotRcdReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    // initialize the ntuple
    theBSfromDB_.init();
 
+   edm::ESHandle< BeamSpotObjects > beamhandle;
+
+   try{
+     iSetup.get<BeamSpotObjectsRcd>().get(beamhandle);
+   }
+   catch (...){
+     return;
+   }
    if (watcher_.check(iSetup)) { // check for new IOV for this run / LS
      
      output << " for runs: " << iEvent.id().run() << " - " << iEvent.id().luminosityBlock() << std::endl;
@@ -174,6 +182,8 @@ BeamSpotRcdReader::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      output <<  *mybeamspot << std::endl;
 
    }
+//    else 
+//    edm::LogError("") << "LS requested by sara not found !!!";
 
    // Final output - either message logger or output file:
    if (output_.get()) *output_ << output.str();
