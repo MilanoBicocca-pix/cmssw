@@ -150,12 +150,14 @@ class PVFitter {
 
   unsigned int maxNrVertices_;
   unsigned int minNrVertices_;
+  double minVtxZ_;
+  double maxVtxZ_;
   double minVtxNdf_;
   double maxVtxNormChi2_;
   unsigned int minVtxTracks_;
   double minVtxWgt_;
   double maxVtxR_;
-  double maxVtxZ_;
+  double maxVtxZhisto_;
   double errorScale_;
   double sigmaCut_;         
   
