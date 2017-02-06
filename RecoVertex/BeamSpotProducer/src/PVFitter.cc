@@ -148,7 +148,7 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           //--- vertex selection
           if ( pv->isFake() || pv->tracksSize()==0 )  continue;
           if ( pv->ndof() < minVtxNdf_ || (pv->ndof()+3.)/pv->tracksSize()<2*minVtxWgt_ )  continue;
-          if ( pv->z() < minVtxZ_ || pv->z() > minVtxZ_) continue; // RM
+          if ( pv->z() < minVtxZ_ || pv->z() > maxVtxZ_) continue; // RM
           //---
 
           hPVx->Fill( pv->x(), pv->z() );
