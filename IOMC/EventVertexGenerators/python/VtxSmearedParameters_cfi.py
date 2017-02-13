@@ -537,7 +537,70 @@ Realistic25ns13TeV2016CollisionVtxSmearingParameters = cms.PSet(
     Y0 = cms.double(0.16955),
     Z0 = cms.double(0.9315 )
 )
+# BeamWidthY = 0.000822 +/- 1.0896E-05 [cm]
+# sigmaZ0    = 3.201970 +/- 2.6843E-02 [cm]
+# dxdz       = 1.385370E-04 +/- 1.2494E-06 [rad]
+# dydz       = 2.111020E-05 +/- 1.2453E-06 [rad]
+# 
+# From LHC calculator, sigma_x 9.906 um gives (non normalised) emittance of 4.618-8 cm 
+# https://lpc.web.cern.ch/lpc/lumi2.html
+# 
+# BPIX absolute position:
+# X = -0.0270175 cm
+# Y = -0.0774627 cm
+# Z = -0.516204 cm
+# 
+# BS position vs BPIX barycentre:
+# X = 0.058659 - (-0.0270175) = 0.0856765
+# Y = 0.099817 - (-0.0774627) = 0.1772797
+# Z = 0.375688 - (-0.516204 ) = 0.891892
+BeamspotStudyFeb2017Width9p9umVtxSmearingParameters = cms.PSet(
+    Phi = cms.double(0.0),
+    BetaStar = cms.double(40.0),
+    Emittance = cms.double(4.618-8), # sigma = 9.9 um
+    Alpha = cms.double(0.0),
+    SigmaZ = cms.double(3.201970),
+    TimeOffset = cms.double(0.0),
+    X0 = cms.double(0.0856765),
+    Y0 = cms.double(0.1772797),
+    Z0 = cms.double(0.891892)
+)
 
+# From Fill 5199 
+# BS parameters extracted from fitting only first vertex in JetHT
+# see /afs/cern.ch/user/f/fiorendi/public/beamSpot/2016/BeamFit_LumiBased_run278820_lumi17_26_byLS_toBeUsedForDB_0p2xWidth.txt
+# X0         = 0.058659 +/- 4.0836E-06 [cm]
+# Y0         = 0.099817 +/- 4.0690E-06 [cm]
+# Z0         = 0.375688 +/- 3.7963E-02 [cm]
+# BeamWidthX = 0.000192 +/- 2.1791E-06 [cm]
+# BeamWidthY = 0.000164 +/- 2.1791E-06 [cm]
+# sigmaZ0    = 3.201970 +/- 2.6843E-02 [cm]
+# dxdz       = 1.385370E-04 +/- 1.2494E-06 [rad]
+# dydz       = 2.111020E-05 +/- 1.2453E-06 [rad]
+# 
+# From LHC calculator, sigma_x 1.9 um gives (non normalised) emittance of 1.876e-9 cm 
+# https://lpc.web.cern.ch/lpc/lumi2.html
+# 
+# BPIX absolute position:
+# X = -0.0270175 cm
+# Y = -0.0774627 cm
+# Z = -0.516204 cm
+# 
+# BS position vs BPIX barycentre:
+# X = 0.058659 - (-0.0270175) = 0.0856765
+# Y = 0.099817 - (-0.0774627) = 0.1772797
+# Z = 0.375688 - (-0.516204 ) = 0.891892
+BeamspotStudyFeb2017Width1p9umVtxSmearingParameters = cms.PSet(
+    Phi = cms.double(0.0),
+    BetaStar = cms.double(40.0),
+    Emittance = cms.double(1.876e-9), # sigma = 1.9 um
+    Alpha = cms.double(0.0),
+    SigmaZ = cms.double(3.201970),
+    TimeOffset = cms.double(0.0),
+    X0 = cms.double(0.0856765),
+    Y0 = cms.double(0.1772797),
+    Z0 = cms.double(0.891892)
+)
 # Test HF offset
 ShiftedCollision2015VtxSmearingParameters = cms.PSet(
     Phi = cms.double(0.0),
