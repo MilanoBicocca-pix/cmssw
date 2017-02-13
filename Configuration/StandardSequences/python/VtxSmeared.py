@@ -49,9 +49,9 @@ VtxSmeared = {
     'Nominal5TeVpp2015Collision':    'IOMC.EventVertexGenerators.VtxSmearedNominal5TeVpp2015Collision_cfi',
     'Realistic25ns13TeV2016Collision':    'IOMC.EventVertexGenerators.VtxSmearedRealistic25ns13TeV2016Collision_cfi',
     'Realistic100ns13TeVCollisionBetaStar90m' : 'IOMC.EventVertexGenerators.VtxSmearedRealistic100ns13TeVCollisionBetaStar90m_cfi',
-    'Realistic100ns13TeVCollisionBetaStar90mLowBunches' : 'IOMC.EventVertexGenerators.VtxSmearedRealistic100ns13TeVCollisionBetaStar90mLowBunches_cfi'
-    'BeamspotStudyFeb2017Width1p9um' : 'IOMC.EventVertexGenerators.VtxSmearedBeamspotStudyFeb2017Width1p9um_cfi'
-    'BeamspotStudyFeb2017Width9p9um' : 'IOMC.EventVertexGenerators.VtxSmearedBeamspotStudyFeb2017Width9p9um_cfi'
+    'Realistic100ns13TeVCollisionBetaStar90mLowBunches' : 'IOMC.EventVertexGenerators.VtxSmearedRealistic100ns13TeVCollisionBetaStar90mLowBunches_cfi',
+    'BeamspotStudyFeb2017Width1p9um' : 'IOMC.EventVertexGenerators.VtxSmearedBeamspotStudyFeb2017Width1p9um_cfi',
+    'BeamspotStudyFeb2017Width9p9um' : 'IOMC.EventVertexGenerators.VtxSmearedBeamspotStudyFeb2017Width9p9um_cfi',
 }
 VtxSmearedDefaultKey='Realistic50ns13TeVCollision'
 VtxSmearedHIDefaultKey='NominalHICollision2015'
