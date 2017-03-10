@@ -70,8 +70,8 @@ void PVFitter::initialize(const edm::ParameterSet& iConfig,
   debug_             = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("Debug");
   vertexToken_       = iColl.consumes<reco::VertexCollection>(
       iConfig.getParameter<edm::ParameterSet>("PVFitter")
-      .getUntrackedParameter<edm::InputTag>("VertexCollection",
-                                            edm::InputTag("offlinePrimaryVertices")));
+      .getUntrackedParameter<edm::InputTag>("VertexCollection"));//, edm::InputTag("offlinePrimaryVertices")));
+//       .getUntrackedParameter<edm::InputTag>("VertexCollection", edm::InputTag("offlinePrimaryVertices")));
   do3DFit_           = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("Apply3DFit");
   //writeTxt_          = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("WriteAscii");
   //outputTxt_         = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<std::string>("AsciiFileName");
@@ -87,8 +87,11 @@ void PVFitter::initialize(const edm::ParameterSet& iConfig,
   errorScale_        = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<double>("errorScale");
   sigmaCut_          = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<double>("nSigmaCut");
   fFitPerBunchCrossing=iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("FitPerBunchCrossing");
-
+  useOnlyFirstPV_    = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("useOnlyFirstPV");
+  minSumPt_          = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<double>("minSumPt");
+  
   // preset quality cut to "infinite"
+//   dynamicQualityCut_ = 5e-12;
   dynamicQualityCut_ = 1.e30;
 
   hPVx = new TH2F("hPVx","PVx vs PVz distribution",200,-maxVtxR_, maxVtxR_, 200, -maxVtxZ_, maxVtxZ_);
@@ -139,7 +142,9 @@ void PVFitter::readEvent(const edm::Event& iEvent)
   if ( hasPVs ) {
 
       for (reco::VertexCollection::const_iterator pv = PVCollection->begin(); pv != PVCollection->end(); ++pv ) {
-
+          if (useOnlyFirstPV_){
+            if (pv != PVCollection->begin()) break;
+          }
 
            //for ( size_t ipv=0; ipv != pv.size(); ++ipv ) {
 
@@ -148,6 +153,21 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           if ( pv->ndof() < minVtxNdf_ || (pv->ndof()+3.)/pv->tracksSize()<2*minVtxWgt_ )  continue;
           //---
 
+          //sara
+          if (pv->tracksSize() < minVtxTracks_ ) continue;
+
+          float sumPt=0;
+          for(auto iTrack = pv->tracks_begin(); iTrack != pv->tracks_end(); ++iTrack) 
+          {
+            const auto pt = (*iTrack)->pt();
+            sumPt += pt; 
+		  }
+		  if (sumPt < minSumPt_) continue;
+
+//           if (fabs(pv->z()) > 1. ) continue; 
+          //end sara
+
+ 
           hPVx->Fill( pv->x(), pv->z() );
           hPVy->Fill( pv->y(), pv->z() );
 
@@ -155,6 +175,7 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           // 3D fit section
           //
           // apply additional quality cut
+//           std::cout << pvQuality(*pv)<< std::endl; //sara
           if ( pvQuality(*pv)>dynamicQualityCut_ )  continue;
           // if store exceeds max. size: reduce size and apply new quality cut
           if ( pvStore_.size()>=maxNrVertices_ ) {
@@ -401,9 +422,11 @@ bool PVFitter::runFitter() {
       upar.Add("x"     , estX       , errX	     , -10.	    , 10.	    ); // 0
       upar.Add("y"     , estY       , errY	     , -10.	    , 10.	    ); // 1
       upar.Add("z"     , estZ       , errZ	     , -30.	    , 30.	    ); // 2
-      upar.Add("ex"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 3
+      upar.Add("ex"    , 0.0002	    , 0.0001  	     , 0.   	    , 10. 	    ); // 3
+//       upar.Add("ex"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 3
       upar.Add("corrxy", 0.   	    , 0.02  	     , -1.  	    , 1.  	    ); // 4
-      upar.Add("ey"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 5
+      upar.Add("ey"    , 0.0002	    , 0.0001  	     , 0.   	    , 10. 	    ); // 5
+//       upar.Add("ey"    , 0.015	    , 0.01  	     , 0.   	    , 10. 	    ); // 5
       upar.Add("dxdz"  , 0.   	    , 0.0002	     , -0.1 	    , 0.1 	    ); // 6
       upar.Add("dydz"  , 0.   	    , 0.0002	     , -0.1 	    , 0.1 	    ); // 7
       upar.Add("ez"    , 1.   	    , 0.1   	     , 0.   	    , 30. 	    ); // 8
@@ -429,6 +452,7 @@ bool PVFitter::runFitter() {
       vector<double> errors  ;
       results = ierr.UserParameters().Params() ;					       \
       errors  = ierr.UserParameters().Errors() ;					       \
+
       
       fcn->setLimits(results[0]-sigmaCut_*results[3],
                      results[0]+sigmaCut_*results[3],
