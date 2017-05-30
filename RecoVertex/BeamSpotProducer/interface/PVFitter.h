@@ -154,12 +154,14 @@ class PVFitter {
   double minVtxNdf_;
   double maxVtxNormChi2_;
   unsigned int minVtxTracks_;
+  unsigned int maxVtxTracks_;
   double minVtxWgt_;
   double maxVtxR_;
   double maxVtxZ_;
   double errorScale_;
   double sigmaCut_;         
-  double minSumPt_;         
+  double minSumPt_;
+  double maxSumPt_;
   
   //  int frun;
   //  int flumi;

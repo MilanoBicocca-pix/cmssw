@@ -52,7 +52,9 @@ d0_phi_analyzer = cms.EDAnalyzer("BeamSpotAnalyzer",
         nSigmaCut = cms.untracked.double(5.),
         FitPerBunchCrossing = cms.untracked.bool(False),
         useOnlyFirstPV = cms.untracked.bool(False),
-        minSumPt = cms.untracked.double(0.)
+        minSumPt = cms.untracked.double(0.),
+		maxSumPt = cms.untracked.double(10000.),
+		maxVertexNTracks = cms.untracked.uint32(10000),
      )
 )
 

@@ -88,6 +88,8 @@ void PVFitter::initialize(const edm::ParameterSet& iConfig,
   fFitPerBunchCrossing=iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("FitPerBunchCrossing");
   useOnlyFirstPV_    = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<bool>("useOnlyFirstPV");
   minSumPt_          = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<double>("minSumPt");
+  maxSumPt_          = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<double>("maxSumPt");
+  maxVtxTracks_      = iConfig.getParameter<edm::ParameterSet>("PVFitter").getUntrackedParameter<unsigned int>("maxVertexNTracks");
   
   // preset quality cut to "infinite"
   dynamicQualityCut_ = 1.e30;
@@ -152,14 +154,16 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           //---
 
           if (pv->tracksSize() < minVtxTracks_ ) continue;
+		  if (pv->tracksSize() > maxVtxTracks_ ) continue;
 
-          float sumPt=0;
+          double sumPt=0;
           for(auto iTrack = pv->tracks_begin(); iTrack != pv->tracks_end(); ++iTrack) 
           {
             const auto pt = (*iTrack)->pt();
             sumPt += pt; 
 		  }
 		  if (sumPt < minSumPt_) continue;
+		  if (sumPt > maxSumPt_) continue;
 
  
           hPVx->Fill( pv->x(), pv->z() );
@@ -178,9 +182,9 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           //
           // copy PV to store
           //
-	  int bx = iEvent.bunchCrossing();
+	      int bx = iEvent.bunchCrossing();
           BeamSpotFitPVData pvData;
-	  pvData.bunchCrossing = bx;
+          pvData.bunchCrossing = bx;
           pvData.position[0] = pv->x();
           pvData.position[1] = pv->y();
           pvData.position[2] = pv->z();
@@ -197,6 +201,8 @@ void PVFitter::readEvent(const edm::Event& iEvent)
 	    theBeamSpotTreeData_.lumi(iEvent.luminosityBlock());
 	    theBeamSpotTreeData_.bunchCrossing(bx);
 	    theBeamSpotTreeData_.pvData(pvData);
+		theBeamSpotTreeData_.ntracks_per_vtx(pv->tracksSize());
+		theBeamSpotTreeData_.sumpt_per_vtx(sumPt);
 	    ftree_->Fill();
 	  }
 
