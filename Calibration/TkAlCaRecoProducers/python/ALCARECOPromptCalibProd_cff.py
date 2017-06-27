@@ -90,6 +90,7 @@ seqALCARECOPromptCalibProd = cms.Sequence(ALCARECOTkAlMinBiasFilterForBS *
                                           ALCARECOHltFilterForBS *
 #                                           offlineBeamSpotForBS +
 #                                           offlinePrimaryVerticesForBS +
-                                          alcaBeamSpotProducer)
+                                          alcaBeamSpotProducer +
+                                          alcaBeamSpotProducerHP)
 
 #process.bsProductionPath = cms.Path(process.TkAlMinBiasFilterForBS+process.alcaBeamSpotProducer)
