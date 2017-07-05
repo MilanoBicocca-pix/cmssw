@@ -37,6 +37,13 @@ alcaBeamSpotProducer.AlcaBeamSpotProducerParameters.resetEveryNLumi = 1
 # alcaBeamSpotProducer.AlcaBeamSpotProducerParameters.TrackCollection = cms.untracked.InputTag('ALCARECOTkAlMinBias')
 # alcaBeamSpotProducer.BeamFitter.TrackCollection = cms.untracked.InputTag('ALCARECOTkAlMinBias')
 
+
+# ------------------------------------------------------------------------------
+# configure the HIGH PERFORMANCE (aka JetHT + vertex selection) beam-spot production. 
+# RM: since it's not used elsewhere, we change the default cfi appropriately 
+from Calibration.TkAlCaRecoProducers.AlcaBeamSpotProducerHP_cfi import alcaBeamSpotProducerHP
+
+
 # ------------------------------------------------------------------------------
 # this is for filtering on L1 technical trigger bit
 # Set the HLT paths
@@ -83,6 +90,7 @@ seqALCARECOPromptCalibProd = cms.Sequence(ALCARECOTkAlMinBiasFilterForBS *
                                           ALCARECOHltFilterForBS *
 #                                           offlineBeamSpotForBS +
 #                                           offlinePrimaryVerticesForBS +
-                                          alcaBeamSpotProducer)
+                                          alcaBeamSpotProducer +
+                                          alcaBeamSpotProducerHP)
 
 #process.bsProductionPath = cms.Path(process.TkAlMinBiasFilterForBS+process.alcaBeamSpotProducer)
