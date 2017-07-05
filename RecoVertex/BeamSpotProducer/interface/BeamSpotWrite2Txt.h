@@ -17,7 +17,9 @@ namespace beamspot {
       std::time_t    reftime[2]        ;
   };
   
-  void dumpBeamSpotTxt(std::string & fileName, bool append, beamspot::BeamSpotContainer bsContainer){
+//   void dumpBeamSpotTxt(std::string & fileName, bool append, beamspot::BeamSpotContainer bsContainer){
+  void dumpBeamSpotTxt(std::string const& fileName, bool append, BeamSpotContainer const& bsContainer){
+ 
     std::ofstream outFile;
   
     if (!append)
