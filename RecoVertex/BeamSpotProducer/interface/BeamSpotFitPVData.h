@@ -9,5 +9,8 @@ struct BeamSpotFitPVData {
   float position[3]; //< x, y, z position
   float posError[3]; //< x, y, z error
   float posCorr[3];  //< xy, xz, yz correlations
+  float ntrks_vtx; //number of trks per vertex
+  float sumpt_vtx; //sumpt of trks per vertex
+  float nPV_vtx;   //number of primary vertexs in the event
 };
 #endif

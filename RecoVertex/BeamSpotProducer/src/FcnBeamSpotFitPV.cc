@@ -9,13 +9,32 @@ using namespace std;
 //
 // constructor from vertex data
 //
-FcnBeamSpotFitPV::FcnBeamSpotFitPV(const vector<BeamSpotFitPVData>& data) : 
+FcnBeamSpotFitPV::FcnBeamSpotFitPV(const vector<BeamSpotFitPVData>& data) :
   data_(data), errorDef_(1.) { 
   //
   // default: no additional cuts
   //
   lowerLimits_[0] = lowerLimits_[1] = lowerLimits_[2] = -1.e30;
   upperLimits_[0] = upperLimits_[1] = upperLimits_[2] =  1.e30;
+  
+  //
+  // Open LUT Files for errorScale
+  //
+  /*file10_20 = new TFile("/afs/cern.ch/work/f/fbrivio/beamSpot/systematics/CMSSW_9_0_2_patch1/src/BeamSpotCalibration/errorScaleCal/test/PU_test/new_LUT/LUTs/LUT_X_PU_15_20.root");
+  lut_10_20 = (TH2F*)file10_20->Get("LUT");
+  
+  file20_30 = new TFile("/afs/cern.ch/work/f/fbrivio/beamSpot/systematics/CMSSW_9_0_2_patch1/src/BeamSpotCalibration/errorScaleCal/test/PU_test/new_LUT/LUTs/LUT_X_PU_25_30.root");
+  lut_20_30 = (TH2F*)file20_30->Get("LUT");
+
+  file30_40 = new TFile("/afs/cern.ch/work/f/fbrivio/beamSpot/systematics/CMSSW_9_0_2_patch1/src/BeamSpotCalibration/errorScaleCal/test/PU_test/new_LUT/LUTs/LUT_X_PU_31_39.root");
+  lut_30_40 = (TH2F*)file30_40->Get("LUT");
+
+  file40_50 = new TFile("/afs/cern.ch/work/f/fbrivio/beamSpot/systematics/CMSSW_9_0_2_patch1/src/BeamSpotCalibration/errorScaleCal/test/PU_test/new_LUT/LUTs/LUT_X_PU_38_47.root");
+  lut_40_50 = (TH2F*)file40_50->Get("LUT");*/
+  
+  //file_3d = new TFile("/afs/cern.ch/work/f/fbrivio/beamSpot/systematics/CMSSW_9_0_2_patch1/src/BeamSpotCalibration/errorScaleCal/test/PU_test/new_LUT/LUTs/LUT_X_PU_4bins.root");
+  file_3d = new TFile("LUT_X_PU_4bins.root");
+  lut_3d = (TH3F*) file_3d->Get("LUT");
 }
 
 void 
@@ -108,6 +127,7 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   Vector3D dv;
   Matrix3D cov;
   Matrix3D wgt;
+  
   //
   // iteration over vertices
   //
@@ -131,9 +151,52 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
     corr13 = (*ipv).posCorr[1];
     corr23 = (*ipv).posCorr[2];
     ev3 = (*ipv).posError[2];
-    ev1 *= escale;
-    ev2 *= escale;
-    ev3 *= escale;
+	
+	// LUT for errorScale
+    /*if ( (*ipv).ntrks_vtx > 30 && (*ipv).ntrks_vtx < 45 && (*ipv).sumpt_vtx > 50  && (*ipv).sumpt_vtx < 100 ) escale = 1.014;
+	if ( (*ipv).ntrks_vtx > 30 && (*ipv).ntrks_vtx < 45 && (*ipv).sumpt_vtx > 100 && (*ipv).sumpt_vtx < 150 ) escale = 1.034;
+	if ( (*ipv).ntrks_vtx > 30 && (*ipv).ntrks_vtx < 45 && (*ipv).sumpt_vtx > 150                           ) escale = 1.174;
+	if ( (*ipv).ntrks_vtx > 45 && (*ipv).ntrks_vtx < 60 && (*ipv).sumpt_vtx > 50  && (*ipv).sumpt_vtx < 100 ) escale = 0.9234;
+	if ( (*ipv).ntrks_vtx > 45 && (*ipv).ntrks_vtx < 60 && (*ipv).sumpt_vtx > 100 && (*ipv).sumpt_vtx < 150 ) escale = 1.101;
+	if ( (*ipv).ntrks_vtx > 45 && (*ipv).ntrks_vtx < 60 && (*ipv).sumpt_vtx > 150                           ) escale = 1.227;
+	if ( (*ipv).ntrks_vtx > 60                          && (*ipv).sumpt_vtx > 50  && (*ipv).sumpt_vtx < 100 ) escale = 1.226;
+	if ( (*ipv).ntrks_vtx > 60                          && (*ipv).sumpt_vtx > 100 && (*ipv).sumpt_vtx < 150 ) escale = 1.953;
+	if ( (*ipv).ntrks_vtx > 60                          && (*ipv).sumpt_vtx > 150                           ) escale = 1.639;*/
+	
+    /*if ( (*ipv).nPV_vtx <= 20 )
+    {
+      Int_t ibin = lut_10_20->FindBin((*ipv).ntrks_vtx, (*ipv).sumpt_vtx);
+      escale = lut_10_20->GetBinContent(ibin);
+    }
+    else if ((*ipv).nPV_vtx > 20 && (*ipv).nPV_vtx <= 30)
+    {
+      Int_t ibin = lut_20_30->FindBin((*ipv).ntrks_vtx, (*ipv).sumpt_vtx);
+      escale = lut_20_30->GetBinContent(ibin);
+    }
+    else if ((*ipv).nPV_vtx > 30 && (*ipv).nPV_vtx <= 40)
+    {
+      Int_t ibin = lut_30_40->FindBin((*ipv).ntrks_vtx, (*ipv).sumpt_vtx);
+      escale = lut_30_40->GetBinContent(ibin);
+    }
+    else
+    {
+      Int_t ibin = lut_40_50->FindBin((*ipv).ntrks_vtx, (*ipv).sumpt_vtx);
+      escale = lut_40_50->GetBinContent(ibin);
+    }*/
+    
+    
+    Int_t ibin = lut_3d->FindBin((*ipv).sumpt_vtx, (*ipv).ntrks_vtx, (*ipv).nPV_vtx);
+    escale = lut_3d->GetBinContent(ibin);
+    
+    //std::cout << "----- new PV ------" << std::endl;
+    //std::cout << "->ibin: " << ibin << " - PU: " << (*ipv).nPV_vtx << " - trks: " << (*ipv).ntrks_vtx << " - pt: " << (*ipv).sumpt_vtx << " - escale: " << escale << std::endl;
+
+    //escale = 1.;
+    
+	ev1 *= escale;
+	ev2 *= escale;
+	ev3 *= escale;
+	
     //
     // vertex covariance matrix
     //

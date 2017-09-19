@@ -21,6 +21,8 @@ ________________________________________________________________**/
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "RecoVertex/BeamSpotProducer/interface/BeamFitter.h"
+#include "TFile.h"
+#include "TH2F.h"
 
 
 class BeamSpotAnalyzer : public edm::EDAnalyzer {
@@ -56,6 +58,7 @@ class BeamSpotAnalyzer : public edm::EDAnalyzer {
   //  double inputBeamWidth_;
 
   BeamFitter * theBeamFitter;
+  
 };
 
 #endif

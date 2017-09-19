@@ -16,6 +16,8 @@
  */
 #include "RecoVertex/BeamSpotProducer/interface/BeamSpotFitPVData.h"
 #include "Minuit2/FCNBase.h"
+#include "TH3F.h"
+#include "TFile.h"
 
 #include <vector> 
 
@@ -23,7 +25,13 @@ class FcnBeamSpotFitPV : public ROOT::Minuit2::FCNBase {
 public: 
   // constructor from vertex data
   FcnBeamSpotFitPV(const std::vector<BeamSpotFitPVData>& data);
-  ~FcnBeamSpotFitPV() {} 
+  ~FcnBeamSpotFitPV() {  // CLose LUT files
+      //file10_20->Close();
+      //file20_30->Close();
+      //file30_40->Close();
+      //file40_50->Close();
+      file_3d->Close();
+  }
   // additional vertex selection using limits in x, y, z
   void setLimits (float xmin, float xmax,
 		  float ymin, float ymax,
@@ -31,9 +39,24 @@ public:
   // deltaFcn for definition of the uncertainty
   double Up() const {return errorDef_;} 
   // -2lnL value based on vector of parameters
-  double operator() (const std::vector<double>&) const; 
+  double operator() (const std::vector<double>&) const;
   // vertex count used for the fit (after selection)
   unsigned int nrOfVerticesUsed () const;
+  
+  // LUT values
+  //TFile * file10_20;
+  //TFile * file20_30;
+  //TFile * file30_40;
+  //TFile * file40_50;
+  TFile * file_3d;
+  
+  //TH2F *lut_10_20;
+  //TH2F *lut_20_30;
+  //TH2F *lut_30_40;
+  //TH2F *lut_40_50;
+  TH3F *lut_3d;
+  
+  
 private: 
   const std::vector<BeamSpotFitPVData>& data_; //< vertex data
   double errorDef_;                            //< error definition for Minuit

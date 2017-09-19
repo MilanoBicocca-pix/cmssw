@@ -47,6 +47,7 @@ BeamSpotAnalyzer::BeamSpotAnalyzer(const edm::ParameterSet& iConfig)
   beginLumiOfBSFit_ = endLumiOfBSFit_ = -1;
   previousLumi_ = previousRun_ = 0;
   Org_resetFitNLumi_ = resetFitNLumi_;
+  
 }
 
 
@@ -168,6 +169,7 @@ BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
 
 void
 BeamSpotAnalyzer::endJob() {
+
   std::cout << "\n-------------------------------------\n" << std::endl;
   std::cout << "\n Total number of events processed: "<< ftotalevents << std::endl;
   std::cout << "\n-------------------------------------\n\n" << std::endl;

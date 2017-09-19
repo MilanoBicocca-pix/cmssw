@@ -185,7 +185,7 @@ void PVFitter::readEvent(const edm::Event& iEvent)
 	      int bx = iEvent.bunchCrossing();
           BeamSpotFitPVData pvData;
           pvData.bunchCrossing = bx;
-          pvData.position[0] = pv->x();
+		  pvData.position[0] = pv->x();
           pvData.position[1] = pv->y();
           pvData.position[2] = pv->z();
           pvData.posError[0] = pv->xError();
@@ -194,6 +194,9 @@ void PVFitter::readEvent(const edm::Event& iEvent)
           pvData.posCorr[0] = pv->covariance(0,1)/pv->xError()/pv->yError();
           pvData.posCorr[1] = pv->covariance(0,2)/pv->xError()/pv->zError();
           pvData.posCorr[2] = pv->covariance(1,2)/pv->yError()/pv->zError();
+		  pvData.ntrks_vtx = pv->tracksSize();
+		  pvData.sumpt_vtx = sumPt;
+          pvData.nPV_vtx   = PVCollection->size();
           pvStore_.push_back(pvData);
 
 	  if(ftree_ != 0){
@@ -201,8 +204,8 @@ void PVFitter::readEvent(const edm::Event& iEvent)
 	    theBeamSpotTreeData_.lumi(iEvent.luminosityBlock());
 	    theBeamSpotTreeData_.bunchCrossing(bx);
 	    theBeamSpotTreeData_.pvData(pvData);
-		theBeamSpotTreeData_.ntracks_per_vtx(pv->tracksSize());
-		theBeamSpotTreeData_.sumpt_per_vtx(sumPt);
+		//theBeamSpotTreeData_.ntracks_per_vtx(pv->tracksSize());
+		//theBeamSpotTreeData_.sumpt_per_vtx(sumPt);
 	    ftree_->Fill();
 	  }
 
@@ -211,9 +214,6 @@ void PVFitter::readEvent(const edm::Event& iEvent)
       }
 
   }
-
-
-
 
 }
 
