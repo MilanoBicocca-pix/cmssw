@@ -166,6 +166,7 @@ class BeamFitter {
   std::vector<reco::TrackBase::TrackQuality> quality_;
   std::vector<reco::TrackBase::TrackAlgorithm> algorithm_;
   double inputBeamWidth_;
+  std::vector<double> time_range_;
   double convergence_;
   int ftotal_tracks;
   int min_Ntrks_;

@@ -73,6 +73,8 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   convergence_       = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("FractionOfFittedTrks");
   inputBeamWidth_    = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("InputBeamWidth",-1.);
 
+  time_range_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<std::vector<double> >("timerange");
+
   for (unsigned int j=0;j<trk_Algorithm_.size();j++)
     algorithm_.push_back(reco::TrackBase::algoByName(trk_Algorithm_[j]));
   for (unsigned int j=0;j<trk_Quality_.size();j++)
@@ -220,6 +222,15 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
   frun = iEvent.id().run();
   const edm::TimeValue_t ftimestamp = iEvent.time().value();
   const std::time_t ftmptime = ftimestamp >> 32;
+
+  // include selection on time range of events
+  // to be used only with fitEveryNLumi = -1 and resetEveryNLumi = -1
+  std::time_t min_time = time_range_[0];
+  std::time_t max_time = time_range_[1];
+  if ( ftmptime < min_time || ftmptime > max_time)  
+  {  
+    return;
+  }
 
   if (fbeginLumiOfFit == -1) freftime[0] = freftime[1] = ftmptime;
   if (freftime[0] == 0 || ftmptime < freftime[0]) freftime[0] = ftmptime;

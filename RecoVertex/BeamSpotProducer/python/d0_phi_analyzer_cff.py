@@ -33,6 +33,7 @@ d0_phi_analyzer = cms.EDAnalyzer("BeamSpotAnalyzer",
         InputBeamWidth = cms.untracked.double(0.0060), ## beam width used for Trk fitter, used only when result from PV is not available
         FractionOfFittedTrks = cms.untracked.double(0.9),
         MinimumInputTracks = cms.untracked.int32(100)
+        timerange          = cms.untracked.vdouble(-9999,1E20)
      ),
      PVFitter = cms.PSet(
         Debug = cms.untracked.bool(False),
