@@ -1,0 +1,8 @@
+<use name="FWCore/Framework"/>
+<use name="CondCore/ESSources"/>
+<use name="FWCore/PluginManager"/>
+<use name="CondFormats/CondTest"/>
+<use name="CondFormats/DataRecord"/>
+<use name="CondFormats/BeamSpotConfig"/>
+
+<flags EDM_PLUGIN="1"/>
