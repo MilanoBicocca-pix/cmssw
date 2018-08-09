@@ -1,0 +1,3 @@
+<bin file="testSerializationBeamSpotConfig.cpp">
+    <use name="CondFormats/BeamSpotConfig"/>
+</bin>

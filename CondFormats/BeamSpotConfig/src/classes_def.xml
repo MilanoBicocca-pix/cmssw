@@ -1,0 +1,5 @@
+<lcgdict>
+   <class name="BeamSpotThresholds" class_version="0"/>
+   <class name="BeamSpotThresholds::Item"/>
+   <class name="std::vector<BeamSpotThresholds::Item>"/>
+</lcgdict>

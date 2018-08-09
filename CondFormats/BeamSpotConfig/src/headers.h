@@ -1,0 +1,1 @@
+#include "CondFormats/BeamSpotConfig/interface/BeamSpotThresholds.h"
