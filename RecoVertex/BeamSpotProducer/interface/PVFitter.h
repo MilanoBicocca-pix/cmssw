@@ -17,6 +17,7 @@
 #include "DataFormats/Provenance/interface/Timestamp.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 #include "DataFormats/TrackReco/interface/TrackBase.h"
 #include "RecoVertex/BeamSpotProducer/interface/BSTrkParameters.h"
 #include "RecoVertex/BeamSpotProducer/interface/BSFitter.h"
@@ -57,6 +58,14 @@ class PVFitter {
   double getWidthXerr() { return fwidthXerr; }
   double getWidthYerr() { return fwidthYerr; }
   double getWidthZerr() { return fwidthZerr; }
+
+  double getDxdz()    { return fdxdz;    }
+  double getDydz()    { return fdydz;    }
+  double getDxdy()    { return fdxdy;    }
+  double getDxdzerr() { return fdxdzerr; }
+  double getDydzerr() { return fdydzerr; }
+  double getDxdyerr() { return fdxdyerr; }
+
   //ssc
   std::vector<BeamSpotFitPVData> getpvStore() { return pvStore_; } 
  
@@ -85,11 +94,11 @@ class PVFitter {
     dynamicQualityCut_ = 1.e30;
     hPVx->Reset();
     hPVy->Reset();
-    fbeamspot = reco::BeamSpot();
+    fbeamspot = reco::BeamSpotExt();
     fbspotMap.clear();
   };
-  reco::BeamSpot getBeamSpot() { return fbeamspot; }
-  std::map<int, reco::BeamSpot> getBeamSpotMap() { return fbspotMap; }
+  reco::BeamSpotExt getBeamSpot() { return fbeamspot; }
+  std::map<int, reco::BeamSpotExt> getBeamSpotMap() { return fbspotMap; }
   bool IsFitPerBunchCrossing() { return fFitPerBunchCrossing; }
   int* getFitLSRange() {
     int *tmp=new int[2];
@@ -135,8 +144,8 @@ class PVFitter {
  private:
 
   std::map<int, int> npvsmap_;
-  reco::BeamSpot fbeamspot;
-  std::map<int,reco::BeamSpot> fbspotMap;
+  reco::BeamSpotExt fbeamspot;
+  std::map<int,reco::BeamSpotExt> fbspotMap;
   bool fFitPerBunchCrossing;
   bool useOnlyFirstPV_;
 
@@ -174,6 +183,12 @@ class PVFitter {
   double fwidthXerr;
   double fwidthYerr;
   double fwidthZerr;
+  double fdxdz;
+  double fdydz;
+  double fdxdy;
+  double fdxdzerr;
+  double fdydzerr;
+  double fdxdyerr;
 
   std::vector<BeamSpotFitPVData> pvStore_; //< cache for PV data
   std::map< int, std::vector<BeamSpotFitPVData> > bxMap_; // store PV data as a function of bunch crossings

@@ -65,13 +65,14 @@ FcnBeamSpotFitPV::operator() (const std::vector<double>& pars) const
   double vb1 = pars[0];
   double vb2 = pars[1];
   double vb3 = pars[2];
-  double sigb1 = pars[3]; 
-  double corrb12 = pars[4];
-  double sigb2 = pars[5];
-  double dxdz = pars[6];
-  double dydz = pars[7];
-  double sigb3 = pars[8];
-  double escale = pars[9];
+  double sigb1   = pars[6]; 
+  double corrb12 = pars[8];
+  double sigb2   = pars[7];
+  double dxdz    = pars[4];
+  double dydz    = pars[5];
+  double sigb3   = pars[3];
+  double escale  = pars[9];
+
   //
   // covariance matrix of the beamspot distribution
   //

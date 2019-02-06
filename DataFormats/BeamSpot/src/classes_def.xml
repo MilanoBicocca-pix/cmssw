@@ -1,7 +1,15 @@
 <lcgdict>
-  <class name="reco::BeamSpot" ClassVersion="11">
+  <class name="reco::BeamSpot" ClassVersion="13">
+   <version ClassVersion="13" checksum="1497064974"/>
+   <version ClassVersion="12" checksum="3536199576"/>
    <version ClassVersion="11" checksum="1497064974"/>
    <version ClassVersion="10" checksum="915260007"/>
   </class>
+  <class name="reco::BeamSpotExt" ClassVersion="0">
+   <version ClassVersion="-1" checksum="1430149181"/>
+   <version ClassVersion="1" checksum="1430149181"/>
+   <version ClassVersion="0" checksum="52679959"/>
+  </class>
   <class name="edm::Wrapper<reco::BeamSpot>"/>
+  <class name="edm::Wrapper<reco::BeamSpotExt>"/>
 </lcgdict>

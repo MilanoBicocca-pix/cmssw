@@ -15,6 +15,7 @@ ________________________________________________________________**/
 #include <string>
 // CMS
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 #include "RecoVertex/BeamSpotProducer/interface/BeamSpotAnalyzer.h"
 #include "RecoVertex/BeamSpotProducer/interface/BSFitter.h"
 
@@ -59,12 +60,10 @@ BeamSpotAnalyzer::~BeamSpotAnalyzer()
 void
 BeamSpotAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-	ftotalevents++;
-	theBeamFitter->readEvent(iEvent);
-	ftmprun = iEvent.id().run();
-
+    ftotalevents++;
+    theBeamFitter->readEvent(iEvent);
+    ftmprun = iEvent.id().run();
 }
-
 
 
 void
@@ -75,7 +74,7 @@ BeamSpotAnalyzer::beginJob()
 //--------------------------------------------------------
 void
 BeamSpotAnalyzer::beginLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
-									   const edm::EventSetup& context) {
+                                       const edm::EventSetup& context) {
 
     const edm::TimeValue_t fbegintimestamp = lumiSeg.beginTime().value();
     const std::time_t ftmptime = fbegintimestamp >> 32;
@@ -91,22 +90,21 @@ BeamSpotAnalyzer::beginLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
     //std::cout << "Lumi # " << countLumi_ << std::endl;
     if ( ftmprun == previousRun_ ) {
       if ( (previousLumi_ + 1) != int(lumiSeg.luminosityBlock()) )
-	edm::LogWarning("BeamSpotAnalyzer") << "LUMI SECTIONS ARE NOT SORTED!";
+        edm::LogWarning("BeamSpotAnalyzer") << "LUMI SECTIONS ARE NOT SORTED!";
     }
 }
 
 //--------------------------------------------------------
 void
 BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
-									 const edm::EventSetup& iSetup) {
+                                     const edm::EventSetup& iSetup) {
 
-  //LogDebug("BeamSpotAnalyzer") <<
-  std::cout <<
-    "for lumis "<< beginLumiOfBSFit_ << " - " << endLumiOfBSFit_ << std::endl <<
-    "number of selected tracks = " << theBeamFitter->getNTracks() << std::endl;
-  std::cout << "number of selected PVs = " << theBeamFitter->getNPVs() << std::endl;
-  //std::cout << "number of selected PVs per bx: " << std::endl;
-  //theBeamFitter->getNPVsperBX();
+    std::cout <<
+      "for lumis "<< beginLumiOfBSFit_ << " - " << endLumiOfBSFit_ << std::endl <<
+      "number of selected tracks = " << theBeamFitter->getNTracks() << std::endl;
+    std::cout << "number of selected PVs = " << theBeamFitter->getNPVs() << std::endl;
+    //std::cout << "number of selected PVs per bx: " << std::endl;
+    //theBeamFitter->getNPVsperBX();
 
     const edm::TimeValue_t fendtimestamp = lumiSeg.endTime().value();
     const std::time_t fendtime = fendtimestamp >> 32;
@@ -126,7 +124,7 @@ BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
     std::pair<int,int> LSRange = theBeamFitter->getFitLSRange();
 
     if (theBeamFitter->runPVandTrkFitter()){
-      reco::BeamSpot bs = theBeamFitter->getBeamSpot();
+      reco::BeamSpotExt bs = theBeamFitter->getBeamSpot();
       std::cout << "\n RESULTS OF DEFAULT FIT " << std::endl;
       std::cout << " for runs: " << ftmprun0 << " - " << ftmprun << std::endl;
       std::cout << " for lumi blocks : " << LSRange.first << " - " << LSRange.second << std::endl;
@@ -135,8 +133,8 @@ BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg,
       std::cout << "[BeamFitter] fit done. \n" << std::endl;
     }
     else { // Fill in empty beam spot if beamfit fails
-      reco::BeamSpot bs;
-      bs.setType(reco::BeamSpot::Fake);
+      reco::BeamSpotExt bs;
+      bs.setType(reco::BeamSpotExt::Fake);
       std::cout << "\n Empty Beam spot fit" << std::endl;
       std::cout << " for runs: " << ftmprun0 << " - " << ftmprun << std::endl;
       std::cout << " for lumi blocks : " << LSRange.first << " - " << LSRange.second << std::endl;
@@ -174,34 +172,34 @@ BeamSpotAnalyzer::endJob() {
 
   if ( fitNLumi_ == -1 && resetFitNLumi_ == -1 ) {
 
-	  if(theBeamFitter->runPVandTrkFitter()){
-		  reco::BeamSpot beam_default = theBeamFitter->getBeamSpot();
+      if(theBeamFitter->runPVandTrkFitter()){
+          reco::BeamSpotExt beam_default = theBeamFitter->getBeamSpot();
                   std::pair<int,int> LSRange = theBeamFitter->getFitLSRange();
 
-		  std::cout << "\n RESULTS OF DEFAULT FIT:" << std::endl;
-		  std::cout << " for runs: " << ftmprun0 << " - " << ftmprun << std::endl;
-		  std::cout << " for lumi blocks : " << LSRange.first << " - " << LSRange.second << std::endl;
-		  std::cout << " lumi counter # " << countLumi_ << std::endl;
-		  std::cout << beam_default << std::endl;
+          std::cout << "\n RESULTS OF DEFAULT FIT:" << std::endl;
+          std::cout << " for runs: " << ftmprun0 << " - " << ftmprun << std::endl;
+          std::cout << " for lumi blocks : " << LSRange.first << " - " << LSRange.second << std::endl;
+          std::cout << " lumi counter # " << countLumi_ << std::endl;
+          std::cout << beam_default << std::endl;
 
-		  if (write2DB_) {
-			  std::cout << "\n-------------------------------------\n\n" << std::endl;
-			  std::cout << " write results to DB..." << std::endl;
-			  theBeamFitter->write2DB();
-		  }
+          if (write2DB_) {
+              std::cout << "\n-------------------------------------\n\n" << std::endl;
+              std::cout << " write results to DB..." << std::endl;
+              theBeamFitter->write2DB();
+          }
 
-		  if (runallfitters_) {
-			  theBeamFitter->runAllFitter();
-		  }
+          if (runallfitters_) {
+              theBeamFitter->runAllFitter();
+          }
 
-	  }
+      }
       if ((runbeamwidthfit_)){
                  theBeamFitter->runBeamWidthFitter();
-                 reco::BeamSpot beam_width = theBeamFitter->getBeamWidth();
+                 reco::BeamSpotExt beam_width = theBeamFitter->getBeamWidth();
                  std::cout <<beam_width<< std::endl;
       }
 
-	  else std::cout << "[BeamSpotAnalyzer] beamfit fails !!!" << std::endl;
+      else std::cout << "[BeamSpotAnalyzer] beamfit fails !!!" << std::endl;
   }
 
   std::cout << "[BeamSpotAnalyzer] endJob done \n" << std::endl;

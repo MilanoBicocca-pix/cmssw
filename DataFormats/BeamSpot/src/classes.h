@@ -1,6 +1,6 @@
-
 #include "DataFormats/Common/interface/Wrapper.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 #include "Math/Cartesian3D.h" 
 #include "DataFormats/Math/interface/Vector3D.h" 
 #include "Math/Polar3D.h" 
@@ -11,5 +11,8 @@ namespace DataFormats_BeamSpot {
   struct dictionary {
     reco::BeamSpot b;
     edm::Wrapper<reco::BeamSpot> b_w;
+
+    reco::BeamSpotExt be;
+    edm::Wrapper<reco::BeamSpotExt> be_w;
   };      
 }

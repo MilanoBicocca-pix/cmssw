@@ -32,8 +32,9 @@ d0_phi_analyzer = cms.EDAnalyzer("BeamSpotAnalyzer",
         TrackQuality = cms.untracked.vstring(), ## loose, tight, highPurity...; for all qualities, leave it blank
         InputBeamWidth = cms.untracked.double(0.0060), ## beam width used for Trk fitter, used only when result from PV is not available
         FractionOfFittedTrks = cms.untracked.double(0.9),
-        MinimumInputTracks = cms.untracked.int32(100)
-        timerange          = cms.untracked.vdouble(-9999,1E20)
+        MinimumInputTracks = cms.untracked.int32(100),
+        timerange          = cms.untracked.vdouble(-9999,1E12),
+        selectBx           = cms.untracked.int32(-1)
      ),
      PVFitter = cms.PSet(
         Debug = cms.untracked.bool(False),

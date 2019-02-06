@@ -41,7 +41,7 @@ using namespace ROOT::Minuit2;
 
 //_____________________________________________________________________
 BSFitter::BSFitter() {
-	fbeamtype = reco::BeamSpot::Unknown;
+	fbeamtype = reco::BeamSpotExt::Unknown;
 
  	//In order to make fitting ROOT histograms thread safe
  	// one must call this undocumented function
@@ -105,15 +105,15 @@ BSFitter::~BSFitter()
 
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit() {
+reco::BeamSpotExt BSFitter::Fit() {
 
 	return this->Fit(nullptr);
 
 }
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
-	fbeamtype = reco::BeamSpot::Unknown;
+reco::BeamSpotExt BSFitter::Fit(double *inipar = nullptr) {
+	fbeamtype = reco::BeamSpotExt::Unknown;
 	if ( ffit_variable == "z" ) {
 
 		if ( ffit_type == "chi2" ) {
@@ -126,7 +126,7 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 
 		} else if ( ffit_type == "combined" ) {
 
-			reco::BeamSpot tmp_beamspot = Fit_z_chi2(inipar);
+			reco::BeamSpotExt tmp_beamspot = Fit_z_chi2(inipar);
 			double tmp_par[2] = {tmp_beamspot.z0(), tmp_beamspot.sigmaZ()};
 			return Fit_z_likelihood(tmp_par);
 
@@ -150,7 +150,7 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 		} else if ( ffit_type == "combined" ) {
 
 			this->d0phi_Init();
-			reco::BeamSpot tmp_beamspot = Fit_d0phi();
+			reco::BeamSpotExt tmp_beamspot = Fit_d0phi();
 			double tmp_par[4] = {tmp_beamspot.x0(), tmp_beamspot.y0(), tmp_beamspot.dxdz(), tmp_beamspot.dydz()};
 			return Fit_d_likelihood(tmp_par);
 
@@ -163,10 +163,10 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 
 		if ( ffit_type == "likelihood" || ffit_type == "default" ) {
 
-			reco::BeamSpot::CovarianceMatrix matrix;
+			reco::BeamSpotExt::CovarianceMatrix matrix;
             // we are now fitting Z inside d0phi fitter
 			// first fit z distribution using a chi2 fit
-			//reco::BeamSpot tmp_z = Fit_z_chi2(inipar);
+			//reco::BeamSpotExt tmp_z = Fit_z_chi2(inipar);
 			//for (int j = 2 ; j < 4 ; ++j) {
             //for(int k = j ; k < 4 ; ++k) {
             //	matrix(j,k) = tmp_z.covariance()(j,k);
@@ -175,9 +175,9 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 
 			// use d0-phi algorithm to extract transverse position
 			this->d0phi_Init();
-			//reco::BeamSpot tmp_d0phi= Fit_d0phi(); // change to iterative procedure:
+			//reco::BeamSpotExt tmp_d0phi= Fit_d0phi(); // change to iterative procedure:
 			this->Setd0Cut_d0phi(4.0);
-			reco::BeamSpot tmp_d0phi= Fit_ited0phi();
+			reco::BeamSpotExt tmp_d0phi= Fit_ited0phi();
 
 			//for (int j = 0 ; j < 2 ; ++j) {
 			//	for(int k = j ; k < 2 ; ++k) {
@@ -193,19 +193,25 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 
 
 			// put everything into one object
-			reco::BeamSpot spot(reco::BeamSpot::Point(tmp_d0phi.x0(), tmp_d0phi.y0(), tmp_d0phi.z0()),
+			reco::BeamSpotExt spot(reco::BeamSpotExt::Point(tmp_d0phi.x0(), tmp_d0phi.y0(), tmp_d0phi.z0()),
 								tmp_d0phi.sigmaZ(),
 								tmp_d0phi.dxdz(),
 								tmp_d0phi.dydz(),
 								0.,
+								0.,
 								tmp_d0phi.covariance(),
+								tmp_d0phi.covariance(),
+								0.,
+								0.,
+								0.,
+								0.,
 								fbeamtype );
 
 
 
-			//reco::BeamSpot tmp_z = Fit_z_chi2(inipar);
+			//reco::BeamSpotExt tmp_z = Fit_z_chi2(inipar);
 
-			//reco::BeamSpot tmp_d0phi = Fit_d0phi();
+			//reco::BeamSpotExt tmp_d0phi = Fit_d0phi();
 
             // log-likelihood fit
 			if (ffit_type == "likelihood") {
@@ -216,11 +222,11 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
                 for(int s=0;s<6;s++){ tmp_error_par[s] = pow( tmp_d0phi.covariance()(s,s),0.5);}
                 tmp_error_par[6]=0.0;
 
-                reco::BeamSpot tmp_lh = Fit_d_z_likelihood(tmp_par,tmp_error_par);
+                reco::BeamSpotExt tmp_lh = Fit_d_z_likelihood(tmp_par,tmp_error_par);
 
                 if (edm::isNotFinite(ff_minimum)) {
                     edm::LogWarning("BSFitter") << "BSFitter: Result is non physical. Log-Likelihood fit to extract beam width did not converge." << std::endl;
-                    tmp_lh.setType(reco::BeamSpot::Unknown);
+                    tmp_lh.setType(reco::BeamSpotExt::Unknown);
                     return tmp_lh;
                 }
                 return tmp_lh;
@@ -234,9 +240,9 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 
 		} else if ( ffit_type == "resolution" ) {
 
-			reco::BeamSpot tmp_z = Fit_z_chi2(inipar);
+			reco::BeamSpotExt tmp_z = Fit_z_chi2(inipar);
 			this->d0phi_Init();
-			reco::BeamSpot tmp_d0phi = Fit_d0phi();
+			reco::BeamSpotExt tmp_d0phi = Fit_d0phi();
 
 			double tmp_par[7] = {tmp_d0phi.x0(), tmp_d0phi.y0(), tmp_z.z0(),
 								 tmp_z.sigmaZ(), tmp_d0phi.dxdz(), tmp_d0phi.dydz(),0.0};
@@ -244,18 +250,18 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
             for(int s=0;s<6;s++){ tmp_error_par[s] = pow(tmp_par[s],0.5);}
             tmp_error_par[6]=0.0;
 
-			reco::BeamSpot tmp_beam = Fit_d_z_likelihood(tmp_par,tmp_error_par);
+			reco::BeamSpotExt tmp_beam = Fit_d_z_likelihood(tmp_par,tmp_error_par);
 
 			double tmp_par2[7] = {tmp_beam.x0(), tmp_beam.y0(), tmp_beam.z0(),
 								 tmp_beam.sigmaZ(), tmp_beam.dxdz(), tmp_beam.dydz(),
 								 tmp_beam.BeamWidthX()};
 
-			reco::BeamSpot tmp_lh = Fit_dres_z_likelihood(tmp_par2);
+			reco::BeamSpotExt tmp_lh = Fit_dres_z_likelihood(tmp_par2);
 
 			if (edm::isNotFinite(ff_minimum)) {
 
                 edm::LogWarning("BSFitter") << "Result is non physical. Log-Likelihood fit did not converge." << std::endl;
-				tmp_lh.setType(reco::BeamSpot::Unknown);
+				tmp_lh.setType(reco::BeamSpotExt::Unknown);
 				return tmp_lh;
 			}
 			return tmp_lh;
@@ -277,7 +283,7 @@ reco::BeamSpot BSFitter::Fit(double *inipar = nullptr) {
 }
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_z_likelihood(double *inipar) {
+reco::BeamSpotExt BSFitter::Fit_z_likelihood(double *inipar) {
 
 	//std::cout << "Fit_z(double *) called" << std::endl;
 	//std::cout << "inipar[0]= " << inipar[0] << std::endl;
@@ -326,7 +332,7 @@ reco::BeamSpot BSFitter::Fit_z_likelihood(double *inipar) {
 	}
 	gmMinuit->Migrad();
 	*/
-	reco::BeamSpot::CovarianceMatrix matrix;
+	reco::BeamSpotExt::CovarianceMatrix matrix;
 
 	for (int j = 2 ; j < 4 ; ++j) {
 		for(int k = j ; k < 4 ; ++k) {
@@ -334,19 +340,26 @@ reco::BeamSpot BSFitter::Fit_z_likelihood(double *inipar) {
 		}
 	}
 
-	return reco::BeamSpot( reco::BeamSpot::Point(0.,
-						     0.,
-						     fmin.Parameters().Vec()(2)),
-			       fmin.Parameters().Vec()(3),
-			       0.,
-			       0.,
-			       0.,
-			       matrix,
-			       fbeamtype );
+	return reco::BeamSpotExt( reco::BeamSpotExt::Point(0.,
+						                               0.,
+						                               fmin.Parameters().Vec()(2)),
+			                  fmin.Parameters().Vec()(3),
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  matrix,
+			                  matrix,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  fbeamtype 
+			                );
 }
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_z_chi2(double *inipar) {
+reco::BeamSpotExt BSFitter::Fit_z_chi2(double *inipar) {
 
     // N.B. this fit is not performed anymore but now
     // Z is fitted in the same track set used in the d0-phi fit after
@@ -377,37 +390,43 @@ reco::BeamSpot BSFitter::Fit_z_chi2(double *inipar) {
 	//std::cout << "got function" << std::endl;
 	double fpar[2] = {fgaus.GetParameter(1), fgaus.GetParameter(2) };
 	//std::cout<<"Debug fpar[2] = (" <<fpar[0]<<","<<fpar[1]<<")"<<std::endl;
-	reco::BeamSpot::CovarianceMatrix matrix;
+	reco::BeamSpotExt::CovarianceMatrix matrix;
 	// add matrix values.
 	matrix(2,2) = fgaus.GetParError(1) * fgaus.GetParError(1);
 	matrix(3,3) = fgaus.GetParError(2) * fgaus.GetParError(2);
 
 	//delete h1z;
 
-	return reco::BeamSpot( reco::BeamSpot::Point(0.,
-						     0.,
-						     fpar[0]),
-			       fpar[1],
-			       0.,
-			       0.,
-			       0.,
-			       matrix,
-			       fbeamtype );
-
+	return reco::BeamSpotExt( reco::BeamSpotExt::Point(0.,
+						                               0.,
+						                               fpar[0]),
+			                  fpar[1],
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  matrix,
+			                  matrix,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  fbeamtype 
+			                );
 
 }
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_ited0phi() {
+reco::BeamSpotExt BSFitter::Fit_ited0phi() {
 
 	this->d0phi_Init();
     edm::LogInfo("BSFitter") << "number of total input tracks: " << fBSvector.size() << std::endl;
 
-	reco::BeamSpot theanswer;
+	reco::BeamSpotExt theanswer;
 
 	if ( (int)fBSvector.size() <= fminNtrks ) {
         edm::LogWarning("BSFitter") << "need at least " << fminNtrks << " tracks to run beamline fitter." << std::endl;
-		fbeamtype = reco::BeamSpot::Fake;
+		fbeamtype = reco::BeamSpotExt::Fake;
 		theanswer.setType(fbeamtype);
 		return theanswer;
 	}
@@ -416,7 +435,7 @@ reco::BeamSpot BSFitter::Fit_ited0phi() {
 	if ( goodfit ) fnthite++;
 	//std::cout << "Initial tempanswer (iteration 0): " << theanswer << std::endl;
 
-	reco::BeamSpot preanswer = theanswer;
+	reco::BeamSpotExt preanswer = theanswer;
 
 	while ( goodfit &&
 			ftmprow > fconvergence * fBSvector.size() &&
@@ -441,12 +460,12 @@ reco::BeamSpot BSFitter::Fit_ited0phi() {
 
     edm::LogInfo("BSFitter") << "Total number of successful iterations = " << ( goodfit ? (fnthite+1) : fnthite ) << std::endl;
     if (goodfit) {
-        fbeamtype = reco::BeamSpot::Tracker;
+        fbeamtype = reco::BeamSpotExt::Tracker;
         theanswer.setType(fbeamtype);
     }
     else {
         edm::LogWarning("BSFitter") << "Fit doesn't converge!!!" << std::endl;
-        fbeamtype = reco::BeamSpot::Unknown;
+        fbeamtype = reco::BeamSpotExt::Unknown;
         theanswer.setType(fbeamtype);
     }
 	return theanswer;
@@ -454,7 +473,7 @@ reco::BeamSpot BSFitter::Fit_ited0phi() {
 
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_d0phi() {
+reco::BeamSpotExt BSFitter::Fit_d0phi() {
 
 	//LogDebug ("BSFitter") << " we will use " << fBSvector.size() << " tracks.";
     if (fnthite > 0) edm::LogInfo("BSFitter") << " number of tracks used: " << ftmprow << std::endl;
@@ -464,7 +483,7 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 	//std::cout << " ftmp(2,0)="<<ftmp(2,0)<<std::endl;
 	//std::cout << " ftmp(3,0)="<<ftmp(3,0)<<std::endl;
 
-        h1z->Reset();
+    h1z->Reset();
 
 
 	TMatrixD x_result(4,1);
@@ -484,10 +503,6 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 	std::vector<BSTrkParameters>::iterator iparam = fBSvector.begin();
 	ftmprow=0;
 
-
-	//edm::LogInfo ("BSFitter") << " test";
-
-	//std::cout << "BSFitter: fit" << std::endl;
 
 	for( iparam = fBSvector.begin() ;
 		iparam != fBSvector.end() ; ++iparam) {
@@ -521,17 +536,21 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 		ftmptrans = ftmptrans.Transpose(ftmp);
 		TMatrixD dcor = ftmptrans * g;
 		double chi2tmp = (iparam->d0() - dcor(0,0)) * (iparam->d0() - dcor(0,0))/sigma2;
-		(*iparam) = BSTrkParameters(iparam->z0(),iparam->sigz0(),iparam->d0(),iparam->sigd0(),
-					    iparam->phi0(), iparam->pt(),dcor(0,0),chi2tmp);
+		(*iparam) = BSTrkParameters(iparam->z0()   ,
+		                            iparam->sigz0(), 
+		                            iparam->d0()   ,
+		                            iparam->sigd0(),
+					                iparam->phi0() , 
+					                iparam->pt()   ,
+					                dcor(0,0)      ,
+					                chi2tmp);
 
 		bool pass = true;
 		if (fapplyd0cut && fnthite>0 ) {
-	       		if ( std::abs(iparam->d0() - dcor(0,0)) > fd0cut ) pass = false;
-
+       		if ( std::abs(iparam->d0() - dcor(0,0)) > fd0cut ) pass = false;
 		}
 		if (fapplychi2cut && fnthite>0 ) {
 			if ( chi2tmp > fchi2cut ) pass = false;
-
 		}
 
 		if (pass) {
@@ -541,7 +560,6 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 					temp(j,k) += g(j,0) * g(k,0);
 				}
 			}
-
 
 			Vint += (temp * (1 / sigma2));
 			b += (iparam->d0() / sigma2 * g);
@@ -589,11 +607,11 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 	if (status){
 	  //edm::LogError("NoBeamSpotFit")<<"gaussian fit failed. no BS d0 fit";
 
-	  return reco::BeamSpot();
+	  return reco::BeamSpotExt();
 	}
 	double fpar[2] = {fgaus.GetParameter(1), fgaus.GetParameter(2) };
 
-	reco::BeamSpot::CovarianceMatrix matrix;
+	reco::BeamSpotExt::CovarianceMatrix matrix;
 	// first two parameters
 	for (int j = 0 ; j < 2 ; ++j) {
 		for(int k = j ; k < 2 ; ++k) {
@@ -624,15 +642,22 @@ reco::BeamSpot BSFitter::Fit_d0phi() {
 	y0tmp += x_result(3,0)*fpar[0];
 
 
-	return reco::BeamSpot( reco::BeamSpot::Point(x0tmp,
-						     y0tmp,
-						     fpar[0]),
-                           fpar[1],
-			       x_result(2,0),
-			       x_result(3,0),
-			       0.,
-			       matrix,
-			       fbeamtype );
+	return reco::BeamSpotExt( reco::BeamSpotExt::Point(x0tmp,
+						                               y0tmp,
+						                               fpar[0]),
+                              fpar[1],
+			                  x_result(2,0),
+			                  x_result(3,0),
+			                  0.,  // dxdy (sara)
+			                  0.,
+			                  matrix,
+			                  matrix, //PV
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  fbeamtype 
+			                );
 
 }
 
@@ -656,7 +681,7 @@ void BSFitter::SetChi2Cut_d0phi(double chi2cut) {
 }
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_d_likelihood(double *inipar) {
+reco::BeamSpotExt BSFitter::Fit_d_likelihood(double *inipar) {
 
 
 	thePDF->SetPDFs("PDFGauss_d");
@@ -676,22 +701,29 @@ reco::BeamSpot BSFitter::Fit_d_likelihood(double *inipar) {
 	FunctionMinimum fmin = migrad();
 	ff_minimum = fmin.Fval();
 
-	reco::BeamSpot::CovarianceMatrix matrix;
+	reco::BeamSpotExt::CovarianceMatrix matrix;
 	for (int j = 0 ; j < 6 ; ++j) {
 		for(int k = j ; k < 6 ; ++k) {
 			matrix(j,k) = fmin.Error().Matrix()(j,k);
 		}
 	}
 
-	return reco::BeamSpot( reco::BeamSpot::Point(fmin.Parameters().Vec()(0),
-						     fmin.Parameters().Vec()(1),
-						     0.),
-			       0.,
-			       fmin.Parameters().Vec()(4),
-			       fmin.Parameters().Vec()(5),
-			       0.,
-			       matrix,
-			       fbeamtype );
+	return reco::BeamSpotExt( reco::BeamSpotExt::Point(fmin.Parameters().Vec()(0),
+						                               fmin.Parameters().Vec()(1),
+						                               0.),
+			                  0.,
+			                  fmin.Parameters().Vec()(4),
+			                  fmin.Parameters().Vec()(5),
+			                  0.,
+			                  0.,
+			                  matrix,
+			                  matrix,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  0.,
+			                  fbeamtype 
+			                );
 }
 //______________________________________________________________________
 double BSFitter::scanPDF(double *init_pars, int & tracksfixed, int option){
@@ -784,7 +816,7 @@ for( iparam = fBSvector.begin(); iparam != fBSvector.end(); ++iparam)
 }
 
 //________________________________________________________________________________
-reco::BeamSpot BSFitter::Fit_d_z_likelihood(double *inipar, double *error_par) {
+reco::BeamSpotExt BSFitter::Fit_d_z_likelihood(double *inipar, double *error_par) {
 
       int tracksFailed=0;
 
@@ -864,7 +896,7 @@ reco::BeamSpot BSFitter::Fit_d_z_likelihood(double *inipar, double *error_par) {
         //std::cout << " eval= " << ff_minimum
         //                << "/n params[0]= " << fmin.Parameters().Vec()(0) << std::endl;
 
-        reco::BeamSpot::CovarianceMatrix matrix;
+        reco::BeamSpotExt::CovarianceMatrix matrix;
 
         for (int j = 0 ; j < 7 ; ++j) {
                 for(int k = j ; k < 7 ; ++k) {
@@ -873,21 +905,26 @@ reco::BeamSpot BSFitter::Fit_d_z_likelihood(double *inipar, double *error_par) {
         }
 
 
-        return reco::BeamSpot( reco::BeamSpot::Point(fmin.Parameters().Vec()(0),
-                                                     fmin.Parameters().Vec()(1),
-                                                     fmin.Parameters().Vec()(2)),
-                               fmin.Parameters().Vec()(3),
-                               fmin.Parameters().Vec()(4),
-                               fmin.Parameters().Vec()(5),
-                               fmin.Parameters().Vec()(6),
-
-                               matrix,
-                               fbeamtype );
+        return reco::BeamSpotExt( reco::BeamSpotExt::Point(fmin.Parameters().Vec()(0),
+                                                           fmin.Parameters().Vec()(1),
+                                                           fmin.Parameters().Vec()(2)),
+                                 fmin.Parameters().Vec()(3),
+                                 fmin.Parameters().Vec()(4),
+                                 fmin.Parameters().Vec()(5),
+                                 0, // dxdy (sara)
+                                 fmin.Parameters().Vec()(6),
+                                 matrix,
+                                 matrix,
+                                 0, // dxdy (sara)
+                                 0, // dxdy (sara)
+                                 0, // dxdy (sara)
+                                 0, // dxdy (sara)
+                                 fbeamtype );
 }
 
 
 //______________________________________________________________________
-reco::BeamSpot BSFitter::Fit_dres_z_likelihood(double *inipar) {
+reco::BeamSpotExt BSFitter::Fit_dres_z_likelihood(double *inipar) {
 
 
 	thePDF->SetPDFs("PDFGauss_d_resolution*PDFGauss_z");
@@ -913,7 +950,7 @@ reco::BeamSpot BSFitter::Fit_dres_z_likelihood(double *inipar) {
 	FunctionMinimum fmin = migrad();
 	ff_minimum = fmin.Fval();
 
-	reco::BeamSpot::CovarianceMatrix matrix;
+	reco::BeamSpotExt::CovarianceMatrix matrix;
 
 	for (int j = 0 ; j < 6 ; ++j) {
 		for(int k = j ; k < 6 ; ++k) {
@@ -937,15 +974,21 @@ reco::BeamSpot BSFitter::Fit_dres_z_likelihood(double *inipar) {
 		}
 	}
 
-	return reco::BeamSpot( reco::BeamSpot::Point(fmin.Parameters().Vec()(0),
-									 fmin.Parameters().Vec()(1),
-									 fmin.Parameters().Vec()(2)),
-					 fmin.Parameters().Vec()(3),
-					 fmin.Parameters().Vec()(4),
-					 fmin.Parameters().Vec()(5),
-					 inipar[6],
-					 matrix,
-					 fbeamtype );
+	return reco::BeamSpotExt( reco::BeamSpotExt::Point(fmin.Parameters().Vec()(0),
+									                   fmin.Parameters().Vec()(1),
+									                   fmin.Parameters().Vec()(2)),
+					          fmin.Parameters().Vec()(3),
+					          fmin.Parameters().Vec()(4),
+					          fmin.Parameters().Vec()(5),
+					          0, //dxdy (sara)
+					          inipar[6],
+					          matrix,
+					          matrix,
+					          0, //dxdy (sara)
+					          0, //dxdy (sara)
+					          0, //dxdy (sara)
+					          0, //dxdy (sara)
+					          fbeamtype );
 }
 
 

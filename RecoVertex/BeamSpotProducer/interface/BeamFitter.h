@@ -17,6 +17,7 @@
 #include "DataFormats/Provenance/interface/Timestamp.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 #include "DataFormats/TrackReco/interface/TrackBase.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -48,7 +49,7 @@ class BeamFitter {
   bool runPVandTrkFitter();
   bool runFitterNoTxt();
 
-  reco::BeamSpot getBeamWidth() { return fbeamWidthFit; }
+  reco::BeamSpotExt getBeamWidth() { return fbeamWidthFit; }
   void runAllFitter();
   void resetTrkVector() { fBSvector.clear(); }
   void resetTotTrk() { ftotal_tracks=0; }
@@ -91,8 +92,8 @@ class BeamFitter {
   void dumpTxtFile(std::string &,bool);
   void dumpBWTxtFile(std::string &);
   void write2DB();
-  reco::BeamSpot getBeamSpot() { return fbeamspot; }
-  std::map<int, reco::BeamSpot> getBeamSpotMap() { return fbspotPVMap; }
+  reco::BeamSpotExt getBeamSpot() { return fbeamspot; }
+  std::map<int, reco::BeamSpotExt> getBeamSpotMap() { return fbspotPVMap; }
   std::vector<BSTrkParameters> getBSvector() { return fBSvector; }
   TH1F * getCutFlow() { return h1cutFlow; }
   void subtractFromCutFlow(const TH1F* toSubtract) {
@@ -137,12 +138,12 @@ class BeamFitter {
   // Update the fbeginTimeOfFit etc from the refTime
   void updateBTime();
   std::vector<BSTrkParameters> fBSvector;
-  reco::BeamSpot fbeamspot;
-  reco::BeamSpot fbeamWidthFit;
-  std::map< int, reco::BeamSpot> fbspotPVMap;
+  reco::BeamSpotExt fbeamspot;
+  reco::BeamSpotExt fbeamWidthFit;
+  std::map< int, reco::BeamSpotExt> fbspotPVMap;
   //  BSFitter *fmyalgo;
   std::ofstream fasciiFile;
-  std::ofstream fasciiDIP;
+  std::ofstream fasciiDIP;  
 
   bool debug_;
   bool appendRunTxt_;
@@ -167,6 +168,7 @@ class BeamFitter {
   std::vector<reco::TrackBase::TrackAlgorithm> algorithm_;
   double inputBeamWidth_;
   std::vector<double> time_range_;
+  int selectedBx_;
   double convergence_;
   int ftotal_tracks;
   int min_Ntrks_;

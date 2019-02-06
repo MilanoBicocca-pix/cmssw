@@ -142,6 +142,7 @@ namespace DataFormats_Math {
     math::Error<5>::type e5;
     math::Error<6>::type e6; 
     math::Error<7>::type e7;
+    math::Error<9>::type e9;
     
     //     math::ErrorD<1>::type ed1;
     math::ErrorD<2>::type ed2;

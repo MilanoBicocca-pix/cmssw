@@ -20,6 +20,7 @@ ________________________________________________________________**/
 
 #include "RecoVertex/BeamSpotProducer/interface/BeamFitter.h"
 #include "RecoVertex/BeamSpotProducer/interface/BeamSpotWrite2Txt.h"
+#include "RecoVertex/BeamSpotProducer/interface/BeamSpotExtWrite2Txt.h"
 
 #include "DataFormats/Common/interface/View.h"
 #include "DataFormats/TrackReco/interface/HitPattern.h"
@@ -74,6 +75,7 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   inputBeamWidth_    = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("InputBeamWidth",-1.);
 
   time_range_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<std::vector<double> >("timerange");
+  selectedBx_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<int>("selectBx");
 
   for (unsigned int j=0;j<trk_Algorithm_.size();j++)
     algorithm_.push_back(reco::TrackBase::algoByName(trk_Algorithm_[j]));
@@ -232,6 +234,8 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
     return;
   }
 
+  if (selectedBx_ != -1 && iEvent.bunchCrossing()!= selectedBx_ ) return;
+  
   if (fbeginLumiOfFit == -1) freftime[0] = freftime[1] = ftmptime;
   if (freftime[0] == 0 || ftmptime < freftime[0]) freftime[0] = ftmptime;
   if (freftime[1] == 0 || ftmptime > freftime[1]) freftime[1] = ftmptime;
@@ -245,6 +249,7 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
   edm::Handle<reco::TrackCollection> TrackCollection;
   iEvent.getByToken(tracksToken_, TrackCollection);
+  if (!TrackCollection.isValid()) return;
 
   //------ Primary Vertices
   edm::Handle< edm::View<reco::Vertex> > PVCollection;
@@ -305,7 +310,7 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 
     for (int i=0; i<5; ++i) {
       for (int j=0; j<5; ++j) {
-	fcov[i][j] = track->covariance(i,j);
+    fcov[i][j] = track->covariance(i,j);
       }
     }
 
@@ -328,8 +333,8 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
       // Track algorithm
 
       if (!algorithm_.empty()) {
-	if (std::find(algorithm_.begin(),algorithm_.end(),track->algo())==algorithm_.end())
-	  falgo = false;
+    if (std::find(algorithm_.begin(),algorithm_.end(),track->algo())==algorithm_.end())
+      falgo = false;
       }
 
     }
@@ -358,32 +363,32 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
     // Track selection
     if (fnTotLayerMeas >= trk_MinNTotLayers_) { countPass[1] += 1;
       if (fnPixelLayerMeas >= trk_MinNPixLayers_) { countPass[2] += 1;
-	if (fnormchi2 < trk_MaxNormChi2_) { countPass[3] += 1;
-	  if (falgo) {countPass[4] += 1;
-	    if (fquality) { countPass[5] += 1;
-	      if (std::abs( fd0 ) < trk_MaxIP_) { countPass[6] += 1;
-		if (std::abs( fz0 ) < trk_MaxZ_){ countPass[7] += 1;
-		  if (fpt > trk_MinpT_) {
-		    countPass[8] += 1;
-		    if (std::abs( feta ) < trk_MaxEta_
-			//&& fpvValid
-			) {
-		      if (debug_) {
+    if (fnormchi2 < trk_MaxNormChi2_) { countPass[3] += 1;
+      if (falgo) {countPass[4] += 1;
+        if (fquality) { countPass[5] += 1;
+          if (std::abs( fd0 ) < trk_MaxIP_) { countPass[6] += 1;
+        if (std::abs( fz0 ) < trk_MaxZ_){ countPass[7] += 1;
+          if (fpt > trk_MinpT_) {
+            countPass[8] += 1;
+            if (std::abs( feta ) < trk_MaxEta_
+            //&& fpvValid
+            ) {
+              if (debug_) {
                   edm::LogInfo("BeamFitter") << "Selected track quality = " << track->qualityMask()
                                              << "; track algorithm = " << track->algoName() << "= TrackAlgorithm: " << track->algo() << std::endl;
-		      }
-		      BSTrkParameters BSTrk(fz0,fsigmaz0,fd0,fsigmad0,fphi0,fpt,0.,0.);
-		      BSTrk.setVx(fvx);
-		      BSTrk.setVy(fvy);
-		      fBSvector.push_back(BSTrk);
-		      averageZ += fz0;
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+              }
+              BSTrkParameters BSTrk(fz0,fsigmaz0,fd0,fsigmad0,fphi0,fpt,0.,0.);
+              BSTrk.setVx(fvx);
+              BSTrk.setVy(fvy);
+              fBSvector.push_back(BSTrk);
+              averageZ += fz0;
+            }
+          }
+        }
+          }
+        }
+      }
+        }
       }
     }// track selection
 
@@ -407,61 +412,61 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
 }
 
 bool BeamFitter::runPVandTrkFitter() {
-// run both PV and track fitters
-    bool fit_ok = false;
+    
+    // run both PV and track fitters
+    bool fit_ok    = false;
     bool pv_fit_ok = false;
-    reco::BeamSpot bspotPV;
-    reco::BeamSpot bspotTrk;
+    reco::BeamSpotExt bspotPV;
+    reco::BeamSpotExt bspotTrk;
 
     // First run PV fitter
     if ( MyPVFitter->IsFitPerBunchCrossing() ){
-      edm::LogInfo("BeamFitter") << " [BeamFitterBxDebugTime] freftime[0] = " << freftime[0]
-				 << "; address =  " << &freftime[0]
-				 << " = " << fbeginTimeOfFit << std::endl;
-      edm::LogInfo("BeamFitter") << " [BeamFitterBxDebugTime] freftime[1] = " << freftime[1]
-				 << "; address =  " << &freftime[1]
-				 << " = " << fendTimeOfFit << std::endl;
+        edm::LogInfo("BeamFitter") << " [BeamFitterBxDebugTime] freftime[0] = " << freftime[0]
+                                   << "; address =  " << &freftime[0]
+                                   << " = " << fbeginTimeOfFit << std::endl;
+        edm::LogInfo("BeamFitter") << " [BeamFitterBxDebugTime] freftime[1] = " << freftime[1]
+                                   << "; address =  " << &freftime[1]
+                                   << " = " << fendTimeOfFit << std::endl;
 
-      if ( MyPVFitter->runBXFitter() ) {
-	fbspotPVMap = MyPVFitter->getBeamSpotMap();
-	pv_fit_ok = true;
-      }
-      if(writeTxt_ ) dumpTxtFile(outputTxt_,true); // all reaults
-      if(writeDIPTxt_ && (pv_fit_ok || writeDIPBadFit_)) {
-          dumpTxtFile(outputDIPTxt_,false); // for DQM/DIP
-      }
-      return pv_fit_ok;
+        if ( MyPVFitter->runBXFitter() ) {
+            fbspotPVMap = MyPVFitter->getBeamSpotMap();
+            pv_fit_ok = true;
+        }
+        if(writeTxt_ ) dumpTxtFile(outputTxt_,true); // all reaults
+        if(writeDIPTxt_ && (pv_fit_ok || writeDIPBadFit_)) {
+            dumpTxtFile(outputDIPTxt_,false); // for DQM/DIP
+        }
+        return pv_fit_ok;
     }
 
     if ( MyPVFitter->runFitter() ) {
-
         bspotPV = MyPVFitter->getBeamSpot();
 
         // take beam width from PV fit and pass it to track fitter
         // assume circular transverse beam width
         inputBeamWidth_ = sqrt( pow(bspotPV.BeamWidthX(),2) + pow(bspotPV.BeamWidthY(),2) )/sqrt(2);
         pv_fit_ok = true;
-
-    } else {
+    } 
+    else {
         // problems with PV fit
-        bspotPV.setType(reco::BeamSpot::Unknown);
-        bspotTrk.setType(reco::BeamSpot::Unknown); //propagate error to trk beam spot
+        bspotPV.setType(reco::BeamSpotExt::Unknown);
+        bspotTrk.setType(reco::BeamSpotExt::Unknown); //propagate error to trk beam spot
     }
 
     if ( runFitterNoTxt() ) {
-
         bspotTrk = fbeamspot;
         fit_ok = true;
-    } else {
+    } 
+    else {
       // beamfit failed, flagged as empty beam spot
-      bspotTrk.setType(reco::BeamSpot::Fake);
+      bspotTrk.setType(reco::BeamSpotExt::Fake);
       fit_ok = false;
     }
 
     // combined results into one single beam spot
 
     // to pass errors I have to create another beam spot object
-    reco::BeamSpot::CovarianceMatrix matrix;
+    reco::BeamSpotExt::CovarianceMatrix matrix;
     for (int j = 0 ; j < 7 ; ++j) {
         for(int k = j ; k < 7 ; ++k) {
             matrix(j,k) = bspotTrk.covariance(j,k);
@@ -469,34 +474,55 @@ bool BeamFitter::runPVandTrkFitter() {
     }
     // change beam width error to one from PV
     if (pv_fit_ok && fit_ok ) {
-      matrix(6,6) = MyPVFitter->getWidthXerr() * MyPVFitter->getWidthXerr();
+  
+        matrix(6,6) = MyPVFitter->getWidthXerr() * MyPVFitter->getWidthXerr();
+        matrix(7,7) = MyPVFitter->getWidthYerr() * MyPVFitter->getWidthYerr();
+        matrix(8,8) = MyPVFitter->getDxdyerr()   * MyPVFitter->getDxdyerr();
 
-      // get Z and sigmaZ from PV fit
-      matrix(2,2) = bspotPV.covariance(2,2);
-      matrix(3,3) = bspotPV.covariance(3,3);
-      reco::BeamSpot tmpbs(reco::BeamSpot::Point(bspotTrk.x0(), bspotTrk.y0(),
-						 bspotPV.z0() ),
-			   bspotPV.sigmaZ() ,
-			   bspotTrk.dxdz(),
-			   bspotTrk.dydz(),
-			   bspotPV.BeamWidthX(),
-			   matrix,
-			   bspotPV.type() );
-      tmpbs.setBeamWidthY( bspotPV.BeamWidthY() );
-      // overwrite beam spot result
-      fbeamspot = tmpbs;
+        // get Z and sigmaZ from PV fit
+        matrix(2,2) = bspotPV.covariance(2,2);
+        matrix(3,3) = bspotPV.covariance(3,3);
+        
+        reco::BeamSpotExt::CovarianceMatrix pvmatrix;
+        for (int j = 0 ; j < 9 ; ++j) {
+            for(int k = 0 ; k < 9 ; ++k) {
+                pvmatrix(j,k) = bspotPV.covariancePV(j,k);
+            }
+        }
+        
+        
+        reco::BeamSpotExt tmpbs(reco::BeamSpotExt::Point(bspotTrk.x0(), 
+                                                         bspotTrk.y0(),
+                                                         bspotPV.z0() ),
+                                bspotPV.sigmaZ() ,
+                                bspotTrk.dxdz(),
+                                bspotTrk.dydz(),
+                                bspotPV.dxdy(), 
+                                bspotPV.BeamWidthX(),
+                                matrix,
+                                pvmatrix,
+                                bspotPV.x0(),
+                                bspotPV.y0(),
+                                bspotPV.dxdz(),
+                                bspotPV.dydz(),
+                                bspotPV.type() 
+                               );
+                               
+        tmpbs.setBeamWidthY( bspotPV.BeamWidthY() );
+        // overwrite beam spot result
+        fbeamspot = tmpbs;
     }
     if (pv_fit_ok && fit_ok) {
-      fbeamspot.setType(bspotPV.type());
+        fbeamspot.setType(bspotPV.type());
     }
     else if(!pv_fit_ok && fit_ok){
-      fbeamspot.setType(reco::BeamSpot::Unknown);
+        fbeamspot.setType(reco::BeamSpotExt::Unknown);
     }
     else if(pv_fit_ok && !fit_ok){
-      fbeamspot.setType(reco::BeamSpot::Unknown);
+        fbeamspot.setType(reco::BeamSpotExt::Unknown);
     }
     else if(!pv_fit_ok && !fit_ok){
-      fbeamspot.setType(reco::BeamSpot::Fake);
+        fbeamspot.setType(reco::BeamSpotExt::Fake);
     }
 
     if(writeTxt_ ) dumpTxtFile(outputTxt_,true); // all reaults
@@ -509,70 +535,69 @@ bool BeamFitter::runPVandTrkFitter() {
 }
 
 bool BeamFitter::runFitterNoTxt() {
-  edm::LogInfo("BeamFitter") << " [BeamFitterDebugTime] freftime[0] = " << freftime[0]
-			     << "; address =  " << &freftime[0]
-			     << " = " << fbeginTimeOfFit << std::endl;
-  edm::LogInfo("BeamFitter") << " [BeamFitterDebugTime] freftime[1] = " << freftime[1]
-			     << "; address =  " << &freftime[1]
-			     << " = " << fendTimeOfFit << std::endl;
+    edm::LogInfo("BeamFitter") << " [BeamFitterDebugTime] freftime[0] = " << freftime[0]
+                               << "; address =  " << &freftime[0]
+                               << " = " << fbeginTimeOfFit << std::endl;
+    edm::LogInfo("BeamFitter") << " [BeamFitterDebugTime] freftime[1] = " << freftime[1]
+                               << "; address =  " << &freftime[1]
+                               << " = " << fendTimeOfFit << std::endl;
 
-  if (fbeginLumiOfFit == -1 || fendLumiOfFit == -1) {
-      edm::LogWarning("BeamFitter") << "No event read! No Fitting!" << std::endl;
-    return false;
-  }
-
-  bool fit_ok = false;
-  // default fit to extract beam spot info
-  if(fBSvector.size() > 1 ){
-
-      edm::LogInfo("BeamFitter") << "Calculating beam spot..." << std::endl
-                                 << "We will use " << fBSvector.size() << " good tracks out of " << ftotal_tracks << std::endl;
-
-    BSFitter *myalgo = new BSFitter( fBSvector );
-    myalgo->SetMaximumZ( trk_MaxZ_ );
-    myalgo->SetConvergence( convergence_ );
-    myalgo->SetMinimumNTrks( min_Ntrks_ );
-    if (inputBeamWidth_ > 0 ) myalgo->SetInputBeamWidth( inputBeamWidth_ );
-
-    fbeamspot = myalgo->Fit();
-
-
-    // retrieve histogram for Vz
-    h1z = (TH1F*) myalgo->GetVzHisto();
-
-    delete myalgo;
-    if ( fbeamspot.type() != 0 ) {// save all results except for Fake (all 0.)
-      fit_ok = true;
-      if (saveBeamFit_){
-	fx = fbeamspot.x0();
-	fy = fbeamspot.y0();
-	fz = fbeamspot.z0();
-	fsigmaZ = fbeamspot.sigmaZ();
-	fdxdz = fbeamspot.dxdz();
-	fdydz = fbeamspot.dydz();
-	fwidthX = fbeamspot.BeamWidthX();
-	fwidthY = fbeamspot.BeamWidthY();
-	fxErr = fbeamspot.x0Error();
-	fyErr = fbeamspot.y0Error();
-	fzErr = fbeamspot.z0Error();
-	fsigmaZErr = fbeamspot.sigmaZ0Error();
-	fdxdzErr = fbeamspot.dxdzError();
-	fdydzErr = fbeamspot.dydzError();
-	fwidthXErr = fbeamspot.BeamWidthXError();
-	fwidthYErr = fbeamspot.BeamWidthYError();
-	ftreeFit_->Fill();
-      }
+    if (fbeginLumiOfFit == -1 || fendLumiOfFit == -1) {
+        edm::LogWarning("BeamFitter") << "No event read! No Fitting!" << std::endl;
+      return false;
     }
-  }
-  else{ // tracks <= 1
-    reco::BeamSpot tmpbs;
-    fbeamspot = tmpbs;
-    fbeamspot.setType(reco::BeamSpot::Fake);
-    edm::LogInfo("BeamFitter") << "Not enough good tracks selected! No beam fit!" << std::endl;
 
-  }
-  fitted_ = true;
-  return fit_ok;
+    bool fit_ok = false;
+    // default fit to extract beam spot info
+    if(fBSvector.size() > 1 ){
+
+        edm::LogInfo("BeamFitter") << "Calculating beam spot..." << std::endl
+                                   << "We will use " << fBSvector.size() << " good tracks out of " << ftotal_tracks << std::endl;
+
+        BSFitter *myalgo = new BSFitter( fBSvector );
+        myalgo->SetMaximumZ( trk_MaxZ_ );
+        myalgo->SetConvergence( convergence_ );
+        myalgo->SetMinimumNTrks( min_Ntrks_ );
+        if (inputBeamWidth_ > 0 ) myalgo->SetInputBeamWidth( inputBeamWidth_ );
+
+        fbeamspot = myalgo->Fit();
+
+        // retrieve histogram for Vz
+        h1z = (TH1F*) myalgo->GetVzHisto();
+    
+        delete myalgo;
+        if ( fbeamspot.type() != 0 ) { // save all results except for Fake (all 0.)
+            fit_ok = true;
+            if (saveBeamFit_){
+                fx         = fbeamspot.x0();
+                fy         = fbeamspot.y0();
+                fz         = fbeamspot.z0();
+                fsigmaZ    = fbeamspot.sigmaZ();
+                fdxdz      = fbeamspot.dxdz();
+                fdydz      = fbeamspot.dydz();
+                fwidthX    = fbeamspot.BeamWidthX();
+                fwidthY    = fbeamspot.BeamWidthY();
+                fxErr      = fbeamspot.x0Error();
+                fyErr      = fbeamspot.y0Error();
+                fzErr      = fbeamspot.z0Error();
+                fsigmaZErr = fbeamspot.sigmaZ0Error();
+                fdxdzErr   = fbeamspot.dxdzError();
+                fdydzErr   = fbeamspot.dydzError();
+                fwidthXErr = fbeamspot.BeamWidthXError();
+                fwidthYErr = fbeamspot.BeamWidthYError();
+                ftreeFit_->Fill();
+            }
+        }
+    }
+    else { // tracks <= 1
+        reco::BeamSpotExt tmpbs;
+        fbeamspot = tmpbs;
+        fbeamspot.setType(reco::BeamSpotExt::Fake);
+        edm::LogInfo("BeamFitter") << "Not enough good tracks selected! No beam fit!" << std::endl;
+    }
+
+    fitted_ = true;
+    return fit_ok;
 
 }
 
@@ -616,7 +641,7 @@ bool BeamFitter::runBeamWidthFitter() {
        widthfit_ok = true;
   }
   else{
-    fbeamspot.setType(reco::BeamSpot::Fake);
+    fbeamspot.setType(reco::BeamSpotExt::Fake);
     edm::LogWarning("BeamFitter") << "Not enough good tracks selected! No beam fit!" << std::endl;
   }
   return widthfit_ok;
@@ -651,8 +676,8 @@ void BeamFitter::dumpTxtFile(std::string & fileName, bool append){
 
   if ( MyPVFitter->IsFitPerBunchCrossing() ) {
 
-    for (std::map<int,reco::BeamSpot>::const_iterator abspot = fbspotPVMap.begin(); abspot!= fbspotPVMap.end(); ++abspot) {
-      reco::BeamSpot beamspottmp = abspot->second;
+    for (std::map<int,reco::BeamSpotExt>::const_iterator abspot = fbspotPVMap.begin(); abspot!= fbspotPVMap.end(); ++abspot) {
+      reco::BeamSpotExt beamspottmp = abspot->second;
       int bx = abspot->first;
 
       outFile << "Runnumber " << frun << " bx " << bx << std::endl;
@@ -669,11 +694,11 @@ void BeamFitter::dumpTxtFile(std::string & fileName, bool append){
       outFile << "BeamWidthX " << beamspottmp.BeamWidthX() << std::endl;
       outFile << "BeamWidthY " << beamspottmp.BeamWidthY() << std::endl;
       for (int i = 0; i<6; ++i) {
-	outFile << "Cov("<<i<<",j) ";
-	for (int j=0; j<7; ++j) {
-	  outFile << beamspottmp.covariance(i,j) << " ";
-	}
-	outFile << std::endl;
+        outFile << "Cov("<<i<<",j) ";
+        for (int j=0; j<7; ++j) {
+          outFile << beamspottmp.covariance(i,j) << " ";
+        }
+        outFile << std::endl;
       }
       outFile << "Cov(6,j) 0 0 0 0 0 0 " << beamspottmp.covariance(6,6) << std::endl;
       //}
@@ -685,7 +710,7 @@ void BeamFitter::dumpTxtFile(std::string & fileName, bool append){
   }//if bx results needed
   else {
   
-    beamspot::BeamSpotContainer currentBS;
+    beamspotext::BeamSpotExtContainer currentBS;
     
     currentBS.beamspot       = fbeamspot      ;
     currentBS.run            = frun           ;
@@ -695,7 +720,7 @@ void BeamFitter::dumpTxtFile(std::string & fileName, bool append){
     currentBS.endLumiOfFit   = fendLumiOfFit  ;
     std::copy(freftime, freftime+2, currentBS.reftime);
           
-    beamspot::dumpBeamSpotTxt(outFile, currentBS);
+    beamspotext::dumpBeamSpotTxt(outFile, currentBS);
         
     //write here Pv info for DIP only: This added only if append is false, which happen for DIP only :)
   if(!append){
@@ -742,12 +767,12 @@ void BeamFitter::write2DB(){
     if ( poolDbService->isNewTagRequest( "BeamSpotObjectsRcd" ) ) {
       std::cout << "new tag requested" << std::endl;
       poolDbService->createNewIOV<BeamSpotObjects>( pBSObjects, poolDbService->beginOfTime(),poolDbService->endOfTime(),
-						    "BeamSpotObjectsRcd"  );
+                            "BeamSpotObjectsRcd"  );
     }
     else {
       std::cout << "no new tag requested" << std::endl;
       poolDbService->appendSinceTime<BeamSpotObjects>( pBSObjects, poolDbService->currentTime(),
-						       "BeamSpotObjectsRcd" );
+                               "BeamSpotObjectsRcd" );
     }
   }
 }
@@ -762,7 +787,7 @@ void BeamFitter::runAllFitter() {
       std::cout << " d0-phi Iterative:" << std::endl;
     BSFitter *myitealgo = new BSFitter( fBSvector );
     myitealgo->Setd0Cut_d0phi(4.0);
-    reco::BeamSpot beam_ite = myitealgo->Fit_ited0phi();
+    reco::BeamSpotExt beam_ite = myitealgo->Fit_ited0phi();
     if (debug_){
       std::cout << beam_ite << std::endl;
       std::cout << "\n Now run tests of the different fits\n";
@@ -771,7 +796,7 @@ void BeamFitter::runAllFitter() {
     std::string fit_type = "chi2";
     myalgo->SetFitVariable(std::string("z"));
     myalgo->SetFitType(std::string("chi2"));
-    reco::BeamSpot beam_fit_z_chi2 = myalgo->Fit();
+    reco::BeamSpotExt beam_fit_z_chi2 = myalgo->Fit();
     if (debug_){
       std::cout << " z Chi2 Fit ONLY:" << std::endl;
       std::cout << beam_fit_z_chi2 << std::endl;
@@ -780,7 +805,7 @@ void BeamFitter::runAllFitter() {
     fit_type = "combined";
     myalgo->SetFitVariable("z");
     myalgo->SetFitType("combined");
-    reco::BeamSpot beam_fit_z_lh = myalgo->Fit();
+    reco::BeamSpotExt beam_fit_z_lh = myalgo->Fit();
     if (debug_){
       std::cout << " z Log-Likelihood Fit ONLY:" << std::endl;
       std::cout << beam_fit_z_lh << std::endl;
@@ -788,7 +813,7 @@ void BeamFitter::runAllFitter() {
 
     myalgo->SetFitVariable("d");
     myalgo->SetFitType("d0phi");
-    reco::BeamSpot beam_fit_dphi = myalgo->Fit();
+    reco::BeamSpotExt beam_fit_dphi = myalgo->Fit();
     if (debug_){
       std::cout << " d0-phi0 Fit ONLY:" << std::endl;
       std::cout << beam_fit_dphi << std::endl;
@@ -796,7 +821,7 @@ void BeamFitter::runAllFitter() {
     /*
     myalgo->SetFitVariable(std::string("d*z"));
     myalgo->SetFitType(std::string("likelihood"));
-    reco::BeamSpot beam_fit_dz_lh = myalgo->Fit();
+    reco::BeamSpotExt beam_fit_dz_lh = myalgo->Fit();
     if (debug_){
       std::cout << " Log-Likelihood Fit:" << std::endl;
       std::cout << beam_fit_dz_lh << std::endl;
@@ -804,7 +829,7 @@ void BeamFitter::runAllFitter() {
 
     myalgo->SetFitVariable(std::string("d*z"));
     myalgo->SetFitType(std::string("resolution"));
-    reco::BeamSpot beam_fit_dresz_lh = myalgo->Fit();
+    reco::BeamSpotExt beam_fit_dresz_lh = myalgo->Fit();
     if(debug_){
       std::cout << " IP Resolution Fit" << std::endl;
       std::cout << beam_fit_dresz_lh << std::endl;
