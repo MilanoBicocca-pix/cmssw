@@ -8,7 +8,7 @@
 namespace beamspotext {
 
   struct BeamSpotExtContainer {
-      reco::BeamSpotExt beamspot          ;
+      reco::BeamSpotExt beamspot          ;    
       int               run               ;
       char              beginTimeOfFit[32];
       char              endTimeOfFit  [32];
@@ -40,6 +40,10 @@ namespace beamspotext {
       }
       outFile << std::endl;
     }
+    outFile << "xPV "                 << bsContainer.beamspot.xPV()                                     << std::endl;
+    outFile << "yPV "                 << bsContainer.beamspot.yPV()                                     << std::endl;
+    outFile << "dxdzPV "              << bsContainer.beamspot.dxdzPV()                                  << std::endl;
+    outFile << "dydzPV "              << bsContainer.beamspot.dydzPV()                                  << std::endl;
     for (int i = 0; i<9; ++i) {
       outFile << "PVCov("<<i<<",j) ";
       for (int j=0; j<9; ++j) {
