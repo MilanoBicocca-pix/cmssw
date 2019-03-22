@@ -50,7 +50,7 @@ process.d0_phi_analyzer.BeamFitter.SaveFitResults            = False
 process.d0_phi_analyzer.BeamFitter.SaveNtuple                = False
 process.d0_phi_analyzer.BeamFitter.SavePVVertices            = False
 process.d0_phi_analyzer.BeamFitter.timerange                 = cms.untracked.vdouble(min_time_t,max_time_t)
-process.d0_phi_analyzer.BeamFitter.selectBx                  = theBx
+process.d0_phi_analyzer.BeamFitter.selectBx                  = cms.untracked.vint32(theBx)
 '''
 {{ <row>L1_ZeroBias_copy,  265, 1</row>}}
 {{ <row>L1_ZeroBias_copy,  865, 1</row>}}

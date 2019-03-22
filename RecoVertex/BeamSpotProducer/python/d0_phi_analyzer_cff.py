@@ -34,7 +34,7 @@ d0_phi_analyzer = cms.EDAnalyzer("BeamSpotAnalyzer",
         FractionOfFittedTrks = cms.untracked.double(0.9),
         MinimumInputTracks = cms.untracked.int32(100),
         timerange          = cms.untracked.vdouble(-9999,1E12),
-        selectBx           = cms.untracked.int32(-1)
+        selectBx           = cms.untracked.vint32(-1)
      ),
      PVFitter = cms.PSet(
         Debug = cms.untracked.bool(False),

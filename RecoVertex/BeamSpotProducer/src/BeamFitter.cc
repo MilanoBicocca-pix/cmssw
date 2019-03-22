@@ -75,7 +75,9 @@ BeamFitter::BeamFitter(const edm::ParameterSet& iConfig,
   inputBeamWidth_    = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<double>("InputBeamWidth",-1.);
 
   time_range_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<std::vector<double> >("timerange");
-  selectedBx_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<int>("selectBx");
+//   selectedBx_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<int>("selectBx");
+  selectedBx_        = iConfig.getParameter<edm::ParameterSet>("BeamFitter").getUntrackedParameter<std::vector<int>>("selectBx");
+
 
   for (unsigned int j=0;j<trk_Algorithm_.size();j++)
     algorithm_.push_back(reco::TrackBase::algoByName(trk_Algorithm_[j]));
@@ -234,7 +236,10 @@ void BeamFitter::readEvent(const edm::Event& iEvent)
     return;
   }
 
-  if (selectedBx_ != -1 && iEvent.bunchCrossing()!= selectedBx_ ) return;
+//   if (selectedBx_ != -1 && iEvent.bunchCrossing()!= selectedBx_ ) return;
+  if (! (std::find(selectedBx_.begin(), selectedBx_.end(), iEvent.bunchCrossing()) != selectedBx_.end())) return;
+    
+  
   
   if (fbeginLumiOfFit == -1) freftime[0] = freftime[1] = ftmptime;
   if (freftime[0] == 0 || ftmptime < freftime[0]) freftime[0] = ftmptime;

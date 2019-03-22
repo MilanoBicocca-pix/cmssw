@@ -11,6 +11,7 @@ parser.add_argument("-d"  , "--folder"    , dest = "newFolder"  ,  help = "out f
 parser.add_argument("-b"  , "--bunch"     , dest = "bx"         ,  help = "selected bx, if -1 no selection"         , default =  -1                       )
 parser.add_argument("--ilumi"             , dest = "initls"     ,  help = "initial LS"                              , default =  "0"                      )
 parser.add_argument("--flumi"             , dest = "endls"      ,  help = "final LS"                                , default =  "99999"                  )
+parser.add_argument("--nlumi"             , dest = "nlumi"      ,  help = "number of LS to merge"                   , default =  "1"                      )
 parser.add_argument("--runN"              , dest = "runN"       ,  help = "run number"                              , default =  "254991"                 )
 
 options = parser.parse_args()
@@ -25,11 +26,15 @@ RUN_NUMBER = int(options.runN)
 import os
 import datetime
 
-flist   = open(options.timefile)
-ranges  = flist.readlines()
+# flist   = open(options.timefile)
+# ranges  = flist.readlines()
 
 # eval the number of jobs to be submitted
-njobs = len(ranges)
+initls = float(options.initls)
+endls  = float(options.endls)
+nlumi  = float(options.nlumi)
+
+njobs = int ( (endls-initls)/nlumi) + 1
 print 'njobs: ', njobs
 
 # create a new folder 
@@ -49,12 +54,14 @@ os.chdir(os.getcwd() +'/' + newFolder)
 for j in range(njobs): 
   k = j
   
-  low_time = ranges[j].split(',')[0].rstrip()
-  max_time = ranges[j].split(',')[1].rstrip()
+  low_time = -9999  ###ranges[j].split(',')[0].rstrip()
+  max_time = 1E12   ###ranges[j].split(',')[1].rstrip()
 
+  low_lumi = int(initls + nlumi * j)
+  max_lumi = int(initls + nlumi * (j+1) - 1)
   # write the .cfg file
   f   = open(options.cfg)
-  f1  = open('{M}_{MIN}_{MAX}.py'.format(M=options.cfg.replace(".py","").replace("../","").rstrip(), MIN=str(low_time), MAX=str(max_time) ), "w")
+  f1  = open('{M}_{MIN}_{MAX}.py'.format(M=options.cfg.replace(".py","").replace("../","").rstrip(), MIN=str(low_lumi), MAX=str(max_lumi) ), "w")
   for line in f:
       newline = None
       newfile = None
@@ -62,13 +69,13 @@ for j in range(njobs):
       if 'timerange' in line:
           newline = line.replace('min_time_t,max_time_t', '{MIN},{MAX}'.format( MIN=str(low_time), MAX=str(max_time)).rstrip())
       if 'BeamFit_LumiBased_alcareco_template.' in line:
-          newline = line.replace('BeamFit_LumiBased_alcareco_template', 'BeamFit_LumiBased_alcareco_{MIN}_{MAX}'.format( MIN=str(low_time), MAX=str(max_time) )).rstrip()
+          newline = line.replace('BeamFit_LumiBased_alcareco_template', 'BeamFit_LumiBased_alcareco_{MIN}_{MAX}'.format( MIN=str(low_lumi), MAX=str(max_lumi) )).rstrip()
       if 'theBx' in line:
           newline = line.replace('theBx', '{BX}'.format( BX=str(options.bx)).rstrip())
       if 'filelist_template' in line:
           newline = line.replace('filelist_template', '{LIST}'.format( LIST=str(options.inputfiles).strip('.py')).rstrip())
       if 'thelumirange' in line:
-          newline = line.replace('thelumirange', '{run}:{ils}-{run}:{fls}'.format( run = RUN_NUMBER, ils = options.initls, fls = options.endls).rstrip())
+          newline = line.replace('thelumirange', '{run}:{ils}-{run}:{fls}'.format( run = RUN_NUMBER, ils = low_lumi, fls = max_lumi).rstrip())
       if newline:
         print >> f1,newline.strip()
       if not (newline or newfile):
@@ -87,15 +94,15 @@ for j in range(njobs):
           shline = shline.replace('/wdir', '/{FOLDER}'.format(FOLDER=newFolder)).rstrip()
           print >> sh1, shline.rstrip()
       elif 'thecfg.py'  in shline:
-          shline = shline.replace('thecfg.py', '{FOLDER}/{M}_{MIN}_{MAX}.py'.format(M=options.cfg.replace("../","").replace(".py","").rstrip(), MIN=str(low_time), MAX=str(max_time), FOLDER=newFolder)).rstrip()
+          shline = shline.replace('thecfg.py', '{FOLDER}/{M}_{MIN}_{MAX}.py'.format(M=options.cfg.replace("../","").replace(".py","").rstrip(), MIN=str(low_lumi), MAX=str(max_lumi), FOLDER=newFolder)).rstrip()
           print >> sh1, shline.rstrip()
       elif 'FILELIST'  in shline:
           shline = shline.replace('FILELIST', '{FILELIST}'.format(FILELIST=str(options.inputfiles))).rstrip()
           shline = shline.replace('FOLDER', '{FOLDER}'    .format(FOLDER=newFolder )).rstrip()
           print >> sh1, shline.rstrip()
       elif 'MINT'  in shline:
-          shline = shline.replace('MINT', '{MIN}'.format(MIN=str(low_time))).rstrip()
-          shline = shline.replace('MAXT', '{MAX}'.format(MAX=str(max_time))).rstrip()
+          shline = shline.replace('MINT', '{MIN}'.format(MIN=str(low_lumi))).rstrip()
+          shline = shline.replace('MAXT', '{MAX}'.format(MAX=str(max_lumi))).rstrip()
           print >> sh1, shline.rstrip()
       else: 
         print >> sh1, shline.rstrip()
