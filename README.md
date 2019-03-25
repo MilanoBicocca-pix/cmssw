@@ -1,3 +1,17 @@
+**Purpose of this branch**
+
+Run the BS fit on custom ranges defined by given timestamps.  
+Useful for, e.g., determine the BS parameters during the scan steps in VdM scans.  
+
+In addition, these improvements are included:
+- uncertainty on sigmaY is saved and printed out
+- value and uncertainty of dxdy are saved and printed out 
+- the results of the pure 3D fit to the PVs (values and full covariance matrix) are also saved and printed
+
+
+
+
+
 **How to setup this branch**  
 
 ```
