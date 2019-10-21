@@ -11,6 +11,7 @@
 <use   name="CondFormats/HLTObjects"/>
 <use   name="CondFormats/Alignment"/>
 <use   name="CondFormats/BeamSpotObjects"/>
+<use   name="CondFormats/BeamSpotThresholds"/>
 <use   name="CondFormats/CastorObjects"/>
 <use   name="CondFormats/HIObjects"/>
 <use   name="CondFormats/CSCObjects"/>
