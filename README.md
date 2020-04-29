@@ -7,6 +7,8 @@ In addition, these improvements are included:
 - uncertainty on sigmaY is saved and printed out
 - value and uncertainty of dxdy are saved and printed out 
 - the results of the pure 3D fit to the PVs (values and full covariance matrix) are also saved and printed
+- the number of PVs used in the 3D fit is also saved and printed
+- the final value of the likelihood returned by minuit is also saved and printed
 
 
 
@@ -48,6 +50,7 @@ git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/script_bs_condor
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/submit_RunFitOnLumiRange_forCondor.py
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/submit_RunFitOnTimeRange_forCondor.py
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/condor_bs_template.cfg
+git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/time_ranges_274100_scans_1_2_3_4_5.txt
 
 scram b -j 10  
 cd RecoVertex/BeamSpotProducer/test  
