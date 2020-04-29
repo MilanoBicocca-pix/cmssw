@@ -322,6 +322,8 @@ bool PVFitter::runBXFitter() {
     fbeamspot.setBeamWidthX( fwidthX );
     fbeamspot.setBeamWidthY( fwidthY );
     fbeamspot.setType( reco::BeamSpotExt::Tracker );
+    fbeamspot.setnPVs( (pvStore->second).size() );
+    fbeamspot.setLLvalue( ierr.Fval() );
 
     fbspotMap[pvStore->first] = fbeamspot;
     edm::LogInfo("PVFitter") << "3D PV fit done for this bunch crossing."<<std::endl;
@@ -400,6 +402,8 @@ bool PVFitter::runFitter() {
       fbeamspot.setBeamWidthX( fwidthX );
       fbeamspot.setBeamWidthY( fwidthY );
       fbeamspot.setType(reco::BeamSpotExt::Tracker);
+      fbeamspot.setnPVs( pvStore_.size() );
+      fbeamspot.setLLvalue( -1 );
 
     }
     else { // do 3D fit
@@ -530,6 +534,8 @@ bool PVFitter::runFitter() {
       fbeamspot.setBeamWidthX( fwidthX );
       fbeamspot.setBeamWidthY( fwidthY );
       fbeamspot.setType(reco::BeamSpotExt::Tracker); 
+      fbeamspot.setnPVs( pvStore_.size() );
+      fbeamspot.setLLvalue( ierr.Fval() );
     }
 
     return true;

@@ -68,6 +68,8 @@ namespace reco {
 	  type_       = type;
 	  emittanceX_ = emittanceY_ = 0;
 	  betaStar_   = 0;
+	  nPVs_       = 0;
+	  LLvalue_    = -1.;
     };
 
 	
@@ -174,11 +176,15 @@ namespace reco {
 	double beamWidthFromBeta( double z, double e ) const {
 		return sqrt( e*betaStar_*(1 + pow((z-position_.Z())/betaStar_,2) ) );
 	}
+	int nPVs() const { return nPVs_; }
+	double LLvalue() const { return LLvalue_; }
 	///
 	void setEmittanceX( double v ) { emittanceX_ = v; }
 	void setEmittanceY( double v ) { emittanceY_ = v; }
 	void setbetaStar( double v ) { betaStar_ = v; }
-	
+	void setnPVs( int v ) { nPVs_ = v; }
+	void setLLvalue( double v ) { LLvalue_ = v; }
+
     /// print information
     void print( std::stringstream& ss ) const;
 
@@ -202,7 +208,9 @@ namespace reco {
 	Double32_t emittanceX_;
 	Double32_t emittanceY_;
 	Double32_t betaStar_;
-	
+	int        nPVs_;
+	Double32_t LLvalue_;
+
 	BeamType type_;
 	
   };

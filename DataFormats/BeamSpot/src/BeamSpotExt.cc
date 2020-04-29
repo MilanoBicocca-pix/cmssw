@@ -44,6 +44,8 @@ namespace reco {
 	  emittanceX_ = 0;
 	  emittanceY_ = 0;
 	  betaStar_  = 0;
+	  nPVs_      = 0;
+	  LLvalue_   = -1.;
   }
    	
   const BeamSpotExt::Point BeamSpotExt::position(const double z) const {
@@ -71,6 +73,8 @@ namespace reco {
 	   << " EmittanceX   = " << emittanceX() << " [cm]\n"
 	   << " EmittanceY   = " << emittanceY() << " [cm]\n"
 	   << " beta-star    = " << betaStar()   << " [cm]\n"
+	   << " nPvs         = " << nPVs() << " \n"
+	   << " FuncValue    = " << LLvalue() << " \n"
        << "-----------------------------------------------------\n\n";
 	
   }

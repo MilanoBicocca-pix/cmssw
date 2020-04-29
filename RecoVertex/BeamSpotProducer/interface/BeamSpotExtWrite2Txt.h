@@ -56,6 +56,8 @@ namespace beamspotext {
     outFile << "EmittanceX "           << bsContainer.beamspot.emittanceX()                               << std::endl;
     outFile << "EmittanceY "           << bsContainer.beamspot.emittanceY()                               << std::endl;
     outFile << "BetaStar "             << bsContainer.beamspot.betaStar()                                 << std::endl;
+    outFile << "nPvs "                 << bsContainer.beamspot.nPVs()                                     << std::endl;
+    outFile << "funcValue "            << bsContainer.beamspot.LLvalue()                                  << std::endl;
 
   }
 

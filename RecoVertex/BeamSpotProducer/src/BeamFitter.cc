@@ -514,6 +514,9 @@ bool BeamFitter::runPVandTrkFitter() {
                                );
                                
         tmpbs.setBeamWidthY( bspotPV.BeamWidthY() );
+        // set nPVs and Minuit FuncValue from PV fit
+        tmpbs.setnPVs ( bspotPV.nPVs() );
+        tmpbs.setLLvalue ( bspotPV.LLvalue() );
         // overwrite beam spot result
         fbeamspot = tmpbs;
     }
@@ -710,6 +713,8 @@ void BeamFitter::dumpTxtFile(std::string & fileName, bool append){
       outFile << "EmittanceX " << beamspottmp.emittanceX() << std::endl;
       outFile << "EmittanceY " << beamspottmp.emittanceY() << std::endl;
       outFile << "BetaStar " << beamspottmp.betaStar() << std::endl;
+      outFile << "nPvs "      << beamspottmp.nPVs() << std::endl;
+      outFile << "funcValue " << beamspottmp.LLvalue() << std::endl;
 
     }
   }//if bx results needed
