@@ -199,7 +199,7 @@ void AlcaBeamMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const&
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void AlcaBeamMonitor::dqmBeginLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
+void AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
   // Always create a beamspot group for each lumi weather we have results or not! Each Beamspot will be of unknown type!
 
   vertices_.clear();
@@ -247,6 +247,7 @@ void AlcaBeamMonitor::dqmBeginLuminosityBlock(const LuminosityBlock& iLumi, cons
   } else {
     LogInfo("AlcaBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
+  
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -292,7 +293,7 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void AlcaBeamMonitor::dqmEndLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
+void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
   if (theBeamFitter_->runPVandTrkFitter()) {
     beamSpotsMap_["BF"] = theBeamFitter_->getBeamSpot();
   }
