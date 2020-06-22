@@ -202,8 +202,6 @@ void AlcaBeamMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const&
 std::shared_ptr<Cache> AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) const {
   // Always create a beamspot group for each lumi weather we have results or not! Each Beamspot will be of unknown type!
  
-  testLumi = true;
-  cout <<" che lumi siamo? "<<iLumi.luminosityBlock()<<endl;
   vertices_.clear();
   theValuesContainer_->Reset();
   beamSpotsMap_.clear();
@@ -297,11 +295,7 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
 
 //----------------------------------------------------------------------------------------------------------------------
 void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
-  if (!testLumi){
-    cout <<" CHE CAZZO SUCCEDE?"<<endl;
-  } 
-  testLumi = false;
-  cout <<" End lumi # "<<iLumi.luminosityBlock()<<endl;
+  
   if (theBeamFitter_->runPVandTrkFitter()) {
     beamSpotsMap_["BF"] = theBeamFitter_->getBeamSpot();
   }
