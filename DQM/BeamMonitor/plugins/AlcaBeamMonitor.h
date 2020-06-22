@@ -24,8 +24,15 @@
 
 class BeamFitter;
 class PVFitter;
+namespace {
+  struct Cache {
+    Cache() : value(0) {}
+    //Using mutable since we want to update the value.
+    mutable std::atomic<unsigned int> value;
+  };
 
-class AlcaBeamMonitor : public DQMOneEDAnalyzer<> {
+}  //end anonymous namespace
+class AlcaBeamMonitor : public DQMOneEDAnalyzer<edm::LuminosityBlockCache<Cache>> {
 public:
   AlcaBeamMonitor(const edm::ParameterSet&);
   ~AlcaBeamMonitor() override;
@@ -33,8 +40,8 @@ public:
 protected:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
   void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-virtual void globalBeginLuminosityBlock(const edm::LuminosityBlock& iLumi, const edm::EventSetup& iSetup);
-  virtual void globalEndLuminosityBlock(const edm::LuminosityBlock& iLumi, const edm::EventSetup& iSetup);
+  std::shared_ptr<Cache> globalBeginLuminosityBlock(const edm::LuminosityBlock& iLumi, const edm::EventSetup& iSetup) const override;
+  void globalEndLuminosityBlock(const edm::LuminosityBlock& iLumi, const edm::EventSetup& iSetup) override;
 
 private:
   //Typedefs
@@ -62,14 +69,14 @@ private:
   MonitorElement* hD0Phi0_;
   MonitorElement* hDxyBS_;
   MonitorElement* theValuesContainer_;
-
+  mutable bool testLumi = false;
   //Containers
-  BeamSpotContainer beamSpotsMap_;
+  mutable BeamSpotContainer beamSpotsMap_;
   HistosContainer histosMap_;
   PositionContainer positionsMap_;
   std::vector<std::string> varNamesV_;                            //x,y,z,sigmax(y,z)
   std::multimap<std::string, std::string> histoByCategoryNames_;  //run, lumi
-  std::vector<reco::VertexCollection> vertices_;
+  mutable std::vector<reco::VertexCollection> vertices_;
 };
 
 #endif

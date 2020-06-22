@@ -199,9 +199,11 @@ void AlcaBeamMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const&
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-void AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
+std::shared_ptr<Cache> AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) const {
   // Always create a beamspot group for each lumi weather we have results or not! Each Beamspot will be of unknown type!
-
+ 
+  testLumi = true;
+  cout <<" che lumi siamo? "<<iLumi.luminosityBlock()<<endl;
   vertices_.clear();
   theValuesContainer_->Reset();
   beamSpotsMap_.clear();
@@ -212,11 +214,12 @@ void AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, c
     iSetup.get<BeamSpotObjectsRcd>().get(bsDBHandle);
   } catch (cms::Exception& exception) {
     LogInfo("AlcaBeamMonitor") << exception.what();
-    return;
+    return std::make_shared<Cache>();
   }
+   
   if (bsDBHandle.isValid()) {  // check the product
     const BeamSpotObjects* spotDB = bsDBHandle.product();
-
+    
     // translate from BeamSpotObjects to reco::BeamSpot
     BeamSpot::Point apoint(spotDB->GetX(), spotDB->GetY(), spotDB->GetZ());
 
@@ -228,8 +231,7 @@ void AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, c
     }
 
     beamSpotsMap_["DB"] =
-        BeamSpot(apoint, spotDB->GetSigmaZ(), spotDB->Getdxdz(), spotDB->Getdydz(), spotDB->GetBeamWidthX(), matrix);
-
+        BeamSpot(apoint, spotDB->GetSigmaZ(), spotDB->Getdxdz(), spotDB->Getdydz(), spotDB->GetBeamWidthX(), matrix);    
     BeamSpot* aSpot = &(beamSpotsMap_["DB"]);
 
     aSpot->setBeamWidthY(spotDB->GetBeamWidthY());
@@ -247,7 +249,7 @@ void AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi, c
   } else {
     LogInfo("AlcaBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
-  
+return std::make_shared<Cache>();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -257,6 +259,7 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
   //------ PVFitter
   thePVFitter_->readEvent(iEvent);
 
+ 
   if (beamSpotsMap_.find("DB") != beamSpotsMap_.end()) {
     //------ Tracks
     Handle<reco::TrackCollection> TrackCollection;
@@ -294,9 +297,15 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
 
 //----------------------------------------------------------------------------------------------------------------------
 void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
+  if (!testLumi){
+    cout <<" CHE CAZZO SUCCEDE?"<<endl;
+  } 
+  testLumi = false;
+  cout <<" End lumi # "<<iLumi.luminosityBlock()<<endl;
   if (theBeamFitter_->runPVandTrkFitter()) {
     beamSpotsMap_["BF"] = theBeamFitter_->getBeamSpot();
   }
+ 
   theBeamFitter_->resetTrkVector();
   theBeamFitter_->resetLSRange();
   theBeamFitter_->resetRefTime();
@@ -306,7 +315,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
     beamSpotsMap_["PV"] = thePVFitter_->getBeamSpot();
   }
   thePVFitter_->resetAll();
-
+  
   //    "PV,BF..."      Value,Error
   map<std::string, pair<double, double> > resultsMap;
   vector<pair<double, double> > vertexResults;
@@ -314,7 +323,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
   int position = 0;
   for (vector<string>::iterator itV = varNamesV_.begin(); itV != varNamesV_.end(); itV++) {
     resultsMap.clear();
-    for (BeamSpotContainer::iterator itBS = beamSpotsMap_.begin(); itBS != beamSpotsMap_.end(); itBS++) {
+    for (BeamSpotContainer::iterator itBS = beamSpotsMap_.begin(); itBS != beamSpotsMap_.end(); itBS++) {     
       if (itBS->second.type() == BeamSpot::Tracker) {
         if (*itV == "x") {
           resultsMap[itBS->first] = pair<double, double>(itBS->second.x0(), itBS->second.x0Error());
@@ -376,17 +385,20 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
 */
     for (multimap<string, string>::iterator itM = histoByCategoryNames_.begin(); itM != histoByCategoryNames_.end();
          itM++) {
+      
       if (itM->first == "run" && (histo = histosMap_[*itV][itM->first][itM->second]) == nullptr) {
         continue;
       } else if (itM->first != "run") {
         position = positionsMap_[*itV][itM->first][itM->second];
       }
       if (itM->second == "Coordinate") {
-        if (beamSpotsMap_.find("DB") != beamSpotsMap_.end()) {
+        if (beamSpotsMap_.find("DB") != beamSpotsMap_.end()) {          
           histo->Fill(resultsMap["DB"].first);
         }
       } else if (itM->second == "PrimaryVertex fit-DataBase") {
         if (resultsMap.find("PV") != resultsMap.end() && resultsMap.find("DB") != resultsMap.end()) {
+           
+            
           histo->Fill(resultsMap["PV"].first - resultsMap["DB"].first);
         }
       } else if (itM->second == "PrimaryVertex fit-BeamFit") {
@@ -407,7 +419,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
       } else if (itM->second == "PrimaryVertex-BeamFit") {
         if (resultsMap.find("PV") != resultsMap.end() && resultsMap.find("BF") != resultsMap.end()) {
           for (vector<pair<double, double> >::iterator itPV = vertexResults.begin(); itPV != vertexResults.end();
-               itPV++) {
+               itPV++) {                 
             histo->Fill(itPV->first - resultsMap["BF"].first);
           }
         }
@@ -417,9 +429,10 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
                itPV++) {
             histo->Fill(itPV->first - resultsMap["SC"].first);
           }
-        }
-      } else if (itM->second == "Lumibased BeamSpotFit") {
-        if (resultsMap.find("BF") != resultsMap.end()) {
+        }       
+      } else if (itM->second == "Lumibased BeamSpotFit") {   
+             
+        if (resultsMap.find("BF") != resultsMap.end()) {        
           theValuesContainer_->Fill(position, resultsMap["BF"].first);       //Value
           theValuesContainer_->Fill(position + 1, resultsMap["BF"].second);  //Error
           theValuesContainer_->Fill(position + 2, 1);                        //ok
@@ -472,17 +485,6 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
                itPV++) {
             theValuesContainer_->Fill(position, (*itPV).first - resultsMap["DB"].first);  //Value
           }
-          /*
-          double error = 0;
-	  if(vertexResults.size() != 0){
-	    for(vector<pair<double,double> >::iterator itPV=vertexResults.begin(); itPV!=vertexResults.end(); itPV++){
-              error += std::pow((*itPV).first-resultsMap["DB"].first-theValuesContainer_->getTProfile()->GetBinContent(position+1),2.);
-            }
-	    error = std::sqrt(error)/vertexResults.size();
-	  }
-//          theValuesContainer_->Fill(position+1,std::sqrt(std::pow((*itPV).second,2)+std::pow(resultsMap["DB"].second,2)));//Error	  
-          theValuesContainer_->Fill(position+1,error);//Error	  
-*/
           theValuesContainer_->Fill(position + 1,
                                     theValuesContainer_->getTProfile()->GetBinError(position + 1));  //Error
           theValuesContainer_->Fill(position + 2, 1);                                                //ok
@@ -493,17 +495,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
                itPV++) {
             theValuesContainer_->Fill(position, (*itPV).first - resultsMap["SC"].first);  //Value
           }
-          /*
-          double error = 0;
-	  if(vertexResults.size() != 0){
-	    for(vector<pair<double,double> >::iterator itPV=vertexResults.begin(); itPV!=vertexResults.end(); itPV++){
-              error += std::pow((*itPV).first-resultsMap["SC"].first-theValuesContainer_->getTProfile()->GetBinContent(position+1),2.);
-            }
-	    error = std::sqrt(error)/vertexResults.size();
-	  }
-//          theValuesContainer_->Fill(position+1,std::sqrt(std::pow((*itPV).second,2)+std::pow(resultsMap["SC"].second,2)));//Error	  
-          theValuesContainer_->Fill(position+1,error);//Error	  
-*/
+ 
           theValuesContainer_->Fill(position + 1,
                                     theValuesContainer_->getTProfile()->GetBinError(position + 1));  //Error
           theValuesContainer_->Fill(position + 2, 1);                                                //ok
