@@ -7,7 +7,12 @@
 <use name="RecoVertex/BeamSpotProducer"/>
 <use name="DataFormats/VertexReco"/>
 <use name="DataFormats/TrackerRecHit2D"/>
+<use name="CondCore/DBOutputService"/>
 <library file="BeamMonitor.cc" name="BeamMonitor">
+  <flags EDM_PLUGIN="1"/>
+</library>
+
+<library file="FakeBeamMonitor.cc" name="FakeBeamMonitor">
   <flags EDM_PLUGIN="1"/>
 </library>
 
