@@ -67,6 +67,9 @@ for j in range(njobs):
           newline = line.replace('theBx', '{BX}'.format( BX=str(options.bx)).rstrip())
       if 'filelist_template' in line:
           newline = line.replace('filelist_template', '{LIST}'.format( LIST=str(options.inputfiles).strip('.py')).rstrip())
+          newline = newline.replace('file_list', 'file_list_{MIN}_{MAX}'.format( MIN=str(low_time), MAX=str(max_time)).rstrip())
+      if 'file_list' in line and not 'filelist_template' in line:
+          newline = line.replace('file_list', 'file_list_{MIN}_{MAX}'.format( MIN=str(low_time), MAX=str(max_time)).rstrip())
       if 'thelumirange' in line:
           newline = line.replace('thelumirange', '{run}:{ils}-{run}:{fls}'.format( run = RUN_NUMBER, ils = options.initls, fls = options.endls).rstrip())
       if newline:
