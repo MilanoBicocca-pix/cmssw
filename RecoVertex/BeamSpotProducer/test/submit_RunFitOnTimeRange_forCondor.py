@@ -28,6 +28,9 @@ import datetime
 flist   = open(options.timefile)
 ranges  = flist.readlines()
 
+# remove commented lines
+ranges = [x for x in ranges if x[0] != '#']
+
 # eval the number of jobs to be submitted
 njobs = len(ranges)
 print 'njobs: ', njobs
@@ -44,13 +47,22 @@ else:
 os.system('cp {LIST} {FOLDER}'.format(LIST=options.inputfiles, FOLDER=newFolder))
 os.chdir(os.getcwd() +'/' + newFolder)
 
+LSfromCommandLine = True
+if options.initls == "0" and options.endls == "99999":
+  LSfromCommandLine = False
 
 ## create a cfg per each job and the corresponding .sh
 for j in range(njobs): 
   k = j
-  
-  low_time = ranges[j].split(',')[0].rstrip()
-  max_time = ranges[j].split(',')[1].rstrip()
+
+  # read begin and end LS if not configured by command line
+  if not LSfromCommandLine:
+    options.initls = ranges[j].split()[0].rstrip()
+    options.endls = ranges[j].split()[1].rstrip()
+
+  # store begin and end times
+  low_time = ranges[j].split()[2].rstrip()
+  max_time = ranges[j].split()[3].rstrip()
 
   # write the .cfg file
   f   = open(options.cfg)
@@ -66,7 +78,8 @@ for j in range(njobs):
       if 'theBx' in line:
           newline = line.replace('theBx', '{BX}'.format( BX=str(options.bx)).rstrip())
       if 'filelist_template' in line:
-          newline = line.replace('filelist_template', '{LIST}'.format( LIST=str(options.inputfiles).strip('.py')).rstrip())
+          inputList = str(options.inputfiles).strip('.py')
+          newline = line.replace('filelist_template', '{LIST}'.format( LIST=inputList.split('/')[1]).rstrip())
           newline = newline.replace('file_list', 'file_list_{MIN}_{MAX}'.format( MIN=str(low_time), MAX=str(max_time)).rstrip())
       if 'file_list' in line and not 'filelist_template' in line:
           newline = line.replace('file_list', 'file_list_{MIN}_{MAX}'.format( MIN=str(low_time), MAX=str(max_time)).rstrip())
