@@ -44,6 +44,7 @@ git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/src/BeamFitter.cc
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/src/FcnBeamSpotFitPV.cc
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/src/PVFitter.cc
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/BeamFit_LumiBased_NoRefit_Template.py
+git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/BeamFit_LumiBased_PVRefit_Template.py
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/README.md
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/filelist_318984_scanX1_ZBAOD.py
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/script_bs_condor_template.sh
@@ -51,6 +52,8 @@ git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/submit_RunFitOnL
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/submit_RunFitOnTimeRange_forCondor.py
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/condor_bs_template.cfg
 git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/time_ranges_274100_scans_1_2_3_4_5.txt
+git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/datasets
+git checkout mib/bsInTimeRange RecoVertex/BeamSpotProducer/test/timestamps
 
 scram b -j 10  
 cd RecoVertex/BeamSpotProducer/test  
