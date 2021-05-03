@@ -37,6 +37,8 @@ public:
 
 protected:
   // BeginRun
+  void dqmBeginRun(edm::Run const&, edm::EventSetup const&) override;
+  
   void bookHistograms(DQMStore::IBooker& i, const edm::Run& r, const edm::EventSetup& c) override;
 
   void analyze(const edm::Event& e, const edm::EventSetup& c) override;

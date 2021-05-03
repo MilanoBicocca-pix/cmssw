@@ -203,6 +203,12 @@ namespace {
   };
 }  // namespace
 
+void BeamMonitor::dqmBeginRun(edm::Run const&, edm::EventSetup const&){
+  if (onlineDbService_.isAvailable()) {
+    onlineDbService_->lockRecords();
+  }
+}
+
 void BeamMonitor::bookHistograms(DQMStore::IBooker& iBooker, edm::Run const& iRun, edm::EventSetup const& iSetup) {
   frun = iRun.run();
   ftimestamp = iRun.beginTime().value();
@@ -1544,6 +1550,9 @@ void BeamMonitor::dqmEndRun(const Run& r, const EventSetup& context) {
   mapLSBSTrkSize.clear();
   mapLSPVStoreSize.clear();
   mapLSCF.clear();
+  if (onlineDbService_.isAvailable()) {
+    onlineDbService_->releaseLocks();
+  }
 }
 
 //--------------------------------------------------------

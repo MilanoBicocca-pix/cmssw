@@ -37,7 +37,9 @@ public:
   ~FakeBeamMonitor() override;
 
 protected:
-  // BeginRun
+  //BeginRun
+  void dqmBeginRun(edm::Run const&, edm::EventSetup const&) override;
+  
   void bookHistograms(DQMStore::IBooker& i, const edm::Run& r, const edm::EventSetup& c) override;
 
   void analyze(const edm::Event& e, const edm::EventSetup& c) override;
@@ -47,7 +49,7 @@ protected:
   void endLuminosityBlock(const edm::LuminosityBlock& lumiSeg, const edm::EventSetup& c) override;
   // EndRun
   void dqmEndRun(const edm::Run& r, const edm::EventSetup& c) override;
-
+  
 private:
   void FitAndFill(const edm::LuminosityBlock& lumiSeg, int&, int&, int&);
   void RestartFitting();
