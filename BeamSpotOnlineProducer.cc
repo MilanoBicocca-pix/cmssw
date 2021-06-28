@@ -15,6 +15,9 @@ ________________________________________________________________**/
 #include "DataFormats/Scalers/interface/BeamSpotOnline.h"
 #include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/DataRecord/interface/BeamSpotObjectsRcd.h"
+#include "CondFormats/DataRecord/interface/BeamSpotTransientObjectsRcd.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -31,6 +34,8 @@ public:
   /// produce a beam spot class
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
+  ///Fill descriptor
+  static void fillDescriptions(edm::ConfigurationDescriptions& iDesc);
 private:
   const bool changeFrame_;
   const double theMaxZ, theSetSigmaZ;
@@ -50,7 +55,7 @@ BeamSpotOnlineProducer::BeamSpotOnlineProducer(const ParameterSet& iconf)
     : changeFrame_(iconf.getParameter<bool>("changeToCMSCoordinates")),
       theMaxZ(iconf.getParameter<double>("maxZ")),
       theSetSigmaZ(iconf.getParameter<double>("setSigmaZ")),
-      useTransientRecord_(icong.getParameter<bool>("useTransientRecord",false)),
+      useTransientRecord_(iconf.getParameter<bool>("useTransientRecord")),
       scalerToken_(consumes<BeamSpotOnlineCollection>(iconf.getParameter<InputTag>("src"))),
       l1GtEvmReadoutRecordToken_(consumes<L1GlobalTriggerEvmReadoutRecord>(iconf.getParameter<InputTag>("gtEvmLabel"))),
       beamToken_(esConsumes<BeamSpotObjects, BeamSpotObjectsRcd>()),      
@@ -64,14 +69,14 @@ BeamSpotOnlineProducer::BeamSpotOnlineProducer(const ParameterSet& iconf)
 
 void BeamSpotOnlineProducer::fillDescriptions(edm::ConfigurationDescriptions& iDesc) {
   edm::ParameterSetDescription ps;
-  ps.addUntracked<bool>("changeToCMSCoordinates",False);
-  ps.addUntracked<double>("maxZ",40.);
-  ps.addUntracked<double>("SetSigmaZ",0.0);
+  ps.add<bool>("changeToCMSCoordinates",false);
+  ps.add<double>("maxZ",40.);
+  ps.add<double>("SetSigmaZ",0.0);
   ps.addUntracked<unsigned int>("beamMode", 11);
-  ps.addUntracked<InputTag>("src","hltScalersRawToDigi");
-  ps.addUntracked<InputTag>("gtEvmLabel","");
-  ps.addUntracked<double>("maxRadius",2.0);
-  ps.AddUntrackedParameter<bool>("useTransientRecord",false);
+  ps.add<InputTag>("src",InputTag("hltScalersRawToDigi"));
+  ps.add<InputTag>("gtEvmLabel",InputTag(""));
+  ps.add<double>("maxRadius",2.0);
+  ps.add<bool>("useTransientRecord",false);
   iDesc.addWithDefaultLabel(ps);
 }
 
@@ -79,41 +84,41 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
   // product is a reco::BeamSpot object
   auto result = std::make_unique<reco::BeamSpot>();
   reco::BeamSpot aSpot;
-
+  //shout MODE only in stable beam
+  bool shoutMODE = false;
+  edm::Handle<L1GlobalTriggerEvmReadoutRecord> gtEvmReadoutRecord;
+  if (iEvent.getByToken(l1GtEvmReadoutRecordToken_, gtEvmReadoutRecord)) {
+    if (gtEvmReadoutRecord->gtfeWord().beamMode() == theBeamShoutMode)
+      shoutMODE = true;
+  } else {
+    shoutMODE = true;
+  }
+  bool fallBackToDB = false;
   if (useTransientRecord_){
-      edm::ESHandle<BeamSpotObjects> beamhandle = iSetup.getHandle(beamTransientToken_);
-      const BeamSpotObjects* spotDB = beamhandle.product();
+      auto const& spotDB = iSetup.getData(beamTransientToken_);
 
       // translate from BeamSpotObjects to reco::BeamSpot
-      reco::BeamSpot::Point apoint(spotDB->GetX(), spotDB->GetY(), spotDB->GetZ());
+      reco::BeamSpot::Point apoint(spotDB.GetX(), spotDB.GetY(), spotDB.GetZ());
 
       reco::BeamSpot::CovarianceMatrix matrix;
       for (int i = 0; i < 7; ++i) {
         for (int j = 0; j < 7; ++j) {
-          matrix(i, j) = spotDB->GetCovariance(i, j);
+          matrix(i, j) = spotDB.GetCovariance(i, j);
         }
       }
 
       // this assume beam width same in x and y
       aSpot = reco::BeamSpot(
-          apoint, spotDB->GetSigmaZ(), spotDB->Getdxdz(), spotDB->Getdydz(), spotDB->GetBeamWidthX(), matrix);
-      aSpot.setBeamWidthY(spotDB->GetBeamWidthY());
-      aSpot.setEmittanceX(spotDB->GetEmittanceX());
-      aSpot.setEmittanceY(spotDB->GetEmittanceY());
-      aSpot.setbetaStar(spotDB->GetBetaStar());
-      aSpot.setType(reco::BeamSpot::Tracker);
-      
-  }else{
-    //shout MODE only in stable beam
-    bool shoutMODE = false;
-    edm::Handle<L1GlobalTriggerEvmReadoutRecord> gtEvmReadoutRecord;
-    if (iEvent.getByToken(l1GtEvmReadoutRecordToken_, gtEvmReadoutRecord)) {
-      if (gtEvmReadoutRecord->gtfeWord().beamMode() == theBeamShoutMode)
-        shoutMODE = true;
-    } else {
-      shoutMODE = true;
-    }
-
+          apoint, spotDB.GetSigmaZ(), spotDB.Getdxdz(), spotDB.Getdydz(), spotDB.GetBeamWidthX(), matrix);
+          aSpot.setBeamWidthY(spotDB.GetBeamWidthY());
+          aSpot.setEmittanceX(spotDB.GetEmittanceX());
+          aSpot.setEmittanceY(spotDB.GetEmittanceY());
+          aSpot.setbetaStar(spotDB.GetBetaStar());
+          aSpot.setType(reco::BeamSpot::Tracker);
+      if (spotDB.GetBeamType() != 2){
+        fallBackToDB = true;
+      }
+  }else{   
     // get scalar collection
     Handle<BeamSpotOnlineCollection> handleScaler;
     iEvent.getByToken(scalerToken_, handleScaler);
@@ -126,7 +131,6 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
 
     reco::BeamSpot aSpot;
 
-    bool fallBackToDB = false;
     if (!handleScaler->empty()) {
       // get one element
       spotOnline = *(handleScaler->begin());
@@ -180,30 +184,29 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
       //the error should probably have been send at unpacker level
       fallBackToDB = true;
     }
+  }
+  if (fallBackToDB) {
+    edm::ESHandle<BeamSpotObjects> beamhandle = iSetup.getHandle(beamToken_);
+    const BeamSpotObjects* spotDB = beamhandle.product();
 
-    if (fallBackToDB) {
-      edm::ESHandle<BeamSpotObjects> beamhandle = iSetup.getHandle(beamToken_);
-      const BeamSpotObjects* spotDB = beamhandle.product();
+    // translate from BeamSpotObjects to reco::BeamSpot
+    reco::BeamSpot::Point apoint(spotDB->GetX(), spotDB->GetY(), spotDB->GetZ());
 
-      // translate from BeamSpotObjects to reco::BeamSpot
-      reco::BeamSpot::Point apoint(spotDB->GetX(), spotDB->GetY(), spotDB->GetZ());
-
-      reco::BeamSpot::CovarianceMatrix matrix;
-      for (int i = 0; i < 7; ++i) {
-        for (int j = 0; j < 7; ++j) {
-          matrix(i, j) = spotDB->GetCovariance(i, j);
-        }
+    reco::BeamSpot::CovarianceMatrix matrix;
+    for (int i = 0; i < 7; ++i) {
+      for (int j = 0; j < 7; ++j) {
+        matrix(i, j) = spotDB->GetCovariance(i, j);
       }
-
-      // this assume beam width same in x and y
-      aSpot = reco::BeamSpot(
-          apoint, spotDB->GetSigmaZ(), spotDB->Getdxdz(), spotDB->Getdydz(), spotDB->GetBeamWidthX(), matrix);
-      aSpot.setBeamWidthY(spotDB->GetBeamWidthY());
-      aSpot.setEmittanceX(spotDB->GetEmittanceX());
-      aSpot.setEmittanceY(spotDB->GetEmittanceY());
-      aSpot.setbetaStar(spotDB->GetBetaStar());
-      aSpot.setType(reco::BeamSpot::Tracker);
     }
+
+    // this assume beam width same in x and y
+    aSpot = reco::BeamSpot(
+        apoint, spotDB->GetSigmaZ(), spotDB->Getdxdz(), spotDB->Getdydz(), spotDB->GetBeamWidthX(), matrix);
+    aSpot.setBeamWidthY(spotDB->GetBeamWidthY());
+    aSpot.setEmittanceX(spotDB->GetEmittanceX());
+    aSpot.setEmittanceY(spotDB->GetEmittanceY());
+    aSpot.setbetaStar(spotDB->GetBetaStar());
+    aSpot.setType(reco::BeamSpot::Tracker);
   }
   *result = aSpot;
 
