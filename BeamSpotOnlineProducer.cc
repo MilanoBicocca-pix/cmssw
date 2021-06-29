@@ -72,7 +72,7 @@ void BeamSpotOnlineProducer::fillDescriptions(edm::ConfigurationDescriptions& iD
   edm::ParameterSetDescription ps;
   ps.add<bool>("changeToCMSCoordinates",false);
   ps.add<double>("maxZ",40.);
-  ps.add<double>("SetSigmaZ",0.0);
+  ps.add<double>("SetSigmaZ",-1.);
   ps.addUntracked<unsigned int>("beamMode", 11);
   ps.add<InputTag>("src",InputTag("hltScalersRawToDigi"));
   ps.add<InputTag>("gtEvmLabel",InputTag(""));
