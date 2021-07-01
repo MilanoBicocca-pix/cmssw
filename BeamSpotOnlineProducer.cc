@@ -78,7 +78,7 @@ void BeamSpotOnlineProducer::fillDescriptions(edm::ConfigurationDescriptions& iD
   ps.add<InputTag>("src", InputTag("hltScalersRawToDigi"));
   ps.add<InputTag>("gtEvmLabel", InputTag(""));
   ps.add<double>("maxRadius", 2.0);
-  ps.add<bool>("useTransientRecord", true);
+  ps.add<bool>("useTransientRecord", false);
   iDesc.addWithDefaultLabel(ps);
 }
 
@@ -98,7 +98,6 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
   bool fallBackToDB = false;
   if (useTransientRecord_) {
     auto const& spotDB = iSetup.getData(beamTransientToken_);
-
     if (spotDB.GetBeamType() != 2) {
       if (shoutMODE) {
         edm::LogWarning("BeamSpotFromDB")
@@ -106,7 +105,6 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
       }
       fallBackToDB = true;
     } else {
-      
       // translate from BeamSpotObjects to reco::BeamSpot
       // in case we need to switch to LHC reference frame
       // ignore for the moment rotations, and translations
@@ -143,8 +141,6 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
 
     // product is a reco::BeamSpot object
     auto result = std::make_unique<reco::BeamSpot>();
-
-    reco::BeamSpot aSpot;
 
     if (!handleScaler->empty()) {
       // get one element
@@ -223,6 +219,7 @@ void BeamSpotOnlineProducer::produce(Event& iEvent, const EventSetup& iSetup) {
     aSpot.setbetaStar(spotDB->GetBetaStar());
     aSpot.setType(reco::BeamSpot::Tracker);
   }
+
   *result = aSpot;
 
   iEvent.put(std::move(result));
