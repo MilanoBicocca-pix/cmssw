@@ -224,12 +224,13 @@ void AlcaBeamMonitor::bookHistograms(DQMStore::IBooker& ibooker, edm::Run const&
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-std::shared_ptr<alcabeammonitor::NoCache> AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi,
+std::shared_ptr<alcabeammonitor::BeamSpotInfo> AlcaBeamMonitor::globalBeginLuminosityBlock(const LuminosityBlock& iLumi,
                                                                                       const EventSetup& iSetup) const {
   // Always create a beamspot group for each lumi weather we have results or not! Each Beamspot will be of unknown type!
-
-  vertices_.clear();
-  beamSpotsMap_.clear();
+  
+  auto beamSpotInfo = std::make_shared<alcabeammonitor::BeamSpotInfo>();
+  beamSpotInfo->vertices_.clear();
+  beamSpotInfo->beamSpotMap_.clear();
   processedLumis_.push_back(iLumi.id().luminosityBlock());
   //Read BeamSpot from DB
   ESHandle<BeamSpotObjects> bsDBHandle;
@@ -252,10 +253,10 @@ std::shared_ptr<alcabeammonitor::NoCache> AlcaBeamMonitor::globalBeginLuminosity
       }
     }
 
-    beamSpotsMap_["DB"] =
+    beamSpotInfo->beamSpotMap_["DB"] =
         BeamSpot(apoint, spotDB->sigmaZ(), spotDB->dxdz(), spotDB->dydz(), spotDB->beamWidthX(), matrix);
 
-    BeamSpot* aSpot = &(beamSpotsMap_["DB"]);
+    BeamSpot* aSpot = &(beamSpotInfo->beamSpotMap_["DB"]);
 
     aSpot->setBeamWidthY(spotDB->beamWidthY());
     aSpot->setEmittanceX(spotDB->emittanceX());
@@ -272,7 +273,7 @@ std::shared_ptr<alcabeammonitor::NoCache> AlcaBeamMonitor::globalBeginLuminosity
   } else {
     LogInfo("AlcaBeamMonitor") << "Database BeamSpot is not valid at lumi: " << iLumi.id().luminosityBlock();
   }
-  return nullptr;
+  return beamSpotInfo;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -282,24 +283,25 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
   //------ PVFitter
   thePVFitter_->readEvent(iEvent);
 
-  if (beamSpotsMap_.find("DB") != beamSpotsMap_.end()) {
+  auto beamSpotInfo = luminosityBlockCache(iEvent.getLuminosityBlock().index());
+  if (beamSpotInfo->beamSpotMap_.find("DB") != beamSpotInfo->beamSpotMap_.end()) {
     //------ Tracks
     Handle<reco::TrackCollection> TrackCollection;
     iEvent.getByToken(trackLabel_, TrackCollection);
     const reco::TrackCollection* tracks = TrackCollection.product();
     for (reco::TrackCollection::const_iterator track = tracks->begin(); track != tracks->end(); ++track) {
       hD0Phi0_->Fill(track->phi(), -1 * track->dxy());
-      hDxyBS_->Fill(-1 * track->dxy(beamSpotsMap_["DB"].position()));
+      hDxyBS_->Fill(-1 * track->dxy(beamSpotInfo->beamSpotMap_["DB"].position()));
     }
   }
 
   //------ Primary Vertices
   Handle<VertexCollection> PVCollection;
   if (iEvent.getByToken(primaryVertexLabel_, PVCollection)) {
-    vertices_.push_back(*PVCollection.product());
+    beamSpotInfo->vertices_.push_back(*PVCollection.product());
   }
 
-  if (beamSpotsMap_.find("SC") == beamSpotsMap_.end()) {
+  if (beamSpotInfo->beamSpotMap_.find("SC") == beamSpotInfo->beamSpotMap_.end()) {
     //BeamSpot from file for this stream is = to the scalar BeamSpot
     Handle<BeamSpot> recoBeamSpotHandle;
     try {
@@ -308,19 +310,20 @@ void AlcaBeamMonitor::analyze(const Event& iEvent, const EventSetup& iSetup) {
       LogInfo("AlcaBeamMonitor") << exception.what();
       return;
     }
-    beamSpotsMap_["SC"] = *recoBeamSpotHandle;
-    if (beamSpotsMap_["SC"].BeamWidthX() != 0) {
-      beamSpotsMap_["SC"].setType(reco::BeamSpot::Tracker);
+    beamSpotInfo->beamSpotMap_["SC"] = *recoBeamSpotHandle;
+    if (beamSpotInfo->beamSpotMap_["SC"].BeamWidthX() != 0) {
+      beamSpotInfo->beamSpotMap_["SC"].setType(reco::BeamSpot::Tracker);
     } else {
-      beamSpotsMap_["SC"].setType(reco::BeamSpot::Fake);
+      beamSpotInfo->beamSpotMap_["SC"].setType(reco::BeamSpot::Fake);
     }
   }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, const EventSetup& iSetup) {
+  auto beamSpotInfo = luminosityBlockCache(iLumi.index());
   if (theBeamFitter_->runPVandTrkFitter()) {
-    beamSpotsMap_["BF"] = theBeamFitter_->getBeamSpot();
+    beamSpotInfo->beamSpotMap_["BF"] = theBeamFitter_->getBeamSpot();
   }
   theBeamFitter_->resetTrkVector();
   theBeamFitter_->resetLSRange();
@@ -328,7 +331,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
   theBeamFitter_->resetPVFitter();
 
   if (thePVFitter_->runFitter()) {
-    beamSpotsMap_["PV"] = thePVFitter_->getBeamSpot();
+    beamSpotInfo->beamSpotMap_["PV"] = thePVFitter_->getBeamSpot();
   }
   thePVFitter_->resetAll();
 
@@ -338,7 +341,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
   MonitorElement* histo = nullptr;
   for (vector<string>::iterator itV = varNamesV_.begin(); itV != varNamesV_.end(); itV++) {
     resultsMap.clear();
-    for (BeamSpotContainer::iterator itBS = beamSpotsMap_.begin(); itBS != beamSpotsMap_.end(); itBS++) {
+    for (BeamSpotContainer::iterator itBS = beamSpotInfo->beamSpotMap_.begin(); itBS != beamSpotInfo->beamSpotMap_.end(); itBS++) {
       if (itBS->second.type() == BeamSpot::Tracker) {
         if (*itV == "x") {
           resultsMap[itBS->first] = pair<double, double>(itBS->second.x0(), itBS->second.x0Error());
@@ -360,7 +363,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
       }
     }
     vertexResults.clear();
-    for (vector<VertexCollection>::iterator itPV = vertices_.begin(); itPV != vertices_.end(); itPV++) {
+    for (vector<VertexCollection>::iterator itPV = beamSpotInfo->vertices_.begin(); itPV != beamSpotInfo->vertices_.end(); itPV++) {
       if (!itPV->empty()) {
         for (VertexCollection::const_iterator pv = itPV->begin(); pv != itPV->end(); pv++) {
           if (pv->isFake() || pv->tracksSize() < 10)
@@ -385,7 +388,7 @@ void AlcaBeamMonitor::globalEndLuminosityBlock(const LuminosityBlock& iLumi, con
       if ((histo = histosMap_[*itV][itM->first][itM->second]) == nullptr)
         continue;
       if (itM->second == "Coordinate") {
-        if (beamSpotsMap_.find("DB") != beamSpotsMap_.end()) {
+        if (beamSpotInfo->beamSpotMap_.find("DB") != beamSpotInfo->beamSpotMap_.end()) {
           histo->Fill(resultsMap["DB"].first);
         }
       } else if (itM->second == "PrimaryVertex fit-DataBase") {

@@ -28,10 +28,14 @@ class BeamFitter;
 class PVFitter;
 
 namespace alcabeammonitor {
-  struct NoCache {};
+  struct BeamSpotInfo {
+  mutable std::vector<reco::VertexCollection> vertices_;
+  typedef std::map<std::string, reco::BeamSpot> BeamSpotContainer;
+  mutable BeamSpotContainer beamSpotMap_;
+  };
 }  // namespace alcabeammonitor
 
-class AlcaBeamMonitor : public DQMOneEDAnalyzer<edm::LuminosityBlockCache<alcabeammonitor::NoCache>> {
+class AlcaBeamMonitor : public DQMOneEDAnalyzer<edm::LuminosityBlockCache<alcabeammonitor::BeamSpotInfo>> {
 public:
   AlcaBeamMonitor(const edm::ParameterSet&);
   static void fillDescriptions(edm::ConfigurationDescriptions&);
@@ -39,19 +43,19 @@ public:
 protected:
   void bookHistograms(DQMStore::IBooker&, edm::Run const&, edm::EventSetup const&) override;
   void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-  std::shared_ptr<alcabeammonitor::NoCache> globalBeginLuminosityBlock(const edm::LuminosityBlock& iLumi,
+  std::shared_ptr<alcabeammonitor::BeamSpotInfo> globalBeginLuminosityBlock(const edm::LuminosityBlock& iLumi,
                                                                        const edm::EventSetup& iSetup) const override;
   void globalEndLuminosityBlock(const edm::LuminosityBlock& iLumi, const edm::EventSetup& iSetup) override;
   void dqmEndRun(edm::Run const&, edm::EventSetup const&) override;
 
 private:
   //Typedefs
-  //                BF,BS...
-  typedef std::map<std::string, reco::BeamSpot> BeamSpotContainer;
   //                x,y,z,sigmax(y,z)... [run,lumi]          Histo name
   typedef std::map<std::string, std::map<std::string, std::map<std::string, MonitorElement*>>> HistosContainer;
   //                x,y,z,sigmax(y,z)... [run,lumi]          Histo name
   typedef std::map<std::string, std::map<std::string, std::map<std::string, int>>> PositionContainer;
+  // beam spot data
+  typedef std::map<std::string, reco::BeamSpot> BeamSpotContainer;
 
   //Parameters
   std::string monitorName_;
@@ -73,13 +77,11 @@ private:
   MonitorElement* hDxyBS_;
   //mutable MonitorElement* theValuesContainer_;
 
-  //Containers
-  mutable BeamSpotContainer beamSpotsMap_;
+  //Containers  
   HistosContainer histosMap_;
   PositionContainer positionsMap_;
   std::vector<std::string> varNamesV_;                            //x,y,z,sigmax(y,z)
   std::multimap<std::string, std::string> histoByCategoryNames_;  //run, lumi
-  mutable std::vector<reco::VertexCollection> vertices_;
 };
 
 #endif
