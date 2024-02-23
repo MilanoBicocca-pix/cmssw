@@ -257,7 +257,8 @@ void BeamFitter::fillDescription(edm::ParameterSetDescription &iDesc) {
   beamFitter.addUntracked<int>("MinimumInputTracks");
   beamFitter.addUntracked<double>("FractionOfFittedTrks");
   beamFitter.addUntracked<double>("InputBeamWidth", -1.);
-
+  beamFitter.addUntracked<std::vector<double>>("timerange");
+  beamFitter.addUntracked<std::vector<int>>("selectBx");
   beamFitter.addUntracked<std::string>("OutputFileName", "");
 
   iDesc.add<edm::ParameterSetDescription>("BeamFitter", beamFitter);
