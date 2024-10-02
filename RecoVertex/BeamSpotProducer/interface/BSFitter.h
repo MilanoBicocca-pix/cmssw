@@ -16,6 +16,7 @@ ________________________________________________________________**/
 #include "RecoVertex/BeamSpotProducer/interface/BSpdfsFcn.h"
 #include "RecoVertex/BeamSpotProducer/interface/BSTrkParameters.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 
 // ROOT
 #include "TMatrixD.h"
@@ -40,18 +41,18 @@ public:
 
   void SetFitVariable(std::string name) { ffit_variable = name; }
 
-  reco::BeamSpot Fit();
+  reco::BeamSpotExt Fit();
 
-  reco::BeamSpot Fit(double *inipar);
+  reco::BeamSpotExt Fit(double *inipar);
 
   // Fit Z distribution with a gaussian
-  reco::BeamSpot Fit_z(std::string type, double *inipar);
+  reco::BeamSpotExt Fit_z(std::string type, double *inipar);
 
-  reco::BeamSpot Fit_z_chi2(double *inipar);
-  reco::BeamSpot Fit_z_likelihood(double *inipar);
+  reco::BeamSpotExt Fit_z_chi2(double *inipar);
+  reco::BeamSpotExt Fit_z_likelihood(double *inipar);
 
   // Fit only d0-phi distribution with a chi2
-  reco::BeamSpot Fit_d0phi();
+  reco::BeamSpotExt Fit_d0phi();
   void SetMaximumZ(double z) { fMaxZ = z; }
   void SetConvergence(double val) { fconvergence = val; }
   void SetMinimumNTrks(int n) { fminNtrks = n; }
@@ -68,11 +69,11 @@ public:
   }
   std::vector<BSTrkParameters> GetData() { return fBSvector; }
 
-  reco::BeamSpot Fit_ited0phi();
+  reco::BeamSpotExt Fit_ited0phi();
 
-  reco::BeamSpot Fit_d_likelihood(double *inipar);
-  reco::BeamSpot Fit_d_z_likelihood(double *inipar, double *error_par);
-  reco::BeamSpot Fit_dres_z_likelihood(double *inipar);
+  reco::BeamSpotExt Fit_d_likelihood(double *inipar);
+  reco::BeamSpotExt Fit_d_z_likelihood(double *inipar, double *error_par);
+  reco::BeamSpotExt Fit_dres_z_likelihood(double *inipar);
 
   double scanPDF(double *init_pars, int &tracksFailed, int option);
 
@@ -82,7 +83,7 @@ public:
   double GetResPar0Err() { return fres_c0_err; }
   double GetResPar1Err() { return fres_c1_err; }
 
-  reco::BeamSpot::ResCovMatrix GetResMatrix() { return fres_matrix; }
+  reco::BeamSpotExt::ResCovMatrix GetResMatrix() { return fres_matrix; }
 
   TH1F *GetVzHisto() { return h1z; }
 
@@ -91,7 +92,7 @@ private:
   //BSzFcn* theGausszFcn;
   BSpdfsFcn *thePDF;
 
-  reco::BeamSpot::BeamType fbeamtype;
+  reco::BeamSpotExt::BeamType fbeamtype;
   std::string ffit_type;
   std::string ffit_variable;
 
@@ -110,8 +111,8 @@ private:
   double fresolution_c1;
   double fres_c0_err;
   double fres_c1_err;
-  reco::BeamSpot::ResCovMatrix fres_matrix;
-  //reco::BeamSpot fBSforCuts;
+  reco::BeamSpotExt::ResCovMatrix fres_matrix;
+  //reco::BeamSpotExt fBSforCuts;
   TMatrixD ftmp;
   bool fapplyd0cut;
   bool fapplychi2cut;

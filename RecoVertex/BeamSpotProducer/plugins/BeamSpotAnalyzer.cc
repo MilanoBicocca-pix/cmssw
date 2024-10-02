@@ -12,6 +12,7 @@ ________________________________________________________________**/
 
 // CMS
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/BeamSpot/interface/BeamSpotExt.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -135,7 +136,7 @@ void BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg, c
   std::pair<int, int> LSRange = theBeamFitter->getFitLSRange();
 
   if (theBeamFitter->runPVandTrkFitter()) {
-    reco::BeamSpot bs = theBeamFitter->getBeamSpot();
+    reco::BeamSpotExt bs = theBeamFitter->getBeamSpot();
     edm::LogPrint("BeamSpotAnalyzer") << "\n RESULTS OF DEFAULT FIT ";
     edm::LogPrint("BeamSpotAnalyzer") << " for runs: " << ftmprun0 << " - " << ftmprun;
     edm::LogPrint("BeamSpotAnalyzer") << " for lumi blocks : " << LSRange.first << " - " << LSRange.second;
@@ -143,8 +144,8 @@ void BeamSpotAnalyzer::endLuminosityBlock(const edm::LuminosityBlock& lumiSeg, c
     edm::LogPrint("BeamSpotAnalyzer") << bs;
     edm::LogPrint("BeamSpotAnalyzer") << "[BeamFitter] fit done. \n";
   } else {  // Fill in empty beam spot if beamfit fails
-    reco::BeamSpot bs;
-    bs.setType(reco::BeamSpot::Fake);
+    reco::BeamSpotExt bs;
+    bs.setType(reco::BeamSpotExt::Fake);
     edm::LogPrint("BeamSpotAnalyzer") << "\n Empty Beam spot fit";
     edm::LogPrint("BeamSpotAnalyzer") << " for runs: " << ftmprun0 << " - " << ftmprun;
     edm::LogPrint("BeamSpotAnalyzer") << " for lumi blocks : " << LSRange.first << " - " << LSRange.second;
@@ -179,7 +180,7 @@ void BeamSpotAnalyzer::endJob() {
 
   if (fitNLumi_ == -1 && resetFitNLumi_ == -1) {
     if (theBeamFitter->runPVandTrkFitter()) {
-      reco::BeamSpot beam_default = theBeamFitter->getBeamSpot();
+      reco::BeamSpotExt beam_default = theBeamFitter->getBeamSpot();
       std::pair<int, int> LSRange = theBeamFitter->getFitLSRange();
 
       edm::LogPrint("BeamSpotAnalyzer") << "\n RESULTS OF DEFAULT FIT:";
@@ -200,7 +201,7 @@ void BeamSpotAnalyzer::endJob() {
     }
     if ((runbeamwidthfit_)) {
       theBeamFitter->runBeamWidthFitter();
-      reco::BeamSpot beam_width = theBeamFitter->getBeamWidth();
+      reco::BeamSpotExt beam_width = theBeamFitter->getBeamWidth();
       edm::LogPrint("BeamSpotAnalyzer") << beam_width;
     } else {
       edm::LogPrint("BeamSpotAnalyzer") << "[BeamSpotAnalyzer] beamfit fails !!!";
