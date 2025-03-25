@@ -39,6 +39,12 @@
 <library file="OfflineToTransientBeamSpotESProducer.cc" name="OfflineToTransientBeamSpotESProducer">
   <flags EDM_PLUGIN="1"/>
 </library>
+<library file="TimeRangeFilter.cc" name="TimeRangeFilter">
+  <flags EDM_PLUGIN="1"/>
+</library>
+<library file="BunchCrossingFilter.cc" name="BunchCrossingFilter">
+  <flags EDM_PLUGIN="1"/>
+</library>
 <iftool name="cuda">
   <library file="BeamSpotToCUDA.cc" name="BeamSpotToCUDA">
     <use name="cuda"/>
