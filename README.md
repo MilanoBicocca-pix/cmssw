@@ -63,3 +63,14 @@ You can see all the available options and needed inputs by doing
 ```
 python submit_RunFitOnTimeRange_forCondor.py --help
 ```
+
+## how to add the filters for time and bx skimming
+```
+cd $CMSSW_BASE/src
+cmsenv
+git remote add lguzzi https://github.com/lguzzi/cmssw/
+git fetch lguzzi
+git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/TimeRangeFilter.cc
+git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/BunchCrossingFilter.cc
+scram b -j10
+```
