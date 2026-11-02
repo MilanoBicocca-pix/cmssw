@@ -72,7 +72,6 @@ git remote add lguzzi https://github.com/lguzzi/cmssw/
 git fetch lguzzi
 git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/TimeRangeFilter.cc
 git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/BunchCrossingFilter.cc
-scram b -j10
 ```
 
 then add 
@@ -84,4 +83,4 @@ then add
   <flags EDM_PLUGIN="1"/>
 </library>
 ```
-to ```RecoVertex/BeamSpotProducer/plugins/BuildFile.xml```.
+to ```RecoVertex/BeamSpotProducer/plugins/BuildFile.xml``` and compile with ```scram b -j10```.
