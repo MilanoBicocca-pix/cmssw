@@ -74,3 +74,14 @@ git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/TimeRan
 git checkout lguzzi/mib_timerange -- RecoVertex/BeamSpotProducer/plugins/BunchCrossingFilter.cc
 scram b -j10
 ```
+
+then add 
+```
+<library file="TimeRangeFilter.cc" name="TimeRangeFilter">
+  <flags EDM_PLUGIN="1"/>
+</library>
+<library file="BunchCrossingFilter.cc" name="BunchCrossingFilter">
+  <flags EDM_PLUGIN="1"/>
+</library>
+```
+to ```RecoVertex/BeamSpotProducer/plugins/BuildFile.xml```.
